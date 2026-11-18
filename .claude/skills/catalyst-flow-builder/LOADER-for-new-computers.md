@@ -1,9 +1,11 @@
 ---
 name: catalyst-flow-builder
 description: >
-  Builds mini flows into the Catalyst working prototype (GitHub repo shinyc01/catalyst-prototype) and publishes them safely.
-  Use whenever the user gives a Catalyst mini flow or Figma links to add to the prototype, asks to update, sync or publish the
-  Catalyst prototype, or asks to set the Catalyst prototype up on this computer. This is a loader: the real skill lives in the repo.
+  Works on the Catalyst working prototype (GitHub repo shinyc01/catalyst-prototype): adds mini flows (JTBD journey documents like
+  "J16 - Portfolio Owner - ….docx", or Figma links), explains how the prototype's screens, numbers and logic work, changes them,
+  records answers to its open questions, reviews it, and syncs / publishes it safely. Use whenever the user mentions the Catalyst
+  prototype, a J-numbered journey, its screens, tours, logic or open questions, or asks to set it up on this computer. This is a
+  loader: the real skill lives in the repo.
 ---
 
 # Catalyst flow builder (loader)

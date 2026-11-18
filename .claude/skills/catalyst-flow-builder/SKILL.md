@@ -1,13 +1,14 @@
 ---
 name: catalyst-flow-builder
 description: >
-  Adds a mini flow to the Catalyst working prototype (repo shinyc01/catalyst-prototype): reads the mini flow and its Figma /
-  Confluence sources, builds the screens and interactions into the one growing app with Catalyst Design System 2.0, extends the
-  shared mock data layer, registers the flow with a guided tour in the Flows panel, updates the product context, tests it, and
-  publishes it safely to GitHub (branch → checks → pull request → merge) so two people can work in parallel without overwriting
-  each other. Use whenever Shiny or Mahsa gives a mini flow, a Figma link for a new flow, or asks to "add this flow", "build this
-  into the prototype", "update the prototype", "publish", "sync", or to fix something in the Catalyst prototype. Also use for
-  first-time setup on a new computer.
+  Works on the Catalyst working prototype (repo shinyc01/catalyst-prototype) for Shiny and Mahsa, who are designers. Four jobs:
+  (1) add a mini flow — usually a JTBD journey document like "J16 - Portfolio Owner - ….docx" or Figma links — building screens,
+  data, logic, a guided tour and context, then publishing safely; (2) explain how something in the prototype works ("why does it
+  show 33%?", "where does this number come from?", "what's assumed here?") from the context files; (3) change something — copy,
+  layout, a rule, a number, a flow — keeping logic, data, context and tours in step; (4) answer an open question and record the
+  decision. Also: review the prototype, sync / publish / update, and set it up on a new computer. Use whenever either of them
+  mentions the Catalyst prototype, a J-numbered journey, a screen in it (Command, Explore, Study, Build, Plan, Compare), its tours,
+  its logic or its open questions.
 ---
 
 # Catalyst flow builder
@@ -16,7 +17,15 @@ You are building one **working mock Catalyst** that grows flow by flow. The peop
 
 Read these before anything else, every time:
 - `CLAUDE.md` (standing rules) → `context/` files named there (product, glossary, logic, flows, screens, data, decisions, open questions).
-- The references in this folder, as each step says: `references/build.md`, `references/data.md`, `references/flows.md`, `references/git.md`, `references/testing.md`.
+- The references in this folder, as each step says: `references/journeys.md` (the mini-flow format), `references/build.md`, `references/data.md`, `references/flows.md`, `references/git.md`, `references/testing.md`.
+- `context/README.md`: the map of what lives where, screen by screen. Start there for any question.
+
+## Which job is this?
+- **A new mini flow** (a journey document, a Figma link for a new flow, "add this"): follow **The run** below.
+- **"How does … work?" / "Why does it show …?" / "What's assumed?"**: follow **Explain** below. Don't change anything.
+- **"Change … / make it … / fix …"**: follow **Change** below.
+- **"Answer open question n: …" / "We decided …"**: follow **Answer an open question** below.
+- **"Review the prototype"**: open the live site in the browser pane, walk every tour, and report what looks off, as one list; change nothing until they pick.
 
 ## The run, start to finish (don't stop for plan approval — build, then hand over for review)
 
@@ -27,7 +36,7 @@ Read these before anything else, every time:
 4. Run `gh pr list --state open` and note what others are working on. If an open pull request changes the same screens or data, tell the user in one line and keep going; you'll reconcile at publish.
 
 ### 1. Understand the flow
-1. Read the mini flow the user gave (Mahsa's template format — keep its wording; save it verbatim to `context/flows/<id>.md` under a "Source mini flow" heading).
+1. Read the mini flow the user gave. It is usually a JTBD journey document (`J<n> - <persona> - <name>.docx`): read it with `python3 -I scripts/read-journey.py "<file>"` and follow `references/journeys.md`, which maps every section of the format to what to build. Keep its wording: save it verbatim to `context/flows/<id>.md` under "Source mini flow (verbatim)". The flow title starts with the journey number (`J16 · Plan · …`).
 2. For every Figma link: screenshot the frames and write a frame spec (layout top to bottom, components, exact copy, states, dev notes) into `context/screens/<screen>.md`. For big files, use a subagent exactly like `context/screens/command-figma-spec.md` was made. **The Figma frame is the spec.**
 3. Map each step to the app: which existing screen it extends, which new screen it needs, what data it reads/changes.
 4. Collect **gaps and conflicts**: data the store doesn't have, logic not in `context/logic/`, a frame that contradicts a recorded decision. Ask the user only about real conflicts or product decisions (one short list, all at once). Everything else: decide sensibly, tag it `[Assumed]`, and list it in the hand-over.
@@ -58,3 +67,29 @@ Update the affected `context/` files (screens, flows, logic, data, glossary), ad
 ### 7. Hand over
 1. Build the offline copy if asked (`bash scripts/build-standalone.sh`) and open the live site or local build in the user's browser.
 2. Tell the user, in plain language: the live link (`https://shinyc01.github.io/catalyst-prototype/`) and deep links for the new screens; how to start the new tour (gear → Prototype settings → the flow → Start tour); what's clickable; what's `[Assumed]` or `[Added]`; non-DS parts; open questions; and that it's merged (pull request number).
+
+---
+
+## Explain (no changes)
+For "how does X work", "why does it show N", "where does this come from", "what's assumed".
+1. Find the screen in `context/README.md`, then read its screen file, the logic file and the data notes it points to. Check the code it names (`shared/*.js`, `app/screens/*.jsx`) when the context is thin, and if the two disagree, say so: the code is what the prototype does.
+2. Answer in plain language, short: what the user sees → the rule behind it → where the numbers come from. Work real examples with the actual numbers (e.g. "33% = 1 of 3 gates passed: Planning groups").
+3. Tag each fact with its source: `[Whistler]` real demo data, `[Figma]`, `[Confluence]`, `[Confirmed]` decided by a designer, `[Assumed]` invented by Claude and waiting for confirmation, `[Added]` data filled in. Point out anything `[Assumed]` and its open question.
+4. Give the deep link to see it (`https://shinyc01.github.io/catalyst-prototype/#…`) and the file names, so they can find it again.
+5. End by offering the obvious change, if there is one ("Want the rule to be …?"). Don't make it unasked.
+
+## Change
+For copy, layout, a rule, a number, a flow.
+1. Safety first, as in step 0 of the run: `sync.sh status`, then `sync.sh start <short-name>`.
+2. Check the request against the Figma frame and `context/decisions.md`. If it **contradicts a frame or a recorded decision**, say which one in one line and ask before changing it. If it's clear, just do it.
+3. Change it in the one place it lives: a rule → `shared/*-model.js` (never a number typed into a screen); data → the generator or the `[Added]` file; copy or layout → the screen. Then follow everything that depends on it: other screens using the same data, tours that point at a renamed label (`grep -rn "<old text>" app/flows`), and the context files that describe it (`logic/`, `screens/`, `data/`).
+4. Log it: a dated line in `context/decisions.md` with who asked (`Source: Mahsa` / `Source: Shiny`). If it settles an open question, close it (below).
+5. Test as `references/testing.md` says (checks, the browser at 1440×900, the affected tours), then publish (`save` → `finish`) and hand over with the live link and a before → after line.
+
+## Answer an open question
+For "answer open question 10: …", "we decided …", or a designer answering one in passing.
+1. Find it in `context/open-questions.md`. Read back the question and the answer in one line to confirm you've got it right if there's any doubt.
+2. Write the answer as `[Confirmed]` into the context file it belongs to (logic, screen, data or flow), and add a dated line to `context/decisions.md` (`Source: <name>`).
+3. Remove it from `context/open-questions.md`, renumber, and fix any reference to the old number (`grep -rn "open question" context app`).
+4. If the answer changes what the prototype does (e.g. an `[Assumed]` rule was wrong), make the change as in **Change** above. Then publish and say what changed.
+
