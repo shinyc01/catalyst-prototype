@@ -49,15 +49,17 @@ const drivers = (a, year, active) => {
   const all = assess(a, year, active).risk;
   return active.map(l => ({ id: l.id, delta: all - assess(a, year, active.filter(o => o.id !== l.id)).risk }));
 };
-function cluster(year, active) {
-  const rows = ASSETS.map(a => { const r = assess(a, year, active); return { a, ...r, band: bandOf(r.risk), tol: TOLERANCE[a.type], over: r.risk >= TOLERANCE[a.type] }; });
+// A study's population: every asset by default, or the ids of the group it was entered on (J03: enter a study on the right population)
+const scopeAssets = ids => ids ? ASSETS.filter(a => ids.includes(a.id)) : ASSETS;
+function cluster(year, active, ids) {
+  const rows = scopeAssets(ids).map(a => { const r = assess(a, year, active); return { a, ...r, band: bandOf(r.risk), tol: TOLERANCE[a.type], over: r.risk >= TOLERANCE[a.type] }; });
   return { rows, score: Math.round(rows.reduce((s, r) => s + r.risk, 0)), valueM: +rows.reduce((s, r) => s + r.pof * r.a.costM, 0).toFixed(1), over: rows.filter(r => r.over).length };
 }
 const crossYear = (a, active) => YEARS.find(y => assess(a, y, active).risk >= TOLERANCE[a.type]) ?? null;
 // Threshold year = the first NEW crossing: the earliest year an asset that is not already over tolerance today (on condition alone)
 // crosses its tolerance. Assets already over in NOW are flagged separately — they need action now.
 const overNow = ASSETS.filter(a => assess(a, NOW, []).risk >= TOLERANCE[a.type]).map(a => a.id);
-const firstCrossing = active => { const ys = ASSETS.filter(a => !overNow.includes(a.id)).map(a => crossYear(a, active)).filter(y => y !== null); return ys.length ? Math.min(...ys) : null; };
+const firstCrossing = (active, ids) => { const ys = scopeAssets(ids).filter(a => !overNow.includes(a.id)).map(a => crossYear(a, active)).filter(y => y !== null); return ys.length ? Math.min(...ys) : null; };
 
 const M_LAT = 111000, M_LNG = 111000 * Math.cos((AREA.s + AREA.n) / 2 * Math.PI / 180);
 /* ============================================================ AREA RISK GRID
@@ -159,25 +161,25 @@ const activeOf = lenses => lenses.filter(l => l.on).map(l => ({ id: l.id, k: l.s
 const withEv = ls => [...ls.filter(l => l.id !== 'ev'), makeLens('ev')];
 
 // Everything the screens show, for one set of lenses and one year
-function study(lenses, year) {
+function study(lenses, year, ids) {
   const act = activeOf(lenses);
-  const now = cluster(year, act), base = cluster(year, []);
-  const contrib = act.map(l => ({ id: l.id, delta: now.score - cluster(year, act.filter(o => o.id !== l.id)).score }));
-  return { act, now, base, contrib, first: firstCrossing(act), baseFirst: firstCrossing([]) };
+  const now = cluster(year, act, ids), base = cluster(year, [], ids);
+  const contrib = act.map(l => ({ id: l.id, delta: now.score - cluster(year, act.filter(o => o.id !== l.id), ids).score }));
+  return { act, now, base, contrib, first: firstCrossing(act, ids), baseFirst: firstCrossing([], ids), count: scopeAssets(ids).length };
 }
 function overviewText(s, year) {
-  if (!s.act.length) return `No lenses applied — condition only. In ${year} the cluster scores ${s.now.score}, with ${s.now.over} of ${ASSETS.length} assets over their intervention tolerance. The first crossing on condition alone is ${s.baseFirst ?? 'beyond ' + END}.`;
+  if (!s.act.length) return `No lenses applied — condition only. In ${year} the cluster scores ${s.now.score}, with ${s.now.over} of ${s.count} assets over their intervention tolerance. The first crossing on condition alone is ${s.baseFirst ?? 'beyond ' + END}.`;
   const top = [...s.contrib].sort((x, y) => y.delta - x.delta)[0];
   const pct = Math.round((s.now.score - s.base.score) / Math.max(1, s.base.score) * 100);
-  return `${s.act.length} lens${s.act.length > 1 ? 'es' : ''} applied. In ${year} they take the cluster from ${s.base.score} to ${s.now.score} (+${pct}%), and ${s.now.over} of ${ASSETS.length} assets are over their intervention tolerance (${s.base.over} on condition alone). The first crossing moves from ${s.baseFirst ?? 'beyond ' + END} to ${s.first ?? 'beyond ' + END}. Most of the movement comes from ${LENS_INFO[top.id].label}.`;
+  return `${s.act.length} lens${s.act.length > 1 ? 'es' : ''} applied. In ${year} they take the cluster from ${s.base.score} to ${s.now.score} (+${pct}%), and ${s.now.over} of ${s.count} assets are over their intervention tolerance (${s.base.over} on condition alone). The first crossing moves from ${s.baseFirst ?? 'beyond ' + END} to ${s.first ?? 'beyond ' + END}. Most of the movement comes from ${LENS_INFO[top.id].label}.`;
 }
-function lensSummary(lens, lenses, year) {
+function lensSummary(lens, lenses, year, ids) {
   const act = activeOf(lenses.map(l => l.id === lens.id ? { ...l, on: true } : l));
   const without = act.filter(l => l.id !== lens.id);
-  const a = cluster(year, act), b = cluster(year, without);
+  const a = cluster(year, act, ids), b = cluster(year, without, ids);
   const moved = a.rows.map((r, i) => ({ r, from: b.rows[i].band })).filter(m => m.r.band.min > m.from.min);
   const newlyOver = a.rows.filter((r, i) => r.over && !b.rows[i].over);
   const list = moved.slice(0, 4).map(m => `${m.r.a.label} (${m.from.label.toLowerCase()} → ${m.r.band.label.toLowerCase()})`).join(', ');
-  return `In ${year}, ${lens.label} adds ${a.score - b.score} points across the cluster. ${moved.length ? `It moves ${moved.length} asset${moved.length > 1 ? 's' : ''} up a band: ${list}${moved.length > 4 ? '…' : ''}.` : 'It doesn’t move any asset up a band yet.'} ${newlyOver.length ? `${newlyOver.map(r => r.a.label).join(', ')} cross${newlyOver.length === 1 ? 'es' : ''} the intervention tolerance because of it.` : ''}`;
+  return `In ${year}, ${lens.label} adds ${a.score - b.score} points across the ${ids ? 'study' : 'cluster'}. ${moved.length ? `It moves ${moved.length} asset${moved.length > 1 ? 's' : ''} up a band: ${list}${moved.length > 4 ? '…' : ''}.` : 'It doesn’t move any asset up a band yet.'} ${newlyOver.length ? `${newlyOver.map(r => r.a.label).join(', ')} cross${newlyOver.length === 1 ? 'es' : ''} the intervention tolerance because of it.` : ''}`;
 }
 

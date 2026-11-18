@@ -2,6 +2,9 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **J03 built as the Asset Manager's study flow** (tour 004): studies have a population, there's a System Confidence tab, Save study and a Studies library. The map rail follows Figma (1 Asset structure, 2 Studies library, 3 Study). The J03 + J06 tour (Investment Owner, whole cluster) is unchanged. Source: user ("choose whatever Asset Manager flow").
+- **2026-11-18** **Create idea ▾ menu = "Save study" only**, as in Figma 29:239507; the earlier "Create idea with Cooper / Create blank idea" items were removed. Source: Figma spec.
+
 - **2026-11-18** **Global Search follows the whole handover** (page 2:61): recent mode, 8 types, grouped / one-type results, Sort & filter per type, Match, query prefixes and filters from the query, typo correction, no results and Ask Cooper, slow / error states, keyboard. It's a feature, not a flow: no tour. A Prototype setting simulates a slow or failing search. Source: user.
 - **2026-11-18** **J02 screens rebuilt to their Figma frames** (search 2:21957, from-search 9:64832, hierarchy 9:64506, details 9:64904 / 9:65804), after the first build didn't match. Every new screen gets a side-by-side screenshot comparison with its frame before publishing. Source: user.
 - **2026-11-18** **J02 is its own flow** (Asset Manager: Global Search → Explore → asset details → Trace Report). The original tour is titled "J03 + J06 · Command → Explore → Study → Idea", because it matches those two journeys more closely than J02. Source: user.

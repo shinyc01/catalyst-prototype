@@ -58,3 +58,17 @@ function globalSearch(q) {
     .filter(x => x.s).sort((x, y) => y.s - x.s);
   return { assets, investments };
 }
+
+/* ---------------------------------------------------------------- studies (J03: Study Library) */
+// A study = a name, a population (asset ids), its lens set (on / source) and a horizon year.
+// The library starts with one study per real asset group plus the whole cluster [Added]; saved studies are added on top (persisted).
+const STUDY_SEEDS = [
+  { id: 'st-cluster', name: CLUSTER.name, ids: null, hoursAgo: 26 },
+  ...ASSET_GROUPS.filter(g => g.id !== 'g-pm').map((g, k) => ({ id: `st-${g.id}`, name: g.label, ids: g.assets, hoursAgo: [3, 49, 120][k] })),   // the pad-mount group is left for the J03 tour to save
+].map(s => ({ ...s, lenses: INITIAL_LENSES.map(l => ({ id: l.id, on: l.on, src: l.src })), year: NOW, savedAt: Date.now() - s.hoursAgo * 36e5, seed: true }));
+const studyCount = st => st.ids ? st.ids.length : ASSETS.length;
+const ago = t => { const m = Math.max(1, Math.round((Date.now() - t) / 6e4)); return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : m < 10080 ? `${Math.round(m / 1440)}d ago` : `${Math.round(m / 10080)}w ago`; };
+// System Confidence for a study [Assumed]: 96% minus 6 points per open question and 4 per open warning that affects its assets.
+// Same Trace Report items as Explore (TRACE_ISSUES), so answering one in either place shows in both.
+const studyIssues = ids => TRACE_ISSUES.filter(i => scopeAssets(ids).some(a => TRACE_AFFECTS[i.id](a)));
+const studyConfidence = (ids, trace) => Math.max(50, 96 - studyIssues(ids).reduce((t, i) => t + (traceDone(trace[i.id]) ? 0 : i.kind === 'question' ? 6 : 4), 0));

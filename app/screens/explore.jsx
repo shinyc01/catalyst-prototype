@@ -195,8 +195,52 @@ function Drivers({ id, lenses, year }) {
   );
 }
 
+// Studies library (Figma 29:101050): left panel from the map rail. Rows "name · N assets · time"; hover → rename / delete; click → open.
+function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
+  const [edit, setEdit] = useState(null);                 // { id, text }
+  const [del, setDel] = useState(null);
+  const list = [...studies].sort((a, b) => b.savedAt - a.savedAt);
+  const remove = st => { const before = studies; setStudies(l => l.filter(x => x.id !== st.id)); setDel(null);
+    toast({ title: 'The study has been removed', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setStudies(before) }, duration: 5000 }); };
+  return (
+    <div className="assets-panel">
+      <div className="row assets-panel__head">
+        <span className="t-heading-h3-uppercase sec">Studies</span><Counter>{studies.length}</Counter><span style={{ flex: 1 }} />
+        <IconButton icon="system-close" type="ghost" size="s" label="Close studies" onClick={onClose} />
+      </div>
+      <NDS label="Study library rows (hover actions, inline rename)" className="col scroll assets-panel__body">
+        {!list.length && <EmptyState cause="empty-container" size="section" heading="No saved studies yet" body="Open a study and use Create idea ▾ → Save study." />}
+        {list.map(st => edit && edit.id === st.id
+          ? <div key={st.id} className="study-row" onKeyDown={e => { if (e.key === 'Escape') setEdit(null); }}>
+              <div style={{ flex: 1 }}><TextField size="m" autoFocus value={edit.text} onChange={v => setEdit({ ...edit, text: v })} aria-label="Study name" /></div>
+              <IconButton icon="system-close" type="ghost" size="s" label="Cancel rename" onClick={() => setEdit(null)} />
+              <IconButton icon="system-check" type="ghost" size="s" label="Save name" onClick={() => { if (edit.text.trim()) setStudies(l => l.map(x => x.id === st.id ? { ...x, name: edit.text.trim() } : x)); setEdit(null); }} />
+            </div>
+          : <div key={st.id} className="study-row is-click" role="button" tabIndex={0} aria-label={`Open ${st.name} study`} onClick={() => onOpen(st)} onKeyDown={e => e.key === 'Enter' && onOpen(st)}>
+              <span className="plan-ellipsis" style={{ flex: 1 }}>{st.name} <span className="sec">· {studyCount(st)} assets</span></span>
+              <span className="t-body-s-regular muted study-time">{ago(st.savedAt)}</span>
+              <span className="study-acts" onClick={e => e.stopPropagation()}>
+                <IconButton icon="system-edit-rename" type="ghost" size="s" label={`Rename ${st.name}`} onClick={() => setEdit({ id: st.id, text: st.name })} />
+                <IconButton icon="system-trash-delete" type="ghost" size="s" label={`Delete ${st.name}`} onClick={() => setDel(st)} />
+              </span>
+            </div>)}
+      </NDS>
+      <Modal open={!!del} onOpenChange={o => !o && setDel(null)} title={del ? `Remove “${del.name}” study?` : ''} width={403}>
+        <div className="col" style={{ gap: 16 }}>
+          <span className="t-body-m-regular sec">This will remove the saved study from your library. You’ll be able to undo this for a few seconds after.</span>
+          <div className="row" style={{ gap: 8 }}>
+            <div style={{ flex: 1 }}><Button type="secondary" size="m" style={{ width: '100%' }} onClick={() => setDel(null)}>Cancel</Button></div>
+            <div style={{ flex: 1 }}><Button type="primary" size="m" style={{ width: '100%' }} onClick={() => remove(del)}>Remove</Button></div>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
 /* ============================================================ Screen 2 — Explore arrival */
-function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, onStudy, onBack, persona, trace, setTrace, searchCtx, setSearchCtx }) {
+function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, onStudy, onBack, persona, trace, setTrace, searchCtx, setSearchCtx, studies, setStudies, onOpenStudy }) {
+  const [libOpen, setLibOpen] = useState(false);
   const [barOpen, setBarOpen] = useState(true);
   const api = useRef(null);
   const s = study(lenses, END);
@@ -232,29 +276,31 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
           <MapView lenses={lenses} year={END} selected={asset} onSelect={id => { if (am && id) pick(id); else { setAsset(id); if (id) setDetails(false); } }} apiRef={api}
             pad={{ tl: [am && treeOpen ? 460 : 80, 120], br: [right ? 580 : 220, 60] }} />
         </NDS>
-        <MapTools api={api} assetsOpen={am && treeOpen} onAssets={am ? () => setTreeOpen(o => !o) : undefined} />
-        {am && treeOpen && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
+        <MapTools api={api} assetsOpen={am && treeOpen && !libOpen} onAssets={am ? () => { setLibOpen(false); setTreeOpen(o => !o); } : undefined}
+          libraryOpen={libOpen} onLibrary={am ? () => { setLibOpen(o => !o); } : undefined} onStudy={() => onStudy(am && g ? g : null)} />
+        {am && libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={onOpenStudy} onClose={() => setLibOpen(false)} />}
+        {am && treeOpen && !libOpen && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
         {am ? <>
           {fromSearch && <FloatingBar style={{ top: 12, zIndex: 500 }} open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
               actions={<div className="row" style={{ gap: 8 }}>
                 <Button type="tertiary" size="s" iconLeft="layout-list" onClick={() => setTreeOpen(true)}>All risk</Button>
                 <IconButton icon="arrow-left" type="secondary" size="s" label="Previous result" onClick={() => stepResult(-1)} />
                 <IconButton icon="arrow-right" type="secondary" size="s" label="Next result" onClick={() => stepResult(1)} />
-                <Button type="primary" size="s" onClick={onStudy}>Study area</Button></div>}
+                <Button type="primary" size="s" onClick={() => onStudy(groupOfAsset(asset))}>Study area</Button></div>}
               onClose={() => { setSearchCtx(null); setAsset(null); }} />}
           {!fromSearch && g && !groupOpen && !asset && <FloatingBar style={{ top: 12, zIndex: 500 }} open={barOpen} category={g.label} categoryIcon="map-location" item={`Selected ${g.assets.length}`}
               badge={<Badge color="red" size="s" indicator="error">{overOf(g.assets)}</Badge>}
-              secondaryAction={{ label: 'View details', onClick: () => { setAsset(null); setGroupOpen(true); } }} primaryAction={{ label: 'Study area', onClick: onStudy }}
+              secondaryAction={{ label: 'View details', onClick: () => { setAsset(null); setGroupOpen(true); } }} primaryAction={{ label: 'Study area', onClick: () => onStudy(g) }}
               onClose={() => { setGroup(null); setGroupOpen(false); }} />}
         </> : <FloatingBar style={{ top: 100, zIndex: 500 }} open={barOpen} category="Cooper found" categoryIcon="cooper-system-icon" item={`${CLUSTER.name} · ${ASSETS.length} assets`}
           badge={<Badge color="red" size="s">{s.now.over} over tolerance by {END}</Badge>}
-          secondaryAction={{ label: 'View details', onClick: () => setDetails(true) }} primaryAction={{ label: 'Study area', onClick: onStudy }}
+          secondaryAction={{ label: 'View details', onClick: () => setDetails(true) }} primaryAction={{ label: 'Study area', onClick: () => onStudy(null) }}
           onClose={() => { setBarOpen(false); toast({ title: 'Selection cleared', primaryAction: { label: 'Undo', onClick: () => setBarOpen(true) } }); }} />}
         {details && (
           <div style={{ position: 'absolute', right: 12, top: 64, bottom: 12, zIndex: 600, display: 'flex' }}>
             <AgentWindow style={{ maxHeight: '100%' }} text={`${CLUSTER.name} — ${CLUSTER.station}, its 12 pad-mount transformers, the Pine Ridge lines and Nesters substation, serving ~${CLUSTER.customers.toLocaleString()} customers. With today’s lenses, ${s.now.over} of ${ASSETS.length} assets are over their intervention tolerance by ${END}. Start with the pad-mount program, which is ready to shape.`}
               onAsk={() => toast({ title: 'Cooper chat isn’t part of this step' })} onClose={() => setDetails(false)}
-              tertiaryAction={{ label: 'Close', onClick: () => setDetails(false) }} secondaryAction={{ label: 'Study area', onClick: onStudy }}>
+              tertiaryAction={{ label: 'Close', onClick: () => setDetails(false) }} secondaryAction={{ label: 'Study area', onClick: () => onStudy(null) }}>
               <ClusterDetails s={s} onAsset={id => { setDetails(false); setAsset(id); api.current?.flyTo(id); }} />
             </AgentWindow>
           </div>

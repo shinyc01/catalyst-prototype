@@ -29,4 +29,8 @@ Answer these with the product designer, then move each answer into the right con
 25. **Investment status in search:** Figma shows workflow statuses (Draft / In review / Approved / Deferred). The demo data has only stages, so the prototype maps them (`logic/global-search.md`). What's the real source?
 26. **Best match caption:** frame 2:21957 shows "BEST MATCH / OTHER MATCHES", the other parts only preselect the first row. The prototype shows "Best match" only for a unique exact match.
 27. **"Filters cleared" when switching type:** inline line or Snackbar? The prototype uses the inline line.
+28. **Which study opens with nothing selected** (J03 entry route E)? The prototype opens the whole-cluster study.
+29. **How is a study's System Confidence % worked out,** and does resolving a question move it? The prototype: 96 − 6 per open question − 4 per open warning affecting the study's assets.
+30. **What does a saved study keep** (population, lenses and sources, horizon year, notes?), and can you "Save as new"?
+31. **Horizon end:** Figma's Study runs to 2045; the demo outlook data ends in 2036.
 
