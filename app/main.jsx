@@ -16,7 +16,8 @@ function initialFromHash(h) {
   if (name === 'study-idea') { s.lenses = withEv(INITIAL_LENSES); s.chat = { kind: 'idea', msgs: [{ role: 'cooper', ...IDEA_SCRIPT[0] }], i: 0, busy: false, answers: [] }; }
   if (name === 'study-idea-done') { s.lenses = withEv(INITIAL_LENSES); s.chat = replay('idea', IDEA_ANSWERS, s.lenses); }
   if (name === 'plan') s.screen = 'plan';
-  if (name.startsWith('plan-')) { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
+  if (name === 'plan-compare') s.screen = 'plan-compare';
+  if (name.startsWith('plan-') && name !== 'plan-compare') { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
   if (name === 'build') { s.lenses = withEv(INITIAL_LENSES); s.screen = 'build'; s.idea = { answers: IDEA_ANSWERS }; }
   return s;
 }
@@ -43,6 +44,9 @@ function App() {
   const [planSetup, setPlanSetup] = usePersisted('plan.setup', {});
   const [run, setRun] = usePersisted('plan.run', null);                    // { startedAt, scenarios, done }
   const [sentAt, setSentAt] = usePersisted('plan.sentAt', {});
+  const [planStage, setPlanStage] = usePersisted('plan.stage', 'time');   // time → setup → (run) → approval
+  const [finalPlan, setFinalPlan] = usePersisted('plan.final', null);     // scenario id chosen on Compare
+  useEffect(() => { if (screen === 'plan-setup' && planStage === 'time') setPlanStage('setup'); }, [screen]);
   const [notes, setNotes] = usePersisted('notifications', []);
   const [notesOpen, setNotesOpen] = useState(false);
   const [showRun, setShowRun] = useState(true);
@@ -106,6 +110,12 @@ function App() {
     if (location.hash.slice(1) !== full) history.replaceState(null, '', '#' + full);
   }, [screen, details, sel, chat, asset, year, persona, tab]);
 
+  const sendForApproval = () => {
+    setPlanStage('approval');
+    notify({ title: `${PLAN_CYCLE} sent for approval`, details: `${PLAN_SCENARIOS.find(x => x.id === finalPlan)?.name} · ${PLAN_PORTFOLIO.name}. Approvers are notified.`, meta: `${PLAN_CYCLE} · Plan`, link: 'plan' });
+    toast({ title: 'Sent for approval', description: 'Approve is the next flow — the approvers are notified' });
+    go('plan');
+  };
   const go = s => { setScreen(s); setDetails(false); setAsset(null); if (s !== 'study') setChat(null); };
   const onStage = v => {
     if (v === 'command') go('command');
@@ -148,7 +158,13 @@ function App() {
         onOptimize={() => { setRun({ startedAt: Date.now(), scenarios: SETUP_SCENARIOS.map(s => s.id), investments: PLAN_ROWS.filter(r => planRows[r.id] !== 'excluded').length,
           constraints: SETUP_SCENARIOS.reduce((t, s) => t + scenConstraints(planSetup, s).length, 0) }); setShowRun(true); go('plan'); }} />}
       {screen === 'plan' && <PlanHome navBar={navBar} run={running ? run : null} done={!!(run && run.done)} showRun={showRun} setShowRun={setShowRun}
-        onSetup={() => { setTab('readiness'); go('plan-setup'); }} onCompare={() => toast({ title: 'Scenario comparison is the next flow', description: 'Compare isn’t part of this prototype yet' })} />}
+        stage={planStage} final={finalPlan} saved={planSaved}
+        onStart={() => { setPlanStage('setup'); setTab('readiness'); go('plan-setup'); }}
+        onSetup={() => { setTab('readiness'); go('plan-setup'); }} onCompare={() => go('plan-compare')}
+        onApproval={() => sendForApproval()} />}
+      {screen === 'plan-compare' && <PlanCompare navBar={navBar} run={running ? run : null} done={!!(run && run.done)} final={finalPlan} stage={planStage}
+        onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
+        onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
       {screen === 'build' && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go('study')} />}
     </div>
   );

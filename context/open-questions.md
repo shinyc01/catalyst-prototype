@@ -18,4 +18,7 @@ Answer these with the product designer, then move each answer into the right con
 14. **Do constraint edits recalculate anything on Setup?** Send to Plan shows scenario cards updating; the handover has no result cards. The prototype doesn't recalculate before Optimize.
 15. **Two readiness numbers:** Figma shows "Ready to optimize 98%" (a KPI) next to "Optimization readiness 35%" (gates). The prototype keeps both: the share of investments without an open issue, and the share of gates passed. Is that the intent?
 16. **Milestone dependencies across the portfolio** (J16 workflow step 3) aren't designed in Plan.
+17. **"Start planning" label.** Figma only draws "Continue planning" (Setup already started). Is "Start planning" right for a cycle nobody has opened yet?
+18. **Which scenario is the final plan by default on Compare?** Figma shows Baseline while optimizing and Max cost once results are in. The prototype preselects none.
+19. **What does Cooper favour, and why?** The Compare frames disagree (evaluation heading vs body vs the Mid card's "balanced recommendation"). The prototype uses most value per dollar of CAPEX.
 

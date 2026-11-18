@@ -3,7 +3,7 @@
    follows "Send to Plan" U7AUNbrWHYuX3E0O4GbfEx 103:63527. Data and rules: shared/whistler-plan.js + shared/plan-model.js.
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 const { useIssueReport, ConfidenceGates, IssueKindSwitch, IssueNavigator, ScatterChart, Table, Tabs, SmartSearch, SideNavTree,
-  StatCardsRow, ReadinessStatus, Counter, NotificationCard, ColumnChart, Checkbox, ProgressRing, Snackbar, Timeline, TimelineItem, IconButton: IB, BarChart } = IFS;
+  StatCardsRow, ReadinessStatus, Counter, NotificationCard, GroupedColumnChart, ColumnChart, Checkbox, ProgressRing, Snackbar, Timeline, TimelineItem, IconButton: IB, BarChart } = IFS;
 
 const fmtDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 const fmtPct = v => `${Math.round(v * 100)}%`;
@@ -405,17 +405,42 @@ function RunProgress({ run, onClose }) {
 }
 
 /* ============================================================ Plan home */
-function PlanHome({ navBar, run, done, onSetup, onCompare, showRun, setShowRun }) {
+// Where the 2028 Plan cycle is: time to plan → planning (Setup) → optimizing → optimized → final plan chosen (Ready v1) → in approval
+function planPhase({ stage, run, done, final }) {
+  if (stage === 'approval') return 'approval';
+  if (final) return 'final';
+  if (done) return 'optimized';
+  if (run) return 'optimizing';
+  return stage === 'setup' ? 'setup' : 'time';
+}
+const PHASE = {                                                     // [Figma] Plan — Next cycle 84:276350 tile values and buttons; [Assumed] where noted
+  time: { tile: 'Time to Plan', button: 'Start planning' },          // "Start planning" [Assumed]: Figma only draws "Continue planning"
+  setup: { tile: 'Time to Plan', button: 'Continue planning' },
+  optimizing: { tile: 'Optimizing', button: 'Compare results' },
+  optimized: { tile: 'Optimized', button: 'Compare results' },
+  final: { tile: 'Ready v1', button: 'Send for approval' },
+  approval: { tile: 'In approval', button: 'In approval' },
+};
+function planConfidenceCounts(saved) {
+  const issues = planIssues({}, {}), done = id => { const st = saved[id] || {}; return !!(st.applied || st.answer || st.file || st.viewed); };
+  const q = issues.filter(i => i.kind === 'question'), w = issues.filter(i => i.kind === 'warning');
+  return { q: [q.filter(i => done(i.id)).length, q.length], w: [w.filter(i => done(i.id)).length, w.length] };
+}
+function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, onCompare, onApproval, showRun, setShowRun }) {
+  const phase = planPhase({ stage, run, done, final }), ph = PHASE[phase];
+  const cc = planConfidenceCounts(saved);
+  const frac = ([a, b]) => `${a}/${b} (${Math.round(a / b * 100)}%)`;
+  const finalS = final && PLAN_SCENARIOS.find(x => x.id === final);
   const [measure, setMeasure] = useState(37);
   const base = BASE, opt = PLAN_SCENARIOS.find(x => x.id === 6864);
   const pct = done ? 100 : Math.round(runProgress(run) * 100);
-  const o = base.outcomes.find(x => x.measureId === measure), oo = opt.outcomes.find(x => x.measureId === measure);
+  const chosen = finalS || opt;
+  const o = base.outcomes.find(x => x.measureId === measure), oo = chosen.outcomes.find(x => x.measureId === measure);
   const yrs = PLAN_YEARS.filter(y => y <= 2032);
   const forecast = yrs.map(y => { const k = PLAN_YEARS.indexOf(y); return { label: `${y}`, value: (done ? oo : o).byYear[k], reference: o.max[k] ?? undefined }; });
-  const risk = base.outcomes.find(x => x.measureId === 21), riskO = opt.outcomes.find(x => x.measureId === 21);
+  const risk = base.outcomes.find(x => x.measureId === 21), riskO = chosen.outcomes.find(x => x.measureId === 21);
   const riskData = yrs.map(y => { const k = PLAN_YEARS.indexOf(y); return { label: `${y}`, req: risk.byYear[k], opt: done ? riskO.byYear[k] : undefined, cap: risk.max[k] ?? undefined }; });
-  const scen = done ? opt : base;
-  const cycle = done ? 'Ready' : run ? 'Optimizing' : 'Setup';
+  const scen = done ? chosen : base;
   const header = <PageHeader title={PLAN_TITLE} status={<Indicator type="blue">Planning</Indicator>} actions={<div className="row" style={{ gap: 8 }}>
     <span className="t-body-m-regular sec">Owner</span><Avatar size="s" initials={PLAN_OWNER} name={ownerName(PLAN_OWNER)} /><span className="t-body-m-medium">{ownerName(PLAN_OWNER)}</span></div>} />;
   return (
@@ -429,32 +454,43 @@ function PlanHome({ navBar, run, done, onSetup, onCompare, showRun, setShowRun }
         <PSec title="Planning cycles">
           <div className="row" style={{ gap: 8, padding: '8px 6px 6px' }}>
             {PLAN_CYCLES.map(cy => <ContentCard key={cy.id} size="s" style={{ width: 220 }} selected={cy.id === '2028'} title={cy.label}
-              description={`${cy.id === '2028' ? cycle : '100%'} · ${cy.range}`} control={<Indicator size="xs" type={cy.id === '2028' ? 'orange' : 'gray'}>{cy.status}</Indicator>} />)}
+              description={`${cy.id === '2028' ? ph.tile : '100%'} · ${cy.range}`} control={<Indicator size="xs" type={cy.id === '2028' ? 'orange' : 'gray'}>{cy.status}</Indicator>} />)}
           </div>
         </PSec>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <span className="t-heading-h2">{PLAN_CYCLE} cycle</span>
-          <Button type="primary" size="s" disabled={!done} onClick={onCompare}>Compare results</Button>
+          <Button type="primary" size="s" disabled={phase === 'approval'} aria-label={ph.button}
+            onClick={phase === 'time' ? onStart : phase === 'setup' ? onSetup : phase === 'final' ? onApproval : onCompare}>{ph.button}</Button>
         </div>
         <StatCardsRow cards={[
-          { title: done ? 'Total value (Optimized)' : 'Total value (requested)', value: fmtCompact(scen.totalValue) },
+          { title: done ? `Total value (${finalS ? 'final plan' : 'Optimized'})` : 'Total value (requested)', value: fmtCompact(scen.totalValue) },
           { title: 'CAPEX', value: fmtMoney(scen.capexTotal) },
           { title: 'Total investments', value: fmtNum(PLAN_INVESTMENTS.length) },
           { title: 'Horizon', value: `${PLAN_YEARS[0]}–${PLAN_YEARS[PLAN_YEARS.length - 1]}` }]} />
         <PSec title="Cycle progress">
           <div className="col" style={{ gap: 4, padding: '8px 6px 6px' }}>
-            <ReadinessStatus type={run || done ? 'done' : 'in-progress'} right={<Button type="ghost" size="s" onClick={onSetup}>View details</Button>}>Setup</ReadinessStatus>
-            <ReadinessStatus type={run || done ? 'active' : 'in-progress'} right={run || done ? `Scenarios optimized ${pct}%` : 'Not started'}>Compare</ReadinessStatus>
-            <ReadinessStatus type="in-progress" right="Queued">Approve</ReadinessStatus>
+            <ReadinessStatus type={['time'].includes(phase) ? 'in-progress' : phase === 'setup' ? 'active' : 'done'} right={<Button type="ghost" size="s" onClick={phase === 'time' ? onStart : onSetup}>View details</Button>}>Setup</ReadinessStatus>
+            {(phase === 'time' || phase === 'setup') && <div className="col plan-subrows">
+              <ReadinessStatus type="done" right={`${SETUP_SCENARIOS.length} scenarios`}>Scenarios built</ReadinessStatus>
+              <ReadinessStatus type={cc.q[0] === cc.q[1] ? 'done' : 'in-progress'} indicators={[{ type: 'red', label: frac(cc.q) }]}>Open questions</ReadinessStatus>
+              <ReadinessStatus type={cc.w[0] === cc.w[1] ? 'done' : 'in-progress'} indicators={[{ type: 'orange', label: frac(cc.w) }]}>Warnings</ReadinessStatus>
+            </div>}
+            <ReadinessStatus type={['optimizing', 'optimized'].includes(phase) ? 'active' : ['final', 'approval'].includes(phase) ? 'done' : 'in-progress'}
+              right={<Button type="ghost" size="s" disabled={!(run || done)} onClick={onCompare}>View details</Button>}>Compare</ReadinessStatus>
+            {['optimizing', 'optimized', 'final', 'approval'].includes(phase) && <div className="col plan-subrows">
+              <ReadinessStatus type={done ? 'done' : 'in-progress'} right={`${done ? 100 : Math.round(runProgress(run) * 100)}%`}>Scenarios optimized</ReadinessStatus>
+              <ReadinessStatus type={final ? 'done' : 'in-progress'} right={finalS ? finalS.name : 'Not started'}>Final scenario selected</ReadinessStatus>
+            </div>}
+            <ReadinessStatus type={phase === 'approval' ? 'active' : 'in-progress'} right={phase === 'approval' ? 'In approval' : phase === 'final' ? 'Ready to send' : 'Queued'}>Approve</ReadinessStatus>
           </div>
         </PSec>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div className="col" style={{ gap: 8 }}>
             <SegmentedControl size="s" value={measure} onChange={setMeasure} options={[{ value: 37, label: 'CAPEX' }, { value: 167, label: 'OPEX' }, { value: 223, label: 'Total Investment Cost' }]} />
-            <ColumnChart title={`Yearly forecast vs budget · ${done ? 'Optimized' : 'requested'}`} data={forecast} valueLabel={o.measure} referenceLabel="Budget (max)" format={fmtMoney} />
+            <ColumnChart title={`Yearly forecast vs budget · ${done ? (finalS ? 'final plan' : 'Optimized') : 'requested'}`} data={forecast} valueLabel={o.measure} referenceLabel="Budget (max)" format={fmtMoney} />
           </div>
           <LineChart title="Aggregate risk" data={riskData} format={v => fmtCompact(v)} zeroBased
-            series={[{ key: 'req', label: 'Requested plan', dashed: !!done }, ...(done ? [{ key: 'opt', label: 'Optimized plan', points: true }] : []), { key: 'cap', label: 'Risk cap', dashed: true }]} />
+            series={[{ key: 'req', label: 'Requested plan', dashed: !!done }, ...(done ? [{ key: 'opt', label: finalS ? 'Final plan' : 'Optimized plan', points: true }] : []), { key: 'cap', label: 'Risk cap', dashed: true }]} />
         </div>
       </div>
     </AppShell>
@@ -472,5 +508,94 @@ function Notifications({ open, notes, onClose, onOpen }) {
           actionRequired={false} avatar={n.cooper ? undefined : n.avatar} actions={n.link ? [{ label: 'View results', onClick: () => onOpen(n) }] : undefined} />)}
       </div>
     </Drawer>
+  );
+}
+
+/* ============================================================ Compare (Figma 85:65862; results stream in while optimizing, 85:83784) */
+function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval, onBack, onSetup }) {
+  const [tab, setTab] = useState('overview');
+  const [, tick] = useState(0);
+  useEffect(() => { if (!run) return; const iv = setInterval(() => tick(t => t + 1), 500); return () => clearInterval(iv); }, [run]);
+  const p = done ? 1 : runProgress(run);
+  const others = COMPARE_SCENARIOS.filter(c => !c.baseline);
+  const ready = c => c.baseline || done || p >= (others.indexOf(c) + 1) / (others.length + 1);   // "baseline will already be here, rest … get populated as the results come in"
+  const shown = COMPARE_SCENARIOS.filter(ready);
+  const pct = (a, b) => `${a >= b ? '+' : ''}${Math.round((a / b - 1) * 100)}%`;
+  const sent = stage === 'approval';
+  const header = <PageHeader title={PLAN_TITLE} onBack={onBack} status={<Indicator type="blue">Planning</Indicator>}
+    center={<Stepper current={sent ? 2 : 1} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
+    actions={<div className="row" style={{ gap: 8 }}>
+      <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+      <IB icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
+      <Button type="primary" size="s" disabled={!final || !done || sent} onClick={onSendApproval} aria-label="Send for approval">{sent ? 'Sent for approval' : 'Send for approval'}</Button>
+    </div>} />;
+  const Card = ({ c }) => {
+    const isFinal = final === c.id, pick = c.id === COOPER_PICK && done;
+    if (!ready(c)) return <ContentCard className="plan-card" loading title={c.short} />;
+    return (
+      <ContentCard className={`plan-card${isFinal ? ' is-final' : ''}`} cooper={pick} selected={isFinal}
+        top={<div className="col" style={{ gap: 8, width: '100%' }}>
+          <span className="t-body-l-medium">{c.short}</span>
+          <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
+            <span className="t-heading-h1">{fmtMoney(c.capex)}</span>
+            {c.baseline ? <span className="t-label-m-regular muted">baseline</span>
+              : <span className={`t-body-m-medium ${c.capex >= COMPARE_BASE.capex ? 'plan-up' : 'plan-down'}`}>{pct(c.capex, COMPARE_BASE.capex)} <span className="t-label-m-regular muted">vs baseline</span></span>}
+          </div>
+          <div style={{ borderTop: '1px solid var(--border-base)' }} />
+          <div><Badge size="s" color="black">{c.baseline ? `${PLAN_INVESTMENTS.length} investments` : `${c.onSchedule} of ${PLAN_INVESTMENTS.length} on schedule`}</Badge></div>
+          <span className="t-body-m-regular sec">{c.baseline ? `Value ${fmtCompact(c.value)} · as requested` : `Value ${fmtCompact(c.value)} (${pct(c.value, COMPARE_BASE.value)}) · ${c.deferred} deferred, ${c.altChanged} alternatives changed`}{pick ? ' · Cooper’s pick' : ''}</span>
+          <StatCard size="s" title="Retained risk (2032)" value={c.risk2032 == null ? '—' : fmtCompact(c.risk2032)} description={c.baseline ? 'aggregate risk' : `${pct(c.risk2032, COMPARE_BASE.risk2032)} vs baseline`} descriptionPosition="inline" />
+        </div>}
+        bottom={<div className="row" style={{ gap: 8, width: '100%' }}>
+          {!c.baseline && <IB icon="arrow-refresh" type="tertiary" size="s" label={`Re-optimize ${c.short}`} onClick={() => toast({ title: 'Re-optimize isn’t part of this flow' })} />}
+          <div style={{ flex: 1 }}>
+            {isFinal ? <Button type="secondary" size="s" iconLeft="system-check" disabled style={{ width: '100%' }}>Final plan</Button>
+              : <Button type="secondary" size="s" disabled={!done || sent} style={{ width: '100%' }} aria-label={`Select ${c.short} as final plan`} onClick={() => onSelect(c.id)}>Select as final plan</Button>}
+          </div>
+        </div>} />
+    );
+  };
+  const yrs = PLAN_YEARS.filter(y => y >= 2028 && y <= 2032);
+  const series = shown.map(c => ({ key: String(c.id), label: c.short }));
+  const capexByYear = yrs.map(y => ({ label: `${y}`, ...Object.fromEntries(shown.map(c => [String(c.id), PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(o => o.measureId === 37).byYear[PLAN_YEARS.indexOf(y)]])) }));
+  const riskByYear = PLAN_YEARS.filter(y => y <= 2032).map(y => ({ label: `${y}`, ...Object.fromEntries(shown.map(c => [String(c.id), PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(o => o.measureId === 21).byYear[PLAN_YEARS.indexOf(y)]])) }));
+  return (
+    <AppShell navBar={navBar} header={header}
+      bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
+        prompts={['Explain gaps in confidence', 'Why this scenario?']} onPrompt={pr => toast({ title: `Cooper: ${pr}` })} />}>
+      {run && !done && <RunProgress run={run} onClose={() => {}} />}
+      <div className="col" style={{ padding: 12, gap: 20 }}>
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <span className="t-heading-h1">Scenario comparison</span>
+          <div className="row" style={{ gap: 8 }}>
+            <Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => toast({ title: 'New scenario isn’t part of this flow' })}>New scenario</Button>
+            <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => { const c = COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK);
+              toast({ title: `Cooper favours ${c.short}`, description: `Most value per dollar: ${fmtCompact(c.value)} value for ${fmtMoney(c.capex)} CAPEX, ${c.deferred} investments deferred.` }); }}>Cooper’s evaluation</Button>
+          </div>
+        </div>
+        <div className="plan-cards">{COMPARE_SCENARIOS.map(c => <Card key={c.id} c={c} />)}</div>
+        <div><Tabs value={tab} onChange={setTab} aria-label="Compare" items={[{ value: 'overview', label: 'Overview' }, { value: 'measures', label: 'Value measures and constraints' }, { value: 'investments', label: 'Investments' }]} /></div>
+        {tab === 'overview' && <div className="col" style={{ gap: 12 }}>
+          <PSec title="Value comparison">
+            <div style={{ padding: '8px 6px 6px' }}><StatCardsRow cards={shown.map(c => ({ size: 's', title: c.short, value: fmtCompact(c.value),
+              ...(c.baseline ? {} : { trend: pct(c.value, COMPARE_BASE.value), trendDirection: c.value >= COMPARE_BASE.value ? 'up' : 'down' }) }))} /></div>
+          </PSec>
+          <GroupedColumnChart title="Forecast comparison by year · CAPEX" data={capexByYear} series={series} format={fmtMoney} />
+          <LineChart title="Aggregate risk by year" data={riskByYear} series={series.map((s, i) => ({ ...s, dashed: i === 0 }))} format={v => fmtCompact(v)} />
+        </div>}
+        {tab === 'measures' && <PSec title="Value measures and constraints">
+          <div style={{ padding: '8px 6px 6px', overflowX: 'auto' }}>
+            <Table rowHeight={48} rows={planConstraintsOf(PLAN_BASELINE_ID).map(r => ({ ...r }))} columns={[
+              { key: 'measure', title: 'Measure', width: 210, render: r => <span className="t-body-m-medium">{r.measure}</span> },
+              { key: 'cap', title: '2028–32 cap', width: 120, render: r => { const m = SETUP_YEARS.reduce((t, y) => t + (r.years[y].max || 0), 0); return m ? fmtUnit(m, r.unit) : '—'; } },
+              ...shown.map(c => ({ key: String(c.id), title: c.short, width: 120, render: r => {
+                const o = PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(x => x.measureId === r.measureId);
+                const tot = SETUP_YEARS.reduce((t, y) => t + (o.byYear[PLAN_YEARS.indexOf(y)] || 0), 0), cap = SETUP_YEARS.reduce((t, y) => t + (r.years[y].max || 0), 0);
+                return <span className={cap && tot > cap ? 'plan-down' : ''}>{fmtUnit(tot, r.unit)}</span>; } }))]} />
+          </div>
+        </PSec>}
+        {tab === 'investments' && <EmptyState title="Investments by scenario" description="Per-investment changes between scenarios aren’t part of this flow yet." />}
+      </div>
+    </AppShell>
   );
 }
