@@ -104,6 +104,7 @@ update)
     fi
   fi
   in_rebase && { say "More conflicts in the next change:"; git diff --name-only --diff-filter=U | sed 's/^/  /'; exit 3; }
+  B=$(branch)
   python3 -I scripts/manifest.py >/dev/null
   git diff --quiet || { git add -A; git commit -q -m "Regenerate flow list after update"; }
   git push -q --force-with-lease -u origin "$B" 2>/dev/null || true
