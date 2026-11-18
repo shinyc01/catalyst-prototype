@@ -58,7 +58,16 @@ start)
   in_rebase && die "a conflict is still being resolved — finish that first (bash scripts/sync.sh update)" 3
   B=$(branch)
   if dirty; then
-    [ "$B" = "$MAIN" ] && die "there are unsaved changes on the shared version. Start a flow first so they can be saved: they are NOT lost (git status shows them)" 5
+    if [ "$B" = "$MAIN" ]; then
+      # Unsaved edits made straight on the shared version: carry them into a new workspace (nothing is discarded),
+      # save them there, then bring that workspace up to date with the latest shared version.
+      NEW="flow/$SLUG"
+      git rev-parse -q --verify "$NEW" >/dev/null && die "a workspace $NEW already exists — pick another flow name" 5
+      git switch -q -c "$NEW" || die "couldn't open a workspace for the unsaved changes — nothing was changed" 5
+      git add -A && git commit -q -m "Work in progress: $SLUG" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+      say "Moved the unsaved changes into a new workspace $NEW."
+      exec bash "$0" update
+    fi
     die "your workspace '$B' has unsaved changes — save them first: bash scripts/sync.sh save \"…\"" 5
   fi
   git fetch -q origin || die "can't reach GitHub — check the internet connection"
@@ -113,7 +122,12 @@ finish)
     PR=$(gh pr view "$B" --json number --jq .number)
   fi
   say "Pull request #$PR opened. Waiting for the GitHub checks…"
-  gh pr checks "$PR" --watch --interval 10 >/dev/null 2>&1 || die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+  sleep 5
+  if gh pr checks "$PR" 2>&1 | grep -qi "no checks reported"; then
+    say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
+  else
+    gh pr checks "$PR" --watch --interval 10 >/dev/null 2>&1 || die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+  fi
   gh pr merge "$PR" --squash --delete-branch >/dev/null 2>&1 || die "couldn't merge #$PR (maybe someone merged first) — run update, then finish again" 8
   git switch -q "$MAIN" && git fetch -q origin && git merge -q --ff-only "origin/$MAIN"
   say "Published: #$PR is now part of the shared version. The live site updates in about a minute." ;;
