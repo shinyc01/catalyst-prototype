@@ -123,12 +123,19 @@ finish)
     PR=$(gh pr view "$B" --json number --jq .number)
   fi
   say "Pull request #$PR opened. Waiting for the GitHub checks…"
-  sleep 5
-  CHK=$(gh pr checks "$PR" 2>&1 || true)
-  if printf '%s' "$CHK" | grep -qi "no checks reported"; then
-    say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
+  if [ -d .github/workflows ]; then
+    # Wait (up to ~10 min) until GitHub has registered the checks for THIS commit and they have all finished.
+    # (`gh pr checks --watch` needs a terminal, so poll instead.)
+    sleep 8; CHK=""
+    for _ in $(seq 1 60); do
+      CHK=$(gh pr checks "$PR" 2>&1 || true)
+      if printf '%s' "$CHK" | grep -qi "no checks reported" || printf '%s' "$CHK" | grep -qiE "\b(pending|queued|in_progress)\b"; then sleep 10; continue; fi
+      break
+    done
+    printf '%s' "$CHK" | grep -qiE "\b(fail|failure|cancel)" && die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+    printf '%s' "$CHK" | grep -qiE "\bpass\b" || die "GitHub checks didn't finish on #$PR — run finish again in a few minutes" 4
   else
-    gh pr checks "$PR" --watch --interval 10 >/dev/null 2>&1 || die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+    say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
   fi
   gh pr merge "$PR" --squash --delete-branch >/dev/null 2>&1 || die "couldn't merge #$PR (maybe someone merged first) — run update, then finish again" 8
   git switch -q "$MAIN" && git fetch -q origin && git merge -q --ff-only "origin/$MAIN"
