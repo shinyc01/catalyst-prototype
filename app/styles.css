@@ -139,3 +139,11 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .gs-filter-btn { position: relative; display: inline-flex; }
 .gs-dot { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--icon-danger); pointer-events: none; }
 .gs-cooper { position: fixed; top: 56px; right: 12px; width: 380px; z-index: 2150; }
+/* J03: Studies library rows and the save Alert */
+.study-row { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 8px; border-radius: var(--radius-radius-100); }
+.study-row.is-click { cursor: pointer; }
+.study-row .study-acts { display: none; }
+.study-row.is-click:hover { background: var(--background-elevation-1-secondary); }
+.study-row.is-click:hover .study-acts, .study-row.is-click:focus-within .study-acts { display: flex; }
+.study-row.is-click:hover .study-time { display: none; }
+.study-alert { position: absolute; top: 12px; right: 12px; width: 303px; z-index: 700; }

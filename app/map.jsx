@@ -149,12 +149,13 @@ const MapLegend = ({ style, grid = true }) => (
     <span className="t-body-s-regular muted">Glowing = over intervention tolerance</span>
   </NDS>
 );
-const MapTools = ({ api, assetsOpen, onAssets }) => <>
+const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen, onStudy }) => <>
   <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 500 }}>
+    {/* Figma Explore rail (29:191921 / 29:101050): 1 = asset structure, 2 = studies library, 3 = study */}
     <MapToolbar><MapToolCluster label="Map views">
-      <MapToolButton icon="map-compass" label="Fit to cluster" onClick={() => api.current?.fit()} />
       <MapToolButton icon="asset-structure" label="Asset structure" active={!!assetsOpen} onClick={() => onAssets ? onAssets() : toast({ title: 'Asset structure isn’t part of this flow' })} />
-      <MapToolButton icon="system-book" label="Studies library" onClick={() => toast({ title: 'Studies library isn’t part of this flow' })} />
+      <MapToolButton icon="system-library" label="Studies library" active={!!libraryOpen} onClick={() => onLibrary ? onLibrary() : toast({ title: 'Studies library isn’t part of this flow' })} />
+      <MapToolButton icon="system-book" label="Study" active={!!studyOpen} onClick={() => onStudy ? onStudy() : api.current?.fit()} />
     </MapToolCluster></MapToolbar>
   </div>
   <div style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 500 }}>

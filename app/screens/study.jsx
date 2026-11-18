@@ -1,7 +1,21 @@
 /* Study: lenses, horizon, Cooper chats.
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 /* ============================================================ Screen 3 — Study (lenses, horizon, asset details, Cooper) */
-function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, setYear, asset, setAsset, onClose, onBuild }) {
+function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, setYear, asset, setAsset, onClose, onBuild,
+  scope, persona, trace = {}, setTrace, studies = [], setStudies, onSave, onOpenStudy }) {
+  // The study's population (J03): a group entered from Explore / the library, or the whole cluster
+  const ids = scope?.ids || null, name = scope?.name || CLUSTER.short, scoped = scope?.ids ? scopeAssets(scope.ids) : ASSETS;
+  const [libOpen, setLibOpen] = useState(false);
+  const [saved, setSaved] = useState(null);                  // the Alert after Save study
+  const conf = useIssueReport({ issues: useMemo(() => studyIssues(ids).map(i => ({ ...i, answer: false, upload: false, ...(trace[i.id] ? { status: trace[i.id] } : {}) })), [scope?.id]) });
+  useEffect(() => { setTrace && setTrace(t => ({ ...t, ...conf.status })); }, [conf.status]);
+  const saveStudy = () => {
+    const prev = studies.find(x => x.id === scope?.studyId);
+    const rec = { id: prev ? prev.id : `st-${Date.now()}`, name: prev ? prev.name : name, ids, lenses: lenses.map(l => ({ id: l.id, on: l.on, src: l.src })), year, savedAt: Date.now() };
+    setStudies(l => [rec, ...l.filter(x => x.id !== rec.id)]);
+    onSave && onSave(rec);
+    setSaved(prev ? 'resave' : 'first');
+  };
   const [view, setView] = useState('lenses');
   const [input, setInput] = useState('');
   const [playing, setPlaying] = useState(false);
@@ -9,7 +23,7 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
   const api = useRef(null);
   const timers = useRef([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
-  const s = useMemo(() => study(lenses, year), [lenses, year]);
+  const s = useMemo(() => study(lenses, year, ids), [lenses, year, ids]);
 
   // Horizon playback: one year per second, NOW → END
   useEffect(() => {
@@ -58,28 +72,33 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
   const selected = lenses.find(l => l.id === sel);
   const right = !!(chat || asset || details);
   return (
-    <AppShell navBar={navBar} header={<ExploreHeader search={{ placeholder: 'Search for…' }}><Button type="ghost" size="s" iconLeft="arrow-left" onClick={onClose}>{CLUSTER.name}</Button></ExploreHeader>}>
+    <AppShell navBar={navBar} header={<ExploreHeader search={{ placeholder: 'Search for…' }}><Button type="ghost" size="s" iconLeft="arrow-left" onClick={onClose}>{scope ? name : CLUSTER.name}</Button></ExploreHeader>}>
       <div style={{ position: 'relative', height: '100%', minHeight: 700, overflow: 'hidden' }}>
         <NDS label="3D risk map (MapLibre + OpenFreeMap)" className="fill">
           <MapView grid lenses={lenses} year={year} selected={asset} onSelect={selectAsset} apiRef={api}
-            focus={selected && selected.on ? ASSETS.filter(a => drivers(a, year, s.act).find(d => d.id === selected.id && d.delta >= 1)).map(a => a.id) : null}
+            focus={selected && selected.on ? scoped.filter(a => drivers(a, year, s.act).find(d => d.id === selected.id && d.delta >= 1)).map(a => a.id) : null}
             pad={{ tl: [660, 80], br: [right ? 400 : 200, 90] }} />
         </NDS>
-        <MapTools api={api} />
-        <FloatingBar style={{ top: 100, zIndex: 500, left: 'calc(50% + 160px)' }} category={CLUSTER.name} categoryIcon="map-location" item={`Selected ${ASSETS.length}`}
+        <MapTools api={api} studyOpen={!libOpen} libraryOpen={libOpen} onLibrary={() => setLibOpen(o => !o)} onStudy={() => setLibOpen(false)}
+          onAssets={() => onClose()} />
+        {libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={st => { setLibOpen(false); onOpenStudy(st); }} onClose={() => setLibOpen(false)} />}
+        {saved && <div className="study-alert"><IFS.Alert type="success" title={saved === 'first' ? 'Saved to Study Library' : 'Study saved to library'}
+          action={saved === 'first' ? 'View in Study Library' : undefined} onAction={() => { setSaved(null); setLibOpen(true); }} onClose={() => setSaved(null)}>
+          {saved === 'first' ? `${name.toUpperCase()} exploration is saved to Study Library` : `${name.toUpperCase()} exploration is saved`}</IFS.Alert></div>}
+        <FloatingBar style={{ top: 100, zIndex: 500, left: 'calc(50% + 160px)' }} category={scope ? name : CLUSTER.name} categoryIcon="map-location" item={`Selected ${scoped.length}`}
           badge={<Badge color="red" size="s">{s.now.over}</Badge>}
           actions={<div className="row" style={{ gap: 8 }}>
             <Button type="tertiary" size="m" onClick={() => { setChat(null); setAsset(null); setDetails(true); }}>View details</Button>
             <SplitButton size="m" onClick={() => openChat('idea')} menuLabel="More create options"
-              items={[{ label: 'Create idea with Cooper', description: 'Answer 3 questions', onClick: () => openChat('idea') }, { label: 'Create blank idea', description: 'Not part of this flow', onClick: () => toast({ title: 'Blank idea isn’t part of this flow' }) }]}>Create idea</SplitButton>
+              items={[{ label: 'Save study', onClick: saveStudy }]}>Create idea</SplitButton>
           </div>}
           onClose={onClose} />
 
-        <div style={{ position: 'absolute', left: 60, top: 12, bottom: 12, width: 580, zIndex: 600, display: 'flex' }}>
-          <Panel title={`${CLUSTER.short} Study`} showEvidence={false} onClose={onClose} style={{ width: '100%', height: '100%' }}>
+        <div style={{ position: 'absolute', left: 60, top: 12, bottom: 12, width: view === 'conf' ? 356 : 580, zIndex: 600, display: libOpen ? 'none' : 'flex' }}>
+          <Panel title={`${name} Study`} onEvidence={() => toast({ title: 'Evidence chain' })} onClose={onClose} style={{ width: '100%', height: '100%' }}>
             <div className="col" style={{ gap: 12, height: '100%', minHeight: 0 }}>
               <SegmentedControl size="s" fullWidth value={view} onChange={setView} options={[{ value: 'lenses', label: 'Lenses' }, { value: 'conf', label: 'System Confidence' }]} />
-              {view === 'conf' ? <EmptyState cause="empty-container" size="section" heading="System Confidence" body="Not part of this flow." /> : (
+              {view === 'conf' ? <StudyConfidence c={conf} value={studyConfidence(ids, { ...trace, ...conf.status })} /> : (
                 <div style={{ display: 'flex', gap: 12, minHeight: 0, flex: 1 }}>
                   <NDS label="Map layer (lens) list" className="col" style={{ width: 200, flex: 'none', gap: 2 }}>
                     <NavSubtitle>Lenses</NavSubtitle>
@@ -95,8 +114,8 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
                   </NDS>
                   <div className="col scroll" style={{ flex: 1, gap: 12, paddingRight: 4 }}>
                     {sel === 'overview' && <Overview s={s} lenses={lenses} year={year} onAsset={showAsset} />}
-                    {sel === 'base' && <BaseView year={year} onAsset={showAsset} />}
-                    {selected && <LensView lens={selected} lenses={lenses} year={year} onToggle={() => toggle(selected.id)} onSource={v => setSrc(selected.id, v)} onAsset={showAsset} />}
+                    {sel === 'base' && <BaseView year={year} ids={ids} onAsset={showAsset} />}
+                    {selected && <LensView lens={selected} lenses={lenses} year={year} ids={ids} onToggle={() => toggle(selected.id)} onSource={v => setSrc(selected.id, v)} onAsset={showAsset} />}
                   </div>
                 </div>
               )}
@@ -117,7 +136,7 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
 
         {details && (
           <div style={{ position: 'absolute', right: 12, top: 64, bottom: 12, zIndex: 600, display: 'flex' }}>
-            <AgentWindow style={{ maxHeight: '100%' }} text={`${CLUSTER.name} — with the ${s.act.length} lenses applied, ${s.now.over} of ${ASSETS.length} assets are over their intervention tolerance in ${year}.`}
+            <AgentWindow style={{ maxHeight: '100%' }} text={`${scope ? name : CLUSTER.name} — with the ${s.act.length} lenses applied, ${s.now.over} of ${s.count} assets are over their intervention tolerance in ${year}.`}
               onAsk={() => openChat('idea')} onClose={() => setDetails(false)}
               tertiaryAction={{ label: 'Close', onClick: () => setDetails(false) }} secondaryAction={{ label: 'Create idea', onClick: () => openChat('idea') }}>
               <ClusterDetails s={s} />
@@ -157,7 +176,7 @@ function Stats({ now, base, first, baseFirst, year }) {
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
       <StatCard size="s" title="Risk score" value={String(now.score)} description={`vs. ${base.score}`} descriptionPosition="inline" trend={d(now.score - base.score)} trendDirection="up" />
       <StatCard size="s" title="Value at stake" value={`$${now.valueM}M`} description={`vs. $${base.valueM}M`} descriptionPosition="inline" trend={d(Math.round((now.valueM - base.valueM) / Math.max(0.1, base.valueM) * 100), ' %')} trendDirection="up" />
-      <StatCard size="s" title="At-risk assets" value={`${now.over}/${ASSETS.length}`} description={`vs. ${base.over}/${ASSETS.length}`} descriptionPosition="inline" trend={d(now.over - base.over)} trendDirection="up" />
+      <StatCard size="s" title="At-risk assets" value={`${now.over}/${now.rows.length}`} description={`vs. ${base.over}/${base.rows.length}`} descriptionPosition="inline" trend={d(now.over - base.over)} trendDirection="up" />
       <StatCard size="s" title="Threshold year" value={first ? String(first) : '—'} description={`vs. ${baseFirst ?? '—'}`} descriptionPosition="inline" trend={yrs ? `${yrs} yrs` : undefined} trendDirection="down" />
     </div>
   );
@@ -186,8 +205,8 @@ function Overview({ s, lenses, year, onAsset }) {
     </div>
   </>;
 }
-function BaseView({ year, onAsset }) {
-  const s = study([], year);
+function BaseView({ year, ids, onAsset }) {
+  const s = study([], year, ids);
   return <>
     <span className="t-body-l-medium">Base Condition</span>
     <span className="t-label-m-upper muted">Risk &amp; condition</span>
@@ -195,11 +214,11 @@ function BaseView({ year, onAsset }) {
     <p className="t-body-m-regular sec" style={{ margin: 0 }}>Condition only — no external influences, straight from each asset’s Whistler outlook. Substation transformers by condition score, pad-mounts by normalized age ({ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][year - NOW]}× design life in {year}), breakers by health score, and the Pine Ridge lines by transmission reliability risk. {overNow.length} assets are already past tolerance today.</p>
   </>;
 }
-function LensView({ lens, lenses, year, onToggle, onSource, onAsset }) {
+function LensView({ lens, lenses, year, ids, onToggle, onSource, onAsset }) {
   const act = activeOf(lenses.map(l => l.id === lens.id ? { ...l, on: true } : l));
   const without = act.filter(l => l.id !== lens.id);
-  const traj = YEARS.map(y => ({ label: String(y), lens: cluster(y, act).score, base: cluster(y, without).score }));
-  const a = cluster(year, act), b = cluster(year, without);
+  const traj = YEARS.map(y => ({ label: String(y), lens: cluster(y, act, ids).score, base: cluster(y, without, ids).score }));
+  const a = cluster(year, act, ids), b = cluster(year, without, ids);
   const affected = a.rows.map((r, i) => ({ ...r, delta: r.risk - b.rows[i].risk })).filter(r => r.delta >= 1).sort((x, y) => y.delta - x.delta);
   return <>
     <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -210,11 +229,24 @@ function LensView({ lens, lenses, year, onToggle, onSource, onAsset }) {
     <Select size="m" options={lens.sources.map(x => x.label)} value={lens.sources[lens.src].label} clearable={false} onChange={onSource} />
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
       <StatCard size="s" title={`Adds in ${year}`} value={`+${a.score - b.score}`} description="risk points" />
-      <StatCard size="s" title="Affects" value={lens.kind === 'likelihood' ? 'Likelihood' : 'Consequence'} description={`${affected.length} of ${ASSETS.length} assets`} />
+      <StatCard size="s" title="Affects" value={lens.kind === 'likelihood' ? 'Likelihood' : 'Consequence'} description={`${affected.length} of ${scopeAssets(ids).length} assets`} />
     </div>
     <span className="t-label-m-upper muted">Change summary</span>
-    <p className="t-body-m-regular sec" style={{ margin: 0 }}>{lensSummary(lens, lenses, year)}{!lens.on && ' (Lens is off — numbers show what it would add.)'}</p>
+    <p className="t-body-m-regular sec" style={{ margin: 0 }}>{lensSummary(lens, lenses, year, ids)}{!lens.on && ' (Lens is off — numbers show what it would add.)'}</p>
     <span className="t-label-m-upper muted">Cluster risk with and without this lens</span>
     <div style={{ height: 210, flex: 'none', overflow: 'hidden' }}><LineChart data={traj} series={[{ key: 'lens', label: `With ${lens.label}` }, { key: 'base', label: 'Without', dashed: true }]} /></div>
   </>;
+}
+
+// System Confidence tab (Figma 29:189379): the confidence bar (DS EvidenceStrength), then the open questions / warnings for this study.
+// Same items as Explore's Trace Report, filtered to the study's assets. The % is a rule, not typed in (shared/explore-model.js).
+function StudyConfidence({ c, value }) {
+  const { IssueKindSwitch: Kinds, IssueNavigator: Nav, EvidenceStrength: Strength } = IFS;
+  return (
+    <div className="col scroll" style={{ gap: 12, flex: 1, minHeight: 0 }}>
+      <Strength value={value} title="" labels={[value < 70 ? `${value}% Reject` : '<70% Reject', value >= 70 && value <= 90 ? `${value}% Review` : 'Review', value > 90 ? `${value}% Approve` : '>90% Approve']} />
+      {c.issues.length ? <>{c.present.length > 1 && <Kinds controller={c} />}<Nav controller={c} /></>
+        : <EmptyState cause="empty-container" size="section" heading="No open questions" body="Cooper found nothing to check in this study’s data." />}
+    </div>
+  );
 }

@@ -61,7 +61,9 @@ function App() {
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
   }, []);
-  const [trace, setTrace] = usePersisted('explore.trace', {});           // J02 Trace Report answers (the flood fix changes the lens source)
+  const [trace, setTrace] = usePersisted('explore.trace', {});
+  const [studies, setStudies] = usePersisted('studies', STUDY_SEEDS);      // J03 Study Library (seeded from the real asset groups)
+  const [studyScope, setStudyScope] = usePersisted('study.scope', null);    // { id, name, ids, studyId } — the population the Study is on           // J02 Trace Report answers (the flood fix changes the lens source)
   const [showRun, setShowRun] = useState(true);
   const [, setTick] = useState(0);
   const notify = n => setNotes(l => [{ id: Date.now() + Math.random(), time: Date.now(), ...n }, ...l]);
@@ -138,6 +140,12 @@ function App() {
     go(r.open.screen);
     if (r.open.asset) { setAsset(r.open.asset); setSearchCtx({ query: o.query, ids: o.ids && o.ids.includes(r.open.asset) ? o.ids : [r.open.asset] }); }
   };
+  // Open a saved study: its population, its lenses (on / source) and its year (Figma 29:101050 "Study Opened")
+  const openStudy = st => {
+    setStudyScope({ id: st.id, name: st.name, ids: st.ids, studyId: st.id });
+    setLenses(ls => ls.map(l => { const x = st.lenses.find(y => y.id === l.id); return x ? { ...l, on: x.on, src: x.src } : l; }));
+    setYear(st.year || NOW); go('study');
+  };
   const sendForApproval = () => {
     setPlanStage('approval');
     notify({ title: `${PLAN_CYCLE} sent for approval`, details: `${PLAN_SCENARIOS.find(x => x.id === finalPlan)?.name} · ${PLAN_PORTFOLIO.name}. Approvers are notified.`, meta: `${PLAN_CYCLE} · Plan`, link: 'plan' });
@@ -176,8 +184,10 @@ function App() {
         else if (d.open === 'study') go('study');
         else if (d.open === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
-      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={() => { go('study'); }} onBack={() => go('command')} />}
-      {screen === 'study' && <Study {...shared} {...{ sel, setSel, setLenses, chat, setChat, setYear }}
+      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={g => { const ex = g && studies.find(x => x.ids && x.ids.length === g.assets.length && g.assets.every(id => x.ids.includes(id))); setStudyScope(g ? { id: g.id, name: ex ? ex.name : g.label, ids: g.assets, studyId: ex?.id } : null); go('study'); }} onBack={() => go('command')} />}
+      {screen === 'study' && <Study {...shared} key={studyScope?.id || 'cluster'} {...{ sel, setSel, setLenses, chat, setChat, setYear }}
+        scope={studyScope} persona={persona} trace={trace} setTrace={setTrace} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
+        onSave={rec => setStudyScope(sc => ({ ...(sc || { id: rec.id, name: rec.name, ids: rec.ids }), studyId: rec.id }))}
         onClose={() => go('explore')}
         onBuild={answers => { setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
       <GlobalSearch open={searchOpen} network={searchNetwork} onClose={() => setSearchOpen(false)} onOpen={openFromSearch} />
