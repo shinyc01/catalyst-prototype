@@ -2,7 +2,7 @@
 
 A working mock of **Catalyst** (IFS Copperleaf) that grows flow by flow, for usability tests, demos and marketing. It is built with **Catalyst Design System 2.0** on one consistent set of demo data (Alder Ridge Energy).
 
-**Live:** https://shinyc01.github.io/catalyst-prototype/ (updates about a minute after each publish)
+**Live:** https://shinyc01.github.io/catalyst-prototype/ — share this link for tests and demos (updates about a minute after each publish)
 
 ## Using it
 - **Prototype controls** sit at the bottom centre:
