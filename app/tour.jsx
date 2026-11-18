@@ -60,44 +60,45 @@ function Tour({ flow, step, setStep, onExit }) {
   );
 }
 
-// Prototype settings — opened from the gear in the NavBar. Holds everything a tester needs occasionally:
-// persona, the flows with their guided tours, the non-DS flags, and resetting the demo data.
+// Prototype settings — opened from the gear in the NavBar. Everything a tester needs now and then, as simple card rows:
+// who you're signed in as, the guided tours, the non-DS outlines, and resetting the demo data.
+const SettingsSection = ({ title, children }) => (
+  <section className="col" style={{ gap: 8 }}>
+    <span className="t-label-m-upper muted">{title}</span>
+    <div className="col" style={{ gap: 4 }}>{children}</div>
+  </section>
+);
 function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart }) {
-  const flows = [...(window.FLOWS || [])].sort((a, b) => (b.added || '').localeCompare(a.added || ''));
+  const flows = [...(window.FLOWS || [])].sort((a, b) => (a.added || '').localeCompare(b.added || ''));
+  const reset = () => { Store.reset(); location.hash = '#command'; location.reload(); };
   return (
     <Drawer open={open} onOpenChange={o => !o && onClose()} title="Prototype settings" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim (z 500) sits above the drawer (z 200) */}
-      <div className="col" style={{ gap: 20 }}>
-        <div className="col" style={{ gap: 8 }}>
-          <span className="t-label-m-upper muted">Persona</span>
-          <SegmentedControl size="s" fullWidth value={persona} onChange={setPersona} options={Object.values(PERSONAS).map(p => ({ value: p.key, label: p.role }))} />
-          <span className="t-body-s-regular muted">Signed in as {PERSONAS[persona].name} · {PERSONAS[persona].title}</span>
-        </div>
-        <div className="col" style={{ gap: 8 }}>
-          <span className="t-label-m-upper muted">Flows and guided tours</span>
-          <span className="t-body-m-regular sec">Every mini flow built into this prototype. Start one to be guided through it, step by step.</span>
-          {flows.map(f => (
-            <ContentCard key={f.id} size="s" title={f.title} description={f.summary}
-              bottom={<div className="col" style={{ gap: 8, width: '100%' }}>
-                <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                  <Badge size="s" color="white">{PERSONAS[f.persona]?.role || 'Any persona'}</Badge>
-                  <Badge size="s" color="false">{f.steps.length} steps</Badge>
-                  {f.added && <Badge size="s" color="false">Added {f.added}{f.addedBy ? ` · ${f.addedBy}` : ''}</Badge>}
-                </div>
-                <div className="row" style={{ gap: 8 }}>
-                  <Button type="primary" size="s" iconLeft="arrow-right" onClick={() => onStart(f)}>Start tour</Button>
-                  {(f.sources || []).slice(0, 2).map(src => <Button key={src.url} type="tertiary" size="s" onClick={() => window.open(src.url, '_blank', 'noopener')}>{src.label}</Button>)}
-                </div>
-              </div>} />
+      <div className="col" style={{ gap: 24 }}>
+        <span className="t-body-m-regular sec">Tools for testing and demos. They aren’t part of Catalyst.</span>
+
+        <SettingsSection title="Signed in as">
+          {Object.values(PERSONAS).map(p => (
+            <ContentCard key={p.key} size="s" selected={persona === p.key} onClick={() => setPersona(p.key)}
+              avatar={{ initials: p.initials, type: (PEOPLE[p.initials] || {}).type || 'blue' }} title={p.name} description={p.role} />
           ))}
-          {!flows.length && <EmptyState cause="empty-container" size="section" heading="No flows yet" body="Flows appear here as they are added." />}
-        </div>
-        <div className="col" style={{ gap: 8 }}>
-          <span className="t-label-m-upper muted">Prototype</span>
-          <Switch size="s" checked={flags} onChange={setFlags}>Show non-DS parts</Switch>
-          <span className="t-body-s-regular muted">Outlines the parts that aren’t in Catalyst Design System 2.0 yet.</span>
-          <div><Button type="secondary" size="s" iconLeft="arrow-back-up" onClick={() => { Store.reset(); location.hash = '#command'; location.reload(); }}>Reset demo</Button></div>
-          <span className="t-body-s-regular muted">Clears everything changed in this browser: snoozed cards, added events, created ideas.</span>
-        </div>
+        </SettingsSection>
+
+        <SettingsSection title="Guided tours">
+          {flows.map(f => (
+            <ContentCard key={f.id} size="s" iconRight="arrow-right" onClick={() => onStart(f)}
+              title={f.title} description={`${f.steps.length} steps · ${PERSONAS[f.persona]?.role || 'Any persona'}`} />
+          ))}
+          {!flows.length && <span className="t-body-m-regular muted">No tours yet. They appear here as flows are added.</span>}
+        </SettingsSection>
+
+        <SettingsSection title="Display">
+          <ContentCard size="s" title="Show non-DS parts" description="Outline what isn’t in Catalyst Design System 2.0 yet"
+            control={<Switch size="s" checked={flags} onChange={setFlags} aria-label="Show non-DS parts" />} onClick={() => setFlags(!flags)} />
+        </SettingsSection>
+
+        <SettingsSection title="Demo data">
+          <ContentCard size="s" iconRight="arrow-back-up" onClick={reset} title="Reset demo" description="Undo everything changed in this browser" />
+        </SettingsSection>
       </div>
     </Drawer>
   );

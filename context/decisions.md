@@ -2,6 +2,9 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **Only real mini flows get a guided tour.** Screens added directly (like the three Command persona views) are screens, not flows. The Investment Owner, Asset Manager and Portfolio Owner Command tours were removed; Command → Explore → Build is the only flow so far. Source: user.
+- **2026-11-18** **Prototype settings** (the gear in the NavBar) are simple card rows: signed-in person, guided tours, the non-DS switch, Reset demo. Source: user ("freestyle").
+
 - **2026-11-18** **One growing app on GitHub.** The prototype is now one app (`index.html` + `app/` + `shared/`) in the public repo `shinyc01/catalyst-prototype`, served by GitHub Pages with no build step. Shiny and Mahsa (`mkarimi727`) feed mini flows in parallel through the `catalyst-flow-builder` skill. That skill does all the git work with safeguards (`scripts/sync.sh`) and builds without waiting for plan approval; review happens afterwards. Source: user.
 - **2026-11-18** **Every mini flow stays a flow.** Each one is listed in the Flows panel, with a guided tour. Source: user.
 - **2026-11-18** **Catalyst Design System 2.0 only** (`shinyc01/catalyst-design-system-2`), pinned in `vendor/ds2/`. Source: user.
