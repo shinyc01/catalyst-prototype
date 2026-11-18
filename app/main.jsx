@@ -50,6 +50,7 @@ function App() {
   const [notes, setNotes] = usePersisted('notifications', []);
   const [notesOpen, setNotesOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchCtx, setSearchCtx] = useState(null);                        // { query, ids }: Explore shows the results bar after a search
   const [trace, setTrace] = usePersisted('explore.trace', {});           // J02 Trace Report answers (the flood fix changes the lens source)
   const [showRun, setShowRun] = useState(true);
   const [, setTick] = useState(0);
@@ -150,11 +151,11 @@ function App() {
         else if (d.open === 'study') go('study');
         else if (d.open === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
-      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={() => { go('study'); }} onBack={() => go('command')} />}
+      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={() => { go('study'); }} onBack={() => go('command')} />}
       {screen === 'study' && <Study {...shared} {...{ sel, setSel, setLenses, chat, setChat, setYear }}
         onClose={() => go('explore')}
         onBuild={answers => { setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
-      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onOpenAsset={id => { go('explore'); setAsset(id); }} />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onOpenAsset={(id, query, ids) => { go('explore'); setAsset(id); setSearchCtx({ query, ids }); }} />
       <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
         onOpen={n => { setNotesOpen(false); if (n.link) { go(n.link); } }} />
       {screen === 'plan-setup' && <PlanSetup navBar={navBar} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}

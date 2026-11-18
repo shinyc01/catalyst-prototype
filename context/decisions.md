@@ -2,6 +2,7 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **J02 screens rebuilt to their Figma frames** (search 2:21957, from-search 9:64832, hierarchy 9:64506, details 9:64904 / 9:65804), after the first build didn't match. Every new screen gets a side-by-side screenshot comparison with its frame before publishing. Source: user.
 - **2026-11-18** **J02 is its own flow** (Asset Manager: Global Search → Explore → asset details → Trace Report). The original tour is titled "J03 + J06 · Command → Explore → Study → Idea", because it matches those two journeys more closely than J02. Source: user.
 - **2026-11-18** **Asset details follow the Figma layout** (Explore 9:64904): tabs Details / Documentation / History, then Risk & condition, Lifecycle and Identity. This applies everywhere asset details open, Study included. Source: Figma spec.
 

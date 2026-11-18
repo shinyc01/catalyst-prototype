@@ -30,11 +30,13 @@ function Tour({ flow, step, setStep, onExit }) {
         if (r.top < 60 || r.bottom > window.innerHeight - 60 || r.left < 0 || r.right > window.innerWidth) el.scrollIntoView({ block: 'center', inline: 'nearest' });
       }
       setRect(el ? el.getBoundingClientRect() : null);
+      // `until`: the step moves on by itself once the app reaches that screen (e.g. search opens an asset in Explore)
+      if (s.until && !done && location.hash.startsWith(s.until)) { done = true; setTimeout(() => (last ? onExit(true) : setStep(step + 1)), 350); }
     };
-    tick(); const iv = setInterval(tick, 250);
     let done = false;
+    tick(); const iv = setInterval(tick, 250);
     const onClick = e => {
-      if (done || s.advance === 'next' || !s.target) return;
+      if (done || s.advance === 'next' || s.until || !s.target) return;
       const t = findTarget(s.target) || el;                           // look it up fresh: the screen may have re-rendered
       if (t && t.contains(e.target)) { done = true; setTimeout(() => (last ? onExit(true) : setStep(step + 1)), 350); }
     };

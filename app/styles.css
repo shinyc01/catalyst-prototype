@@ -76,8 +76,44 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .plan-card.is-final { outline: 1px solid var(--border-strong); }
 .plan-up { color: var(--text-success); }
 .plan-down { color: var(--text-danger); }
-/* Global search (J02) and the Explore Trace Report rail */
-.gsearch-layer { position: fixed; inset: 0; z-index: 900; }
-.gsearch { position: absolute; top: 44px; right: 96px; width: 600px; max-height: calc(100vh - 80px); overflow: auto; padding: var(--paddings-padding-300);
-  background: var(--background-page); border: 1px solid var(--border-base); border-radius: var(--radius-radius-200); box-shadow: 0 8px 24px var(--shadow-elevation-3); }
+/* Global search (J02, Figma 2:21957): the NavBar search expands into a 600px field; the dropdown hangs under it */
+.gs-layer { position: fixed; inset: 0; z-index: 2100; }
+.gs { position: absolute; top: 6px; right: 108px; width: 600px; }
+.gs-field { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 12px; box-sizing: border-box; border-radius: var(--radius-radius-200);
+  background: var(--background-page); border: 1px solid var(--border-info); color: var(--icon-secondary); }
+.gs-input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text-primary); font: inherit; }
+.gs-input::placeholder { color: var(--text-tertiary); }
+.gs-drop { margin-top: 4px; padding: var(--paddings-padding-300); border-radius: var(--radius-radius-200); background: var(--background-page);
+  border: 1px solid var(--border-base); box-shadow: 0 12px 32px var(--shadow-elevation-3); display: flex; flex-direction: column; gap: 6px; }
+.gs-head { gap: 8px; padding-bottom: 6px; }
+.gs-cap { padding: 6px 0 2px; }
+.gs-row { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 12px 6px 8px; box-sizing: border-box; border-radius: var(--radius-radius-100);
+  border: 1px solid transparent; cursor: pointer; }
+.gs-row.is-active { background: var(--background-elevation-1-secondary); border-color: var(--border-strong); }
+.gs-tile { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: var(--radius-radius-100); background: var(--background-elevation-1-tertiary); }
+.gs-row b { color: var(--text-primary); font-weight: 600; }
+.gs-dim { color: var(--text-tertiary); }
+.gs-keys { gap: 16px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border-base); color: var(--text-secondary); }
+.gs-keys b { color: var(--text-disabled); font-weight: 400; margin-right: 4px; }
 .explore-trace { flex: none; display: flex; border-left: 1px solid var(--border-base); }
+/* Explore for the Asset Manager (J02): ASSETS panel (Figma 9:64506) and two-column asset details (9:64904 / 9:65804) */
+.assets-panel { position: absolute; left: 60px; top: 12px; bottom: 12px; width: 380px; z-index: 600; display: flex; flex-direction: column;
+  background: var(--surface-primary-alpha); border: 1px solid var(--border-base); border-radius: var(--radius-radius-200); backdrop-filter: blur(16px); }
+.assets-panel__head { gap: 8px; padding: 12px; border-bottom: 1px solid var(--border-base); }
+.assets-panel__body { flex: 1; min-height: 0; padding: 6px 4px; gap: 0; }
+.tree-row { display: flex; align-items: center; gap: 4px; min-height: 34px; padding-right: 12px; border: 1px solid transparent; border-radius: var(--radius-radius-100); }
+.tree-row.is-on { border-color: var(--border-strong); background: var(--background-elevation-1-secondary); }
+.tree-caret, .tree-name, .ad-item, .ad-sec__head { all: unset; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--text-primary); }
+.tree-caret { width: 16px; height: 16px; justify-content: center; color: var(--icon-secondary); }
+.tree-name { flex: 1; min-width: 0; }
+.ad-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; margin-left: auto; }
+.ad-dot--red { background: var(--icon-danger); }
+.ad-dot--orange { background: var(--icon-warning); }
+.ad-wrap { position: absolute; right: 12px; top: 12px; bottom: 12px; width: 536px; z-index: 600; display: flex; }
+.ad-cols { display: flex; gap: 12px; flex: 1; min-height: 0; }
+.ad-left { width: 168px; flex: none; gap: 2px; padding-right: 12px; border-right: 1px solid var(--border-base); overflow: auto; }
+.ad-item { padding: 8px; border: 1px solid transparent; border-radius: var(--radius-radius-100); color: var(--text-secondary); }
+.ad-item.is-on { border-color: var(--border-strong); color: var(--text-primary); }
+.ad-right { flex: 1; min-width: 0; gap: 16px; padding-right: 4px; }
+.ad-sec { gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border-base); }
+.ad-field { display: grid; grid-template-columns: 120px 1fr; gap: 12px; }
