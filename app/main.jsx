@@ -31,10 +31,8 @@ function App() {
   const [asset, setAsset] = useState(init.asset);
   const [year, setYear] = useState(init.year);
   const [persona, setPersona] = useState(init.persona);
-  const [present, setPresent] = usePersisted('present', /[?&]present=1/.test(location.search));
-  const [flagsOn, setFlags] = usePersisted('flags', true);
-  const flags = flagsOn && !present;
-  const [flowsOpen, setFlowsOpen] = useState(false);
+  const [flags, setFlags] = usePersisted('nds', false);                    // non-DS flags: off by default
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [tour, setTour] = useState(null);                                   // { flow, step }
 
   // Following a link or a tour step changes the hash: apply it to the app (replaceState below doesn't fire this)
@@ -72,13 +70,13 @@ function App() {
     else toast({ title: `${v[0].toUpperCase() + v.slice(1)} isn’t part of this flow` });
   };
   const stage = screen === 'study' ? 'explore' : screen;
-  const navBar = <NavBar stages={STAGES} value={stage} onChange={onStage} hasNotifications user={{ initials: PERSONAS[persona].initials, name: PERSONAS[persona].name }} />;
+  const navBar = <NavBar stages={STAGES} value={stage} onChange={onStage} hasNotifications onSettings={() => setSettingsOpen(true)} user={{ initials: PERSONAS[persona].initials, name: PERSONAS[persona].name }} />;
   const shared = { navBar, lenses, year, asset, setAsset };
 
   return (
     <div className={flags ? 'nds-on' : ''} style={{ height: '100%' }}>
-      <ProtoControls persona={persona} setPersona={setPersona} flags={flagsOn} setFlags={setFlags} present={present} setPresent={setPresent} onFlows={() => setFlowsOpen(true)} />
-      <FlowsPanel open={flowsOpen} onClose={() => setFlowsOpen(false)} onStart={f => { setFlowsOpen(false); setTour({ flow: f, step: 0 }); }} />
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} persona={persona} setPersona={setPersona} flags={flags} setFlags={setFlags}
+        onStart={f => { setSettingsOpen(false); setTour({ flow: f, step: 0 }); }} />
       {tour && <Tour flow={tour.flow} step={tour.step} setStep={n => setTour(t => ({ ...t, step: n }))}
         onExit={done => { setTour(null); if (done) toast({ title: `Flow complete: ${tour.flow.title}`, description: 'Open Flows to try another one.' }); }} />}
       {screen === 'command' && <Command key={persona} navBar={navBar} lenses={lenses} persona={persona} onOpen={d => {

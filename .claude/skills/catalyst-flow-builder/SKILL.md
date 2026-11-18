@@ -57,4 +57,4 @@ Update the affected `context/` files (screens, flows, logic, data, glossary), ad
 
 ### 7. Hand over
 1. Build the offline copy if asked (`bash scripts/build-standalone.sh`) and open the live site or local build in the user's browser.
-2. Tell the user, in plain language: the live link (`https://shinyc01.github.io/catalyst-prototype/`) and deep links for the new screens; how to start the new tour (Flows → the flow → Start tour); what's clickable; what's `[Assumed]` or `[Added]`; non-DS parts; open questions; and that it's merged (pull request number).
+2. Tell the user, in plain language: the live link (`https://shinyc01.github.io/catalyst-prototype/`) and deep links for the new screens; how to start the new tour (gear → Prototype settings → the flow → Start tour); what's clickable; what's `[Assumed]` or `[Added]`; non-DS parts; open questions; and that it's merged (pull request number).
