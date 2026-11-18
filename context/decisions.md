@@ -2,6 +2,13 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **Plan Setup uses the Plan handover (85:162876) for Scenarios, with the add/edit/delete constraint behaviour from "Send to Plan" (103:63527).** The two files are competing designs. The handover matches the Setup shell, and J16 cites both. Source: Claude's default, flagged to the user for confirmation (open question 10).
+- **2026-11-18** **Plan data is the Demo Portfolio 2028 Plan** (296 real investments, 14 real scenarios, 12 real constraints), not the Figma placeholders ("Electrical distribution FY27", 4,500 investments, repeated INV-2026-0910 rows). Labels stay as in Figma; only the values change. Source: standing rule (one data layer, real records).
+- **2026-11-18** **J16's "Dana" is Owen Fitch**, the invented Portfolio Owner, so the persona stays consistent. Source: standing rule (invented names, used consistently).
+- **2026-11-18** **Readiness, outliers and inconsistencies are computed from the real records** with documented rules (`logic/plan.md`), so their counts (48, 24, 29 safe) replace Figma's 47 / 23 / 31. Source: standing rule (never type a number into a screen).
+- **2026-11-18** **The Optimization readiness panel is composed from DS parts** (Panel + ConfidenceGates + IssueKindSwitch + IssueNavigator), because DS `SystemConfidence` doesn't pass the gate label ("Approval readiness" is hard-coded). Reported as a DS gap.
+- **2026-11-18** **Settings drawer content has 16px padding** on the sides and bottom (also the Command day drawer). Source: user.
+
 - **2026-11-18** **Only real mini flows get a guided tour.** Screens added directly (like the three Command persona views) are screens, not flows. The Investment Owner, Asset Manager and Portfolio Owner Command tours were removed; Command → Explore → Build is the only flow so far. Source: user.
 - **2026-11-18** **Prototype settings** (the gear in the NavBar) are simple card rows: signed-in person, guided tours, the non-DS switch, Reset demo. Source: user ("freestyle").
 

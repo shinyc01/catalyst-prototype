@@ -11,3 +11,11 @@ Answer these with the product designer, then move each answer into the right con
 7. **Recommended alternative.** How does Cooper actually choose it? Highest BCR, or based on the user's intent?
 8. **Asset details panel.** It isn't in the Figma frames. Keep it, design it, or remove it?
 9. **Square size of the area grid.** What resolution should it use in the product?
+10. **Which Scenarios design is canonical?** Plan handover 85:162876 (5 scenario cards with Restrictions / Constraints / Investment groups) and "Send to Plan" 103:63527 (Cooper-derived constraints with 3 proposed scenario cards that recalculate) differ in steppers, buttons, names and numbers. The prototype uses the handover and borrows Send to Plan's cell editing, add and delete.
+11. **Which Optimize Ready variant does Setup implement?** (J16 validation question: A hybrid / B agentic.)
+12. **What does "Review individually" do?** It isn't drawn. The prototype filters the table to the inconsistencies.
+13. **The routed fix for the Investment Owner:** what does their notification say, and where in Build do they land? (J16 lists this as not designed.) The prototype brings each fix back after 6 s.
+14. **Do constraint edits recalculate anything on Setup?** Send to Plan shows scenario cards updating; the handover has no result cards. The prototype doesn't recalculate before Optimize.
+15. **Two readiness numbers:** Figma shows "Ready to optimize 98%" (a KPI) next to "Optimization readiness 35%" (gates). The prototype keeps both: the share of investments without an open issue, and the share of gates passed. Is that the intent?
+16. **Milestone dependencies across the portfolio** (J16 workflow step 3) aren't designed in Plan.
+
