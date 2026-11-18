@@ -123,7 +123,8 @@ finish)
   fi
   say "Pull request #$PR opened. Waiting for the GitHub checks…"
   sleep 5
-  if gh pr checks "$PR" 2>&1 | grep -qi "no checks reported"; then
+  CHK=$(gh pr checks "$PR" 2>&1 || true)
+  if printf '%s' "$CHK" | grep -qi "no checks reported"; then
     say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
   else
     gh pr checks "$PR" --watch --interval 10 >/dev/null 2>&1 || die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
