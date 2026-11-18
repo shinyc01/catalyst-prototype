@@ -30,3 +30,6 @@
 
 ## Known DS 2.0 issues (work around them; don't patch the kit; report them in the hand-over)
 - **Drawer with `overlay="base"` or `"strong"`:** the scrim (`.ifs-overlay`, z-index 500) renders above the drawer (`.ifs-drawer`, z-index 200), so the drawer can't be clicked. Use `overlay="none"`; the drawer still closes with ✕ and Esc. Found 2026-11-18 in vendor/ds2 (repo commit 0696ac5). Re-check after `scripts/update-ds.sh`.
+- **`SystemConfidence` hard-codes "Approval readiness":** it doesn't pass a label to `ConfidenceGates`. For another label (Plan: "Optimization readiness"), compose it from `Panel` + `ContentCard` + `ConfidenceGates label=…` + `IssueKindSwitch` + `IssueNavigator`, with the kit's `ifs-trc-*` class names (see `app/screens/plan.jsx`). Found 2026-11-18.
+- **Icons only exist at some sizes.** A size-S button draws 12 px icons, and an icon without a 12 px version renders as an empty dotted box (`ifs-icon--missing`). Check the sizes in `vendor/ds2/ifs-ds.js` before using an icon in a small button (e.g. `system-mail-message` has 12 px; `system-mail-user` doesn't).
+- **`TextField` doesn't forward `onBlur` / `onKeyDown`.** Control it (`value` + `onChange`) and put those handlers on a wrapper element.
