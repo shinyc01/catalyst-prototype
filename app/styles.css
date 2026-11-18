@@ -71,3 +71,8 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .plan-run { position: fixed; top: 100px; right: 12px; z-index: 600; width: 400px; }
 .plan-clip { display: block; max-width: 100%; overflow: hidden; } .plan-clip .ifs-badge { max-width: 100%; } .plan-clip .ifs-badge > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plan-run-steps { margin-top: 4px; }
+.plan-subrows { padding-left: 24px; gap: 2px; }
+.plan-cards { display: grid; grid-auto-flow: column; grid-auto-columns: 300px; gap: 12px; overflow-x: auto; padding: 2px 2px 4px; }
+.plan-card.is-final { outline: 1px solid var(--border-strong); }
+.plan-up { color: var(--text-success); }
+.plan-down { color: var(--text-danger); }

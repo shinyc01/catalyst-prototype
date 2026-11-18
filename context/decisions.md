@@ -2,6 +2,11 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **Plan home's button follows the cycle:** Start planning → Setup; Continue planning while in Setup; Compare results once optimizing/optimized; Send for approval once a final plan is chosen on Compare; then the cycle is In approval. Source: user (review of J16).
+- **2026-11-18** **Flow names keep the journey number** ("J16 · Plan · …"). Source: user.
+- **2026-11-18** **Tours scroll their target into view** when it's off screen. Source: user.
+- **2026-11-18** **No final plan is preselected on Compare.** Figma shows Baseline / Max cost preselected; the prototype makes the user choose, so Send for approval stays off until they do. Source: Claude, to support the user's "select a final plan → approval" sequence.
+
 - **2026-11-18** **Plan Setup uses the Plan handover (85:162876) for Scenarios, with the add/edit/delete constraint behaviour from "Send to Plan" (103:63527).** The two files are competing designs. The handover matches the Setup shell, and J16 cites both. Source: Claude's default, flagged to the user for confirmation (open question 10).
 - **2026-11-18** **Plan data is the Demo Portfolio 2028 Plan** (296 real investments, 14 real scenarios, 12 real constraints), not the Figma placeholders ("Electrical distribution FY27", 4,500 investments, repeated INV-2026-0910 rows). Labels stay as in Figma; only the values change. Source: standing rule (one data layer, real records).
 - **2026-11-18** **J16's "Dana" is Owen Fitch**, the invented Portfolio Owner, so the persona stays consistent. Source: standing rule (invented names, used consistently).

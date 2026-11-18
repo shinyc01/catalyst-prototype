@@ -131,3 +131,16 @@ const runProgress = run => run ? Math.min(1, (Date.now() - run.startedAt) / (RUN
 // [Added] planning cycles of the Demo Portfolio: the real set has an "Optimized 2025 Plan" and the 2028 Plan scenarios
 const PLAN_CYCLES = [{ id: '2025', label: '2025 Plan', status: 'Archived', range: '2025–2029' }, { id: '2028', label: '2028 Plan', status: 'Next', range: '2028–2032' }];
 const OWNER_FIX_MS = 6000;                                         // how long an owner takes to fix a routed investment in the demo [Assumed]
+
+/* ---------------------------------------------------------------- Compare (results of the run) */
+// Cards: the Baseline (what was requested) plus the five optimised scenarios, with their REAL results.
+const COMPARE_SCENARIOS = [PLAN_BASELINE_ID, ...SETUP_SCENARIOS.map(s => s.id)].map(id => {
+  const s = PLAN_SCENARIOS.find(x => x.id === id), setup = SETUP_SCENARIOS.find(x => x.id === id);
+  const risk = s.outcomes.find(o => o.measureId === 21), last = PLAN_YEARS.indexOf(2032);
+  return { id, name: s.name, short: setup ? setup.short : 'Baseline', baseline: id === PLAN_BASELINE_ID, capex: s.capexTotal, value: s.totalValue,
+    onSchedule: PLAN_INVESTMENTS.length - s.deferredVsRequested, deferred: s.deferredVsRequested, advanced: s.advancedVsRequested,
+    altChanged: s.alternativeChangedVsRequested, risk2032: risk ? risk.byYear[last] : null };
+});
+const COMPARE_BASE = COMPARE_SCENARIOS[0];
+// Cooper's pick [Assumed]: the most value per dollar of CAPEX among the optimised scenarios
+const COOPER_PICK = COMPARE_SCENARIOS.filter(c => !c.baseline).reduce((b, c) => (c.value / c.capex > b.value / b.capex ? c : b)).id;

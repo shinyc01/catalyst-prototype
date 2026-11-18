@@ -21,8 +21,16 @@ function Tour({ flow, step, setStep, onExit }) {
   const [rect, setRect] = useState(null);
   useEffect(() => { if (s.hash && location.hash !== s.hash) location.hash = s.hash; }, [flow.id, step]);   // go to the step's screen
   useEffect(() => {                                                                                       // follow the target as it moves
-    let el = null;
-    const tick = () => { el = findTarget(s.target); setRect(el ? el.getBoundingClientRect() : null); };
+    let el = null, scrolled = null;
+    const tick = () => {
+      el = findTarget(s.target);
+      if (el && el !== scrolled) {                                          // bring the target on screen once, so testers don't have to look for it
+        scrolled = el;
+        const r = el.getBoundingClientRect();
+        if (r.top < 60 || r.bottom > window.innerHeight - 60 || r.left < 0 || r.right > window.innerWidth) el.scrollIntoView({ block: 'center', inline: 'nearest' });
+      }
+      setRect(el ? el.getBoundingClientRect() : null);
+    };
     tick(); const iv = setInterval(tick, 250);
     let done = false;
     const onClick = e => {

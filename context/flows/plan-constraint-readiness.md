@@ -1,4 +1,4 @@
-# Flow: Plan · Constraints and readiness before optimizing (J16)
+# Flow: J16 · Plan · Constraints and readiness before optimizing
 
 **Source:** JTBD journey **J16 — Portfolio Owner — Constraint Definition and Pre-Optimization Validation** (CPLF Product Management, JTBD Journeys; Word document given by Shiny on 2026-11-18). Tour: `app/flows/002-plan-constraint-readiness.js`. Persona: **Owen Fitch, Portfolio Owner** (the journey's "Dana" is our invented Portfolio Owner).
 
@@ -17,6 +17,7 @@ Owen opens **Plan › Setup › Data readiness** for the **Demo Portfolio 2028 P
 ## Steps and deep links
 | # | J16 step | Where | Deep link |
 |---|---|---|---|
+| 0 | Start planning the next cycle (entry, `[Assumed]` from Figma 84:276350) | Plan home → **Start planning** | `#plan?persona=portfolio` |
 | 1 | See how ready the portfolio is | Plan › Setup › Data readiness | `#plan-setup?persona=portfolio` |
 | 2 | Clear low-stakes issues fast | System confidence: Accept all / Review individually / Upload file / My answer | same |
 | 3 | Decide per problem investment | Table: Fix with Cooper / Leave out from this plan | same |
@@ -32,7 +33,7 @@ The Planning groups tab is `#plan-groups` (its gate passes; J16 doesn't touch it
 - "Review individually" filters the table to the inconsistencies instead of resolving the question.
 - The routed fix: the owner's notification and Build landing aren't designed (J16 lists this as a gap). Fixes come back on their own after 6 s.
 - The optimization run is a mock: it takes about 24 s, and its results are the real optimized scenarios (02_Optimized for Plan home). Edits to constraints don't change the results.
-- Compare isn't built: "Compare results" shows a toast.
+- After the run, Plan home's button becomes **Compare results**; Compare (`#plan-compare`) lets you pick the final plan and **Send for approval**. That part is beyond J16's scope and is built at summary level (see `screens/plan-setup.md`).
 
 ## Source mini flow (verbatim)
     J16 · Constraint Definition & Pre-Optimization Validation
