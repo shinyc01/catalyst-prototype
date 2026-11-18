@@ -65,7 +65,7 @@ function Tour({ flow, step, setStep, onExit }) {
 function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart }) {
   const flows = [...(window.FLOWS || [])].sort((a, b) => (b.added || '').localeCompare(a.added || ''));
   return (
-    <Drawer open={open} onOpenChange={o => !o && onClose()} title="Prototype settings" collapsible={false} overlay="base">
+    <Drawer open={open} onOpenChange={o => !o && onClose()} title="Prototype settings" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim (z 500) sits above the drawer (z 200) */}
       <div className="col" style={{ gap: 20 }}>
         <div className="col" style={{ gap: 8 }}>
           <span className="t-label-m-upper muted">Persona</span>

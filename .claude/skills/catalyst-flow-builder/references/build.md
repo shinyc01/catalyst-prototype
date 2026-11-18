@@ -27,3 +27,6 @@
 ## Persistence and presentation
 - **Tester changes that should stick:** use `const [x, setX] = usePersisted('screen.key', initial)` (from `app/store.jsx`), with keys namespaced by screen and persona. "Reset demo" clears them.
 - **Prototype controls** live only in the Prototype settings drawer, which opens from the NavBar gear (`onSettings`). Never put prototype or debug UI on the screens themselves; add it to `SettingsPanel` in `app/tour.jsx`.
+
+## Known DS 2.0 issues (work around them; don't patch the kit; report them in the hand-over)
+- **Drawer with `overlay="base"` or `"strong"`:** the scrim (`.ifs-overlay`, z-index 500) renders above the drawer (`.ifs-drawer`, z-index 200), so the drawer can't be clicked. Use `overlay="none"`; the drawer still closes with ✕ and Esc. Found 2026-11-18 in vendor/ds2 (repo commit 0696ac5). Re-check after `scripts/update-ds.sh`.

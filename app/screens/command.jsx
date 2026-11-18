@@ -216,7 +216,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
       <AddEventModal by={P.initials} open={addOpen} onClose={() => setAddOpen(false)} onAdd={e => {
         setEvents(ev => [...ev, e]); setAddOpen(false);
         toast({ title: 'Event created', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e))) }, duration: 5000 }); }} />
-      <Drawer open={!!day} onOpenChange={o => !o && setDay(null)} title={day ? day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''} collapsible={false} overlay="base">
+      <Drawer open={!!day} onOpenChange={o => !o && setDay(null)} title={day ? day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''} collapsible={false} overlay="none">{/* DS 2.0 bug: scrim above drawer */}
         <div className="col" style={{ gap: 8 }}>
           {!dayEvents.length && <EmptyState cause="empty-container" size="section" heading="No events" body="Add a private event for this day." />}
           {dayEvents.map((e, k) => (
