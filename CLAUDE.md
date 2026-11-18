@@ -43,7 +43,7 @@ app/
   ui.jsx                  kit imports (IFS), NDS flag, shared flow data (Cooper scripts, idea alternatives)
   map.jsx                 MapLibre 3D map, legend, map tools
   store.jsx               usePersisted: demo state that survives reloads ("Reset demo" clears it)
-  screens/*.jsx           one file per screen (command, explore, study, build, plan, …)
+  screens/*.jsx           one file per screen (command, explore, study, build, plan, search, …)
   flows/NNN-<id>.js       one file per mini flow + its guided tour; index.js is GENERATED (scripts/manifest.py)
   tour.jsx                prototype settings drawer (gear in the NavBar: persona, flows + tours, non-DS, reset) + guided tour
   main.jsx                routing (hash ↔ state), app shell
@@ -54,6 +54,7 @@ shared/                   the mock data layer (plain JS, loaded in this order)
   catalyst-model.js       risk model, area-risk grid, lens catalogue, study helpers
   whistler-command.js     Command content per persona (real + [Added])
   whistler-plan.js        REAL Plan data: Demo Portfolio 2028 Plan, 296 investments, scenarios, constraints (GENERATED)
+  explore-model.js        Explore for the Asset Manager (J02): asset hierarchy, Trace Report items, Global Search ([Assumed])
   plan-model.js           Plan rules: inconsistencies, outliers, readiness, scenario setup, the optimisation run ([Assumed])
 vendor/ds2/               pinned Catalyst Design System 2.0 (js, css, api.md, rules, icons, tokens, VERSION.txt)
 scripts/

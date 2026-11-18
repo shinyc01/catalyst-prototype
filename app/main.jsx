@@ -49,6 +49,8 @@ function App() {
   useEffect(() => { if (screen === 'plan-setup' && planStage === 'time') setPlanStage('setup'); }, [screen]);
   const [notes, setNotes] = usePersisted('notifications', []);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [trace, setTrace] = usePersisted('explore.trace', {});           // J02 Trace Report answers (the flood fix changes the lens source)
   const [showRun, setShowRun] = useState(true);
   const [, setTick] = useState(0);
   const notify = n => setNotes(l => [{ id: Date.now() + Math.random(), time: Date.now(), ...n }, ...l]);
@@ -129,12 +131,13 @@ function App() {
   const navBar = <NavBar stages={STAGES} value={stage} onChange={onStage} user={{ initials: PERSONAS[persona].initials, name: PERSONAS[persona].name }}
     actions={<>
       {running && <OptimizingBadge onClick={() => { setShowRun(true); go('plan'); }} />}
-      <IconButton icon="system-search" label="Search" size="s" onClick={() => toast({ title: 'Search isn’t part of this flow' })} />
+      <IconButton icon="system-search" label="Search" size="s" onClick={() => setSearchOpen(true)} />
       <IconButton icon="system-settings" label="Settings" size="s" onClick={() => setSettingsOpen(true)} />
       <span className="ifs-navbar__notify"><IconButton icon="system-notification" label="Notifications" size="s" onClick={() => setNotesOpen(true)} />
         {notes.some(n => !n.read) && <span className="ifs-navbar__dot" aria-hidden="true" />}</span>
     </>} />;
-  const shared = { navBar, lenses, year, asset, setAsset };
+  const effLenses = lensesWithTrace(lenses, trace);
+  const shared = { navBar, lenses: effLenses, year, asset, setAsset };
 
   return (
     <div className={flags ? 'nds-on' : ''} style={{ height: '100%' }}>
@@ -147,10 +150,11 @@ function App() {
         else if (d.open === 'study') go('study');
         else if (d.open === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
-      {screen === 'explore' && <Explore {...shared} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={() => { go('study'); }} onBack={() => go('command')} />}
+      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={() => { go('study'); }} onBack={() => go('command')} />}
       {screen === 'study' && <Study {...shared} {...{ sel, setSel, setLenses, chat, setChat, setYear }}
         onClose={() => go('explore')}
         onBuild={answers => { setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onOpenAsset={id => { go('explore'); setAsset(id); }} />
       <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
         onOpen={n => { setNotesOpen(false); if (n.link) { go(n.link); } }} />
       {screen === 'plan-setup' && <PlanSetup navBar={navBar} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}
