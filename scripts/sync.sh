@@ -129,7 +129,14 @@ finish)
       gh pr checks "$PR" 2>&1 | grep -qi "no checks reported" || break
       sleep 4
     done
-    gh pr checks "$PR" --watch --interval 10 >/dev/null 2>&1 || die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+    # poll until no check is pending (up to ~10 minutes); `gh pr checks --watch` needs a terminal, so don't use it
+    for _ in $(seq 1 60); do
+      CHK=$(gh pr checks "$PR" 2>&1 || true)
+      printf '%s' "$CHK" | grep -qiE "\b(pending|queued|in_progress)\b" || break
+      sleep 10
+    done
+    printf '%s' "$CHK" | grep -qiE "\b(fail|failure|cancel)" && die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+    printf '%s' "$CHK" | grep -qiE "\bpass\b" || die "GitHub checks didn't finish on #$PR — run finish again in a few minutes" 4
   else
     say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
   fi
