@@ -123,12 +123,15 @@ finish)
     PR=$(gh pr view "$B" --json number --jq .number)
   fi
   say "Pull request #$PR opened. Waiting for the GitHub checks…"
-  sleep 5
-  CHK=$(gh pr checks "$PR" 2>&1 || true)
-  if printf '%s' "$CHK" | grep -qi "no checks reported"; then
-    say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
-  else
+  if [ -d .github/workflows ]; then
+    # GitHub takes a few seconds to register the checks: wait for them to appear, then wait for them to finish
+    for _ in $(seq 1 30); do
+      gh pr checks "$PR" 2>&1 | grep -qi "no checks reported" || break
+      sleep 4
+    done
     gh pr checks "$PR" --watch --interval 10 >/dev/null 2>&1 || die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
+  else
+    say "(No GitHub checks are set up on this repo yet — the local checks passed, so continuing.)"
   fi
   gh pr merge "$PR" --squash --delete-branch >/dev/null 2>&1 || die "couldn't merge #$PR (maybe someone merged first) — run update, then finish again" 8
   git switch -q "$MAIN" && git fetch -q origin && git merge -q --ff-only "origin/$MAIN"
