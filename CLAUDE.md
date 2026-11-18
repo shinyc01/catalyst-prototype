@@ -55,6 +55,8 @@ shared/                   the mock data layer (plain JS, loaded in this order)
   whistler-command.js     Command content per persona (real + [Added])
   whistler-plan.js        REAL Plan data: Demo Portfolio 2028 Plan, 296 investments, scenarios, constraints (GENERATED)
   explore-model.js        Explore for the Asset Manager (J02): asset hierarchy, Trace Report items, Global Search ([Assumed])
+  whistler-search.js      REAL portfolios, named scenarios and value measures for Global Search (GENERATED)
+  search-model.js         Global Search index (8 types) and rules: ranking, best match, prefixes, typo fix, filters from the query
   plan-model.js           Plan rules: inconsistencies, outliers, readiness, scenario setup, the optimisation run ([Assumed])
 vendor/ds2/               pinned Catalyst Design System 2.0 (js, css, api.md, rules, icons, tokens, VERSION.txt)
 scripts/

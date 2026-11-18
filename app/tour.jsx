@@ -78,7 +78,7 @@ const SettingsSection = ({ title, children }) => (
     <div className="col" style={{ gap: 4 }}>{children}</div>
   </section>
 );
-function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart }) {
+function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart, searchNetwork, setSearchNetwork }) {
   const flows = [...(window.FLOWS || [])].sort((a, b) => (a.added || '').localeCompare(b.added || ''));
   const reset = () => { Store.reset(); location.hash = '#command'; location.reload(); };
   return (
@@ -104,6 +104,11 @@ function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, on
         <SettingsSection title="Display">
           <ContentCard size="s" title="Show non-DS parts" description="Outline what isn’t in Catalyst Design System 2.0 yet"
             control={<Switch size="s" checked={flags} onChange={setFlags} aria-label="Show non-DS parts" />} onClick={() => setFlags(!flags)} />
+        </SettingsSection>
+
+        <SettingsSection title="Global Search network">
+          <ContentCard size="s" title="Simulate the search connection" description="Slow shows the loading skeleton; Error shows Couldn’t load results with Retry"
+            bottom={<SegmentedControl size="s" fullWidth value={searchNetwork} onChange={setSearchNetwork} options={[{ value: 'normal', label: 'Normal' }, { value: 'slow', label: 'Slow' }, { value: 'error', label: 'Error' }]} />} />
         </SettingsSection>
 
         <SettingsSection title="Demo data">

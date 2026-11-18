@@ -51,6 +51,16 @@ function App() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchCtx, setSearchCtx] = useState(null);                        // { query, ids }: Explore shows the results bar after a search
+  const [searchNetwork, setSearchNetwork] = usePersisted('search.network', 'normal');   // prototype setting: normal | slow | error (Figma 8)
+  // Search opens from the icon, ⌘K / Ctrl+K, or / on any screen (Figma 1 · Start)
+  useEffect(() => {
+    const k = e => {
+      const typing = /input|textarea|select/i.test(e.target.tagName) || e.target.isContentEditable;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearchOpen(true); }
+      else if (e.key === '/' && !typing) { e.preventDefault(); setSearchOpen(true); }
+    };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  }, []);
   const [trace, setTrace] = usePersisted('explore.trace', {});           // J02 Trace Report answers (the flood fix changes the lens source)
   const [showRun, setShowRun] = useState(true);
   const [, setTick] = useState(0);
@@ -113,6 +123,21 @@ function App() {
     if (location.hash.slice(1) !== full) history.replaceState(null, '', '#' + full);
   }, [screen, details, sel, chat, asset, year, persona, tab]);
 
+  // Opening a search result in its owning area (Figma "Opens in the owning area"); ⌘↵ opens it in a new tab
+  const openFromSearch = (r, o = {}) => {
+    const hashOf = x => x.open.screen === 'explore' ? `#explore${x.open.asset ? `?asset=${x.open.asset}&` : '?'}persona=${persona}` : `#${x.open.screen}${persona !== 'owner' ? `?persona=${persona}` : ''}`;
+    if (o.viewAll) {
+      const area = searchType(o.viewAll).area;
+      if (area === 'Explore') { go('explore'); setSearchCtx(o.ids.length ? { query: o.query, ids: o.ids } : null); if (o.ids[0]) setAsset(o.ids[0]); }
+      else toast({ title: `${area}: the full list of ${searchType(o.viewAll).label.toLowerCase()} for “${o.query}”`, description: `${area}’s library isn’t part of this prototype yet` });
+      return;
+    }
+    if (r.open.toast) { toast({ title: `${r.code} · ${r.name}`, description: `Opens in ${r.open.toast} — not part of this prototype yet` }); return; }
+    if (o.newTab) { window.open(location.pathname + hashOf(r), '_blank'); return; }
+    if (r.open.screen === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); return; }
+    go(r.open.screen);
+    if (r.open.asset) { setAsset(r.open.asset); setSearchCtx({ query: o.query, ids: o.ids && o.ids.includes(r.open.asset) ? o.ids : [r.open.asset] }); }
+  };
   const sendForApproval = () => {
     setPlanStage('approval');
     notify({ title: `${PLAN_CYCLE} sent for approval`, details: `${PLAN_SCENARIOS.find(x => x.id === finalPlan)?.name} · ${PLAN_PORTFOLIO.name}. Approvers are notified.`, meta: `${PLAN_CYCLE} · Plan`, link: 'plan' });
@@ -142,7 +167,7 @@ function App() {
 
   return (
     <div className={flags ? 'nds-on' : ''} style={{ height: '100%' }}>
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} persona={persona} setPersona={setPersona} flags={flags} setFlags={setFlags}
+      <SettingsPanel searchNetwork={searchNetwork} setSearchNetwork={setSearchNetwork} open={settingsOpen} onClose={() => setSettingsOpen(false)} persona={persona} setPersona={setPersona} flags={flags} setFlags={setFlags}
         onStart={f => { setSettingsOpen(false); setTour({ flow: f, step: 0 }); }} />
       {tour && <Tour flow={tour.flow} step={tour.step} setStep={n => setTour(t => ({ ...t, step: n }))}
         onExit={done => { setTour(null); if (done) toast({ title: `Flow complete: ${tour.flow.title}`, description: 'Open Flows to try another one.' }); }} />}
@@ -155,7 +180,7 @@ function App() {
       {screen === 'study' && <Study {...shared} {...{ sel, setSel, setLenses, chat, setChat, setYear }}
         onClose={() => go('explore')}
         onBuild={answers => { setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
-      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onOpenAsset={(id, query, ids) => { go('explore'); setAsset(id); setSearchCtx({ query, ids }); }} />
+      <GlobalSearch open={searchOpen} network={searchNetwork} onClose={() => setSearchOpen(false)} onOpen={openFromSearch} />
       <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
         onOpen={n => { setNotesOpen(false); if (n.link) { go(n.link); } }} />
       {screen === 'plan-setup' && <PlanSetup navBar={navBar} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}

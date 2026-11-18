@@ -26,4 +26,7 @@ Answer these with the product designer, then move each answer into the right con
 22. **Is data-quality reconciliation an Asset Manager job in Explore, an admin job in System Settings, or both?** (J02 validation question.)
 23. **Which system is the record for corrections made in Explore?** (J02 validation question, PRD_Explore Q8.)
 24. **Trace Report detail for "5 spans have no clearance data" and "Wildfire hazard is vendor-tier":** Figma has titles only. Confirm the prototype's wording and solutions.
+25. **Investment status in search:** Figma shows workflow statuses (Draft / In review / Approved / Deferred). The demo data has only stages, so the prototype maps them (`logic/global-search.md`). What's the real source?
+26. **Best match caption:** frame 2:21957 shows "BEST MATCH / OTHER MATCHES", the other parts only preselect the first row. The prototype shows "Best match" only for a unique exact match.
+27. **"Filters cleared" when switching type:** inline line or Snackbar? The prototype uses the inline line.
 
