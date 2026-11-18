@@ -60,10 +60,12 @@ scripts/
   sync.sh                 safe git: setup · status · start · save · update · finish · home
   check.mjs               data / flow / token checks (also run on GitHub for every pull request)
   manifest.py             regenerates app/flows/index.js
+  read-journey.py         reads a JTBD journey .docx (J16 format) into text + its Figma links
   make-whistler-data.py   pulls records from the copperleaf-demo-data skill
   update-ds.sh            re-pins DS 2.0 · entry.sh: look up DS components
   build-standalone.sh     offline single-file copy → share/ (git-ignored)
-context/                  product knowledge (read first, keep current)
+context/                  product knowledge (read first, keep current); README.md maps each screen to its logic, data, Figma and open questions
+ONBOARDING.md             guide for a new collaborator (Mahsa): setup, what to ask, where things live
 prototypes/               LEGACY single-file prototypes v1–v7 — on Shiny's Mac only, not in the repo (pre-rename data)
 .claude/skills/catalyst-flow-builder/   the skill
 ```

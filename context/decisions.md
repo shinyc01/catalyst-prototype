@@ -2,6 +2,9 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **Mini flows are JTBD journey documents** (the J16 format). Every journey follows it; the skill reads them with `scripts/read-journey.py` and maps each section as `.claude/skills/catalyst-flow-builder/references/journeys.md` describes. Source: user.
+- **2026-11-18** **The skill also explains, changes and records decisions,** not only adds flows, so Mahsa can review and edit without reading code. `context/README.md` maps every screen; `ONBOARDING.md` gets a new collaborator set up. Source: user.
+
 - **2026-11-18** **Plan home's button follows the cycle:** Start planning → Setup; Continue planning while in Setup; Compare results once optimizing/optimized; Send for approval once a final plan is chosen on Compare; then the cycle is In approval. Source: user (review of J16).
 - **2026-11-18** **Flow names keep the journey number** ("J16 · Plan · …"). Source: user.
 - **2026-11-18** **Tours scroll their target into view** when it's off screen. Source: user.

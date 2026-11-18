@@ -19,6 +19,8 @@ Open this folder in Claude Code and say, for example: *"Add this flow to the pro
 - updates the context;
 - publishes safely to GitHub without overwriting anyone's work.
 
+**Other things to ask:** *"How does the readiness % work?"*, *"Change the outlier rule to…"*, *"Answer open question 10: …"*, *"Review the prototype"*. **`context/README.md`** maps every screen to its logic, data and Figma frame. New to the project? Start with **`ONBOARDING.md`**.
+
 **First time on a new computer:** ask Claude Code to *"set up the Catalyst prototype on this computer"*. It installs and checks what's needed. You'll be asked to log in to GitHub once in your browser.
 
 ## What's where (for Claude)
