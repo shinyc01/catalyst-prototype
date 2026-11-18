@@ -73,7 +73,7 @@ function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, on
   const reset = () => { Store.reset(); location.hash = '#command'; location.reload(); };
   return (
     <Drawer open={open} onOpenChange={o => !o && onClose()} title="Prototype settings" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim (z 500) sits above the drawer (z 200) */}
-      <div className="col" style={{ gap: 24 }}>
+      <div className="col" style={{ gap: 24, padding: '0 var(--paddings-padding-400) var(--paddings-padding-400)' }}>
         <span className="t-body-m-regular sec">Tools for testing and demos. They aren’t part of Catalyst.</span>
 
         <SettingsSection title="Signed in as">
