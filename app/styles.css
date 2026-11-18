@@ -76,3 +76,8 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .plan-card.is-final { outline: 1px solid var(--border-strong); }
 .plan-up { color: var(--text-success); }
 .plan-down { color: var(--text-danger); }
+/* Global search (J02) and the Explore Trace Report rail */
+.gsearch-layer { position: fixed; inset: 0; z-index: 900; }
+.gsearch { position: absolute; top: 44px; right: 96px; width: 600px; max-height: calc(100vh - 80px); overflow: auto; padding: var(--paddings-padding-300);
+  background: var(--background-page); border: 1px solid var(--border-base); border-radius: var(--radius-radius-200); box-shadow: 0 8px 24px var(--shadow-elevation-3); }
+.explore-trace { flex: none; display: flex; border-left: 1px solid var(--border-base); }

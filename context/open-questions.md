@@ -21,4 +21,9 @@ Answer these with the product designer, then move each answer into the right con
 17. **"Start planning" label.** Figma only draws "Continue planning" (Setup already started). Is "Start planning" right for a cycle nobody has opened yet?
 18. **Which scenario is the final plan by default on Compare?** Figma shows Baseline while optimizing and Max cost once results are in. The prototype preselects none.
 19. **What does Cooper favour, and why?** The Compare frames disagree (evaluation heading vs body vs the Mid card's "balanced recommendation"). The prototype uses most value per dollar of CAPEX.
+20. **Should the J03 + J06 tour use the Asset Manager?** J03 and J06 are the Asset Manager's (Priya) journeys; the tour uses the Investment Owner (Hollis Grant). J03's System Confidence and Save study, and J06's "sent to Build" toast and Idea Pad, aren't built yet.
+21. **Where does an asset open from Global Search?** Figma says only "Opens in the owning area". The prototype opens Explore with the asset's details.
+22. **Is data-quality reconciliation an Asset Manager job in Explore, an admin job in System Settings, or both?** (J02 validation question.)
+23. **Which system is the record for corrections made in Explore?** (J02 validation question, PRD_Explore Q8.)
+24. **Trace Report detail for "5 spans have no clearance data" and "Wildfire hazard is vendor-tier":** Figma has titles only. Confirm the prototype's wording and solutions.
 

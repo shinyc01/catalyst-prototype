@@ -3,7 +3,7 @@
    advance: 'click' (default when there is a target: clicking the target moves on) or 'next' (only the Next button). */
 (window.FLOWS = window.FLOWS || []).push({
   id: 'command-explore-build',
-  title: 'Command → Explore → Build',
+  title: 'J03 + J06 · Command → Explore → Study → Idea',
   summary: 'From Cooper’s #1 decision to a drafted investment idea: explore the Alpine Meadows cluster, study it with risk lenses, add a custom lens, and let Cooper draft the idea.',
   persona: 'owner', added: '2026-11-16', addedBy: 'Shiny',
   sources: [

@@ -1,4 +1,4 @@
-# Flow: Command → Explore → Build
+# Flow: J03 + J06 · Command → Explore → Study → Idea
 
 **Source:** Confluence "Command - Explore - Build" (PM space, page 5570592781). Built as `prototypes/command-explore-build.src.html`.
 
