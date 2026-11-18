@@ -124,16 +124,13 @@ finish)
   fi
   say "Pull request #$PR opened. Waiting for the GitHub checks…"
   if [ -d .github/workflows ]; then
-    # GitHub takes a few seconds to register the checks: wait for them to appear, then wait for them to finish
-    for _ in $(seq 1 30); do
-      gh pr checks "$PR" 2>&1 | grep -qi "no checks reported" || break
-      sleep 4
-    done
-    # poll until no check is pending (up to ~10 minutes); `gh pr checks --watch` needs a terminal, so don't use it
+    # Wait (up to ~10 min) until GitHub has registered the checks for THIS commit and they have all finished.
+    # (`gh pr checks --watch` needs a terminal, so poll instead.)
+    sleep 8; CHK=""
     for _ in $(seq 1 60); do
       CHK=$(gh pr checks "$PR" 2>&1 || true)
-      printf '%s' "$CHK" | grep -qiE "\b(pending|queued|in_progress)\b" || break
-      sleep 10
+      if printf '%s' "$CHK" | grep -qi "no checks reported" || printf '%s' "$CHK" | grep -qiE "\b(pending|queued|in_progress)\b"; then sleep 10; continue; fi
+      break
     done
     printf '%s' "$CHK" | grep -qiE "\b(fail|failure|cancel)" && die "GitHub checks failed on #$PR — see: gh pr checks $PR" 4
     printf '%s' "$CHK" | grep -qiE "\bpass\b" || die "GitHub checks didn't finish on #$PR — run finish again in a few minutes" 4
