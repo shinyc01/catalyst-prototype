@@ -16,7 +16,7 @@
 - **Catalyst Design System 2.0 only**: `vendor/ds2/`. Its API is `vendor/ds2/api.md`, with examples in `examples.md`, and usage and placement rules in `rules.md`, `components.md` and `usage.md`. Look a component up with `bash scripts/entry.sh Name1 Name2` rather than reading the whole file.
 - Use props as the handovers use them (the **In handovers** line in api.md).
 - Use **tokens only**. Colours are `var(--…)`; typography uses the `.t-*` classes or the DS 2.0 type tokens (`--text-*`). No hex or rgba values, which `scripts/check.mjs` enforces. Canvas and WebGL colours are read from tokens at runtime.
-- **Non-DS parts.** Anything the kit doesn't have is wrapped in `<NDS label="what it is">`, which shows the "Not in DS" flag when Non-DS is switched on. List each one in the hand-over.
+- **Non-DS parts.** Anything the kit doesn't have is wrapped in `<NDS label="what it is">`, which shows the "Not in DS" flag when "Show non-DS parts" is on (Prototype settings, off by default). List each one in the hand-over.
 - **Updating DS 2.0** happens only on purpose: `bash scripts/update-ds.sh`, then re-check every screen and commit the update on its own.
 - **DS 2.0 content rules** (Title Case for titles and buttons, and so on) are in `vendor/ds2/rules.md`. Follow them in new copy.
 
@@ -26,4 +26,4 @@
 
 ## Persistence and presentation
 - **Tester changes that should stick:** use `const [x, setX] = usePersisted('screen.key', initial)` (from `app/store.jsx`), with keys namespaced by screen and persona. "Reset demo" clears them.
-- **Presentation mode** hides the Non-DS flags and the prototype controls. New screens need nothing extra for it; just don't add debug UI outside `ProtoControls`.
+- **Prototype controls** live only in the Prototype settings drawer, which opens from the NavBar gear (`onSettings`). Never put prototype or debug UI on the screens themselves; add it to `SettingsPanel` in `app/tour.jsx`.

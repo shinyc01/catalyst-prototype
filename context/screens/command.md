@@ -8,7 +8,7 @@
 **Full frame-by-frame spec:** `command-figma-spec.md`. It has exact copy, every state, the dev-note rules and the inconsistencies.
 
 ## Personas `[Confirmed]`
-There is one prototype with a persona switch (bottom centre, non-DS). Each persona has one consistent user (see `data/whistler.md`):
+There is one prototype with a persona switch, in Prototype settings (the gear in the NavBar). Each persona has one consistent user (see `data/whistler.md`):
 
 | Persona | User | Decisions metrics | Following metrics |
 |---|---|---|---|

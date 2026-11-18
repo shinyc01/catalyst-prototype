@@ -9,8 +9,8 @@ Run `node scripts/check.mjs`. It covers the data layer, links, names, the flows 
 3. **Click every new interaction**, including the empty states, the disabled states and Undo. Reload the page to check that persisted changes survive, then use "Reset demo".
 4. **Walk the new tour and one older tour.** Run the click-through from the browser console script in your notes: find each step's target, click it, and confirm the card advances and the hash is as expected. Long tours take more than 45 s, so start them in the background (`window.__log`) and poll.
 5. **Console:** `read_console_messages` with `onlyErrors` must be empty, apart from the Babel "deoptimised" note.
-6. **Presentation mode:** click Present and check that no flags or debug UI show.
+6. **Non-DS flags:** open Prototype settings (gear) and switch "Show non-DS parts" on, check that every new custom part is flagged, then switch it off again.
 7. **Screenshots in the pane can lag** while WebGL or the map is drawing. Re-take the screenshot or check the DOM before calling something broken.
 
 ## 3. After merge
-Open `https://shinyc01.github.io/catalyst-prototype/` about a minute after `finish`, check that the new flow is in the Flows panel, then give the user the link.
+Open `https://shinyc01.github.io/catalyst-prototype/` about a minute after `finish`, check that the new flow is listed in Prototype settings (gear), then give the user the link.

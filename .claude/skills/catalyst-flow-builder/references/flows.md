@@ -1,6 +1,6 @@
 # Registering a flow and its guided tour
 
-Every mini flow stays a flow: it is listed in the **Flows** panel (prototype controls, bottom centre), and **Start tour** walks a tester through it.
+Every mini flow stays a flow: it is listed under **Flows and guided tours** in Prototype settings (the gear in the NavBar), and **Start tour** walks a tester through it.
 
 ## File
 Create `app/flows/NNN-<id>.js`, using the next free number and a kebab-case id. It is plain JS with no JSX:
