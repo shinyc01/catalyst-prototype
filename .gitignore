@@ -1,0 +1,11 @@
+.DS_Store
+# build output (regenerate with prototypes/build.sh); shareable copies live in prototypes/share/
+prototypes/command-explore-build.html
+# large Figma PNG exports (JPGs are kept)
+prototypes/assets/*.png
+# offline single-file build (make it with scripts/build-standalone.sh)
+share/
+# local experiments not part of the app
+prototypes/*.ds2.*
+# LEGACY single-file prototypes v1–v7 (kept on this Mac only; they hold pre-rename demo data)
+prototypes/

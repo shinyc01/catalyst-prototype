@@ -1,0 +1,4 @@
+Catalyst Design System 2.0 snapshot
+source: https://shinyc01.github.io/catalyst-design-system-2
+repo commit: 0696ac5f5c004b81337583c36a83dc5ed3442cae
+taken: 2026-11-18T18:43Z

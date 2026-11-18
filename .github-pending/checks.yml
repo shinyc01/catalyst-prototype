@@ -1,0 +1,19 @@
+name: checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Flow list is up to date
+        run: |
+          python3 -I scripts/manifest.py
+          git diff --exit-code app/flows/index.js || (echo "Run: python3 -I scripts/manifest.py" && exit 1)
+      - name: Data layer, flows, tokens
+        run: node scripts/check.mjs

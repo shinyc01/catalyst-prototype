@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalyst — working prototype</title>
+<!-- Libraries (pinned versions) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<!-- The app's own files, in load order. Add new files to the right group. Each is loaded fresh (?v=…), so a publish
+     never leaves anyone with a mix of old and new files from the browser cache. -->
+<script id="app-files" type="application/json">
+{
+  "css": ["vendor/ds2/ifs-ds.css", "app/styles.css"],
+  "js": [
+    "vendor/ds2/ifs-ds.js",
+    "shared/whistler-data.js", "shared/names.js", "shared/whistler-additions.js", "shared/catalyst-model.js", "shared/whistler-command.js",
+    "app/flows/index.js"
+  ],
+  "babel": [
+    "app/ui.jsx", "app/map.jsx", "app/store.jsx",
+    "app/screens/command.jsx", "app/screens/explore.jsx", "app/screens/study.jsx", "app/screens/build.jsx",
+    "app/tour.jsx", "app/main.jsx"
+  ]
+}
+</script>
+<script>
+  window.APP_V = Date.now();
+  (function () {
+    var f = JSON.parse(document.getElementById('app-files').textContent), v = '?v=' + window.APP_V;
+    f.css.forEach(function (p) { document.write('<link rel="stylesheet" href="' + p + v + '">'); });
+    f.js.forEach(function (p) { document.write('<script src="' + p + v + '"><\/script>'); });
+    window.APP_BABEL = f.babel;
+  })();
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  // Catalyst Design System 2.0 (vendor/ds2, pinned) is loaded above; the data layer, then flows, then the app (text/babel).
+  window.APP_BABEL.forEach(function (p) { document.write('<script type="text/babel" data-presets="react" src="' + p + '?v=' + window.APP_V + '"><\/script>'); });
+</script>
+</body>
+</html>

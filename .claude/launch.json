@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "catalyst-repo", "runtimeExecutable": "python3", "runtimeArgs": ["-I", "-m", "http.server", "8766", "--directory", "/Users/schu/Documents/CLAUDE_NEW/CODE/Catalyst-prototype"], "port": 8766 }
+  ]
+}
