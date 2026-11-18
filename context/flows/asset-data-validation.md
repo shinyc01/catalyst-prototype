@@ -11,13 +11,21 @@ Mara opens **Global Search** and types **PM-0005**. The best match is Pad-mount 
 ## Steps and deep links
 | # | J02 step | Where | Deep link |
 |---|---|---|---|
-| 1 | Jump to a known asset | NavBar **Search** → type a code → Best match → Enter | `#command?persona=asset` |
+| 1 | Jump to a known asset | NavBar **Search** (expands in the bar) → type a code → Best match → Enter | `#command?persona=asset` |
 | 2 | See assets in full context | Explore, Asset Manager: ASSETS tree + map | `#explore?persona=asset` |
 | 3 | Inspect condition and baseline | Asset details (single) / group details (whole group) | `#explore?asset=76503&persona=asset` |
 | 4 | Find what's wrong | Trace Report (right rail) | same |
 | 5 | Resolve gaps in context | Apply Cooper's fix, or My answer | same |
 | 6 | Escalate what she can't fix | Leave the licence item open; dependent assets say so | same |
 | 7 | Structured import | **Not built** (System Settings, no design) | — |
+
+## Rebuilt to the frames (2026-11-18, after Shiny's review)
+The first build didn't match the design: search was a generic dropdown, the tour dimmed it, and the tree and details were generic panels. Now:
+- **Global Search (2:21957):** the NavBar search icon expands into a 600 px field. The dropdown has type chips with counts, Match: Any, a filter button, a preselected BEST MATCH row (pin tile, name, code with the match highlighted, detail line, status pill), OTHER MATCHES · n, and keyboard hints (↑↓, ↵, Tab cycles the type, Esc). The tour highlights the whole search and moves on by itself when the asset opens.
+- **From search (9:64832):** Explore opens with the ASSETS panel closed, the query in the Explore search ("Pad-mount PM-0005 details"), and the bar in results mode ("1 / n results · All risk · ‹ › · Study area · ×").
+- **ASSETS panel (9:64506):** "ASSETS 23" header, a tree | list switch, collapse and close; tree rows with caret, folder and a red / amber risk dot. It's opened from the map rail's Asset structure button. The list view has All risk / High / Moderate / Low.
+- **Asset details (9:64904) and group details (9:65804):** 536 px, Details | Documentation | History, two columns. The left ASSET HIERARCHY column holds the attribute sections, or for a group the group's assets with risk dots. The right holds the collapsible RISK & CONDITION, LIFECYCLE (condition over time), IDENTITY / IDENTIFICATION and LOCATION & SITE sections.
+- **Panels stack** (dev note 29:346563): with details and the Trace Report both open, the ASSETS panel steps aside (reopen it from the rail).
 
 ## What is assumed or not built `[Assumed]`
 - Where search opens an asset (Figma: "Opens in the owning area", not designed): Explore with that asset's details.

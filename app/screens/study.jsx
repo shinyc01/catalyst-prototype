@@ -126,7 +126,7 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
         )}
         {asset && (
           <div style={{ position: 'absolute', right: 12, top: 64, bottom: 12, width: 380, zIndex: 600, display: 'flex' }}>
-            <AssetDetails id={asset} lenses={lenses} year={year} onClose={() => setAsset(null)} onAsk={() => openChat('lens')} />
+            <AssetDetails id={asset} lenses={lenses} year={year} compact extra={<Drivers id={asset} lenses={lenses} year={year} />} onClose={() => setAsset(null)} onAsk={() => openChat('lens')} />
           </div>
         )}
         {chat && (

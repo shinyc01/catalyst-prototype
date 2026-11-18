@@ -149,11 +149,11 @@ const MapLegend = ({ style, grid = true }) => (
     <span className="t-body-s-regular muted">Glowing = over intervention tolerance</span>
   </NDS>
 );
-const MapTools = ({ api }) => <>
+const MapTools = ({ api, assetsOpen, onAssets }) => <>
   <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 500 }}>
     <MapToolbar><MapToolCluster label="Map views">
       <MapToolButton icon="map-compass" label="Fit to cluster" onClick={() => api.current?.fit()} />
-      <MapToolButton icon="asset-structure" label="Asset structure" onClick={() => toast({ title: 'Asset structure isn’t part of this flow' })} />
+      <MapToolButton icon="asset-structure" label="Asset structure" active={!!assetsOpen} onClick={() => onAssets ? onAssets() : toast({ title: 'Asset structure isn’t part of this flow' })} />
       <MapToolButton icon="system-book" label="Studies library" onClick={() => toast({ title: 'Studies library isn’t part of this flow' })} />
     </MapToolCluster></MapToolbar>
   </div>
