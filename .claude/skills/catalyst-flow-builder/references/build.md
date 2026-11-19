@@ -32,6 +32,7 @@
 
 ## Fidelity
 - **The Figma frame is the spec.** Match layout, controls, labels and card order exactly. Logic changes values, never UI.
+- **Outdated Figma components → the DS one.** Handover frames often draw a legacy or look-alike component (an old `*-card` set, a Patterns-file copy, a renamed set). If the kit has one that looks close enough, use the kit's, even when the name differs: ContentCard over legacy cards, the timeline base over legacy timelines, one Menu, one legend swatch. Never build a new copy from the Figma file and never pick a near-duplicate just because the frame names it. Note the substitution in the screen spec; use `NDS` only when nothing in the kit is close. (Shiny, 2026-11-19)
 - When frames disagree with each other, follow the most complete frame and note the inconsistency in the screen's context file.
 
 ## Persistence and presentation
