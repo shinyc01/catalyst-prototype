@@ -31,7 +31,7 @@ function RowShell({ id, children, menu, drag, setDrag, onDropOn, featured, noDra
 }
 
 function Command({ navBar, lenses, persona, onOpen }) {
-  const P = PERSONAS[persona], C = COMMAND[persona];
+  const P = PERSONAS[persona], C = COMMAND[persona] || COMMAND.owner;   // personas without their own Command content (CX Consultant) see the Investment Owner's [Assumed]
   const [tab, setTab] = useState('decisions');
   const [prio, setPrio] = useState('critical');
   const [order, setOrder] = usePersisted(`cmd.${persona}.order`, C.decisions.map(d => d.id));

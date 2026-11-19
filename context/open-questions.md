@@ -47,4 +47,10 @@ Answer these with the product designer, then move each answer into the right con
 43. **J09: Investment value "$" vs score.** Figma shows value in dollars ($23k, $2.05M per year); the demo data's value is a framework score. The prototype shows the score.
 44. **J09: should the three-state triage (Cooper-answered / needs-you / you answered) be the standard for every questionnaire?** (J09 validation question.)
 45. **J09: Widgets drawer** (add, hide, resize, reorder) isn't built; Widgets and the prompt chip generate the one scripted widget.
+46. **J12: who owns Value?** No Figma file names a persona; the journeys say CX Consultant. The prototype adds an invented "Ines Calder, CX Consultant" (Command shows the Investment Owner's content for her).
+47. **J12: where are objective weights edited?** No frame shows a weight control; the prototype only shows the total and fixes it through the Trace report (Rebalance).
+48. **J13: Review numbers.** Figma's 1,621 re-scored / 519 lost / 12 shifts don't fit the 296 Demo Portfolio investments; the prototype computes them from its re-score rule. Should the Review show ranks and funding changes (as the journey says) or value changes (as the table shows)?
+49. **J13: which Library state is "Scheduled"?** Figma has "Ready to publish" in the library and "Scheduled" on the approval page. The prototype shows Scheduled with the date.
+50. **J14: does editing a model in an Active framework make the framework "Revisions Required", or only the model?** Not designed; the prototype makes a model draft only.
+51. **Not built in Value:** Duplicate Framework, Built-by-Cooper walkthrough cursor, Create Value Framework / Value Model choosers, the formula builder and questionnaire editor, comments and collaboration on the map, version history, Strategic Alignment tab, Compare in Capital Flow.
 
