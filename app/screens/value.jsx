@@ -79,8 +79,9 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
   const navValue = ['overview', 'map', 'flow'].includes(page) ? 'overview' : page.startsWith('model-') ? 'library-models' : page;
   const draftStage = ['input', 'shape', 'review', 'approval'].includes(page);
   const activeHeader = ['overview', 'map', 'flow'].includes(page);
-  const views = <SegmentedControl size="s" value={page} onChange={setPage} options={[{ value: 'overview', label: 'Overview' }, { value: 'map', label: 'Map' }, { value: 'flow', label: 'Capital Flow' }]} />;
-  const header = activeHeader ? <PageHeader title="Q1 2026 Strategy Framework" status={<Indicator type="green">Active</Indicator>} center={views}
+  // Figma 2761:256320: an icon-only segmented control (overview · node-map · capital flow) in the header's views slot, after the status
+  const views = <SegmentedControl size="s" value={page} onChange={setPage} options={[{ value: 'overview', iconLeft: 'overview', ariaLabel: 'Overview' }, { value: 'map', iconLeft: 'node-map', ariaLabel: 'Map' }, { value: 'flow', iconLeft: 'capital-flow', ariaLabel: 'Capital Flow' }]} />;
+  const header = activeHeader ? <PageHeader title="Q1 2026 Strategy Framework" status={<Indicator type="green">Active</Indicator>} views={views}
       actions={openRecs.length ? <IFS.CooperChip onClick={() => setCooper({ kind: 'recs' })}>{`${openRecs.length} Recommendation${openRecs.length > 1 ? 's' : ''}`}</IFS.CooperChip> : undefined} />
     : draftStage ? <PageHeader title={draft.name} onBack={() => setPage('library')} status={<Indicator type={VF_STATUS[draft.status].type}>{draft.stage === 'input' ? 'Draft' : VF_STATUS[draft.status].label}</Indicator>}
       center={<Stepper current={['input', 'shape', 'review', 'approval'].indexOf(page)} steps={[{ label: 'Input' }, { label: 'Shape' }, { label: 'Review' }, { label: 'Approve' }]} />}
