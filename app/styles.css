@@ -147,3 +147,10 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .study-row.is-click:hover .study-acts, .study-row.is-click:focus-within .study-acts { display: flex; }
 .study-row.is-click:hover .study-time { display: none; }
 .study-alert { position: absolute; top: 12px; right: 12px; width: 303px; z-index: 700; }
+/* J05: Cooper recommendations window, evidence drawer, send-to-Build snackbar */
+.recs-wrap { position: absolute; right: 12px; top: 12px; bottom: 12px; width: 380px; z-index: 650; display: flex; flex-direction: column; }
+.recs-wrap > * { max-height: 100%; }
+.rec-evidence { position: absolute; right: 404px; top: 12px; width: 396px; z-index: 660; }
+.rec-sec { gap: 8px; padding-top: 8px; border-top: 1px solid var(--border-base); }
+.rec-extra { gap: 4px; }
+.build-snack { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); width: 360px; z-index: 1500; }
