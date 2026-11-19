@@ -144,3 +144,36 @@ const COMPARE_SCENARIOS = [PLAN_BASELINE_ID, ...SETUP_SCENARIOS.map(s => s.id)].
 const COMPARE_BASE = COMPARE_SCENARIOS[0];
 // Cooper's pick [Assumed]: the most value per dollar of CAPEX among the optimised scenarios
 const COOPER_PICK = COMPARE_SCENARIOS.filter(c => !c.baseline).reduce((b, c) => (c.value / c.capex > b.value / b.capex ? c : b)).id;
+
+/* ---------------------------------------------------------------- J18 · Compare: confidence, Cooper's evaluation, evidence, investments */
+// Open questions before approval [Assumed] (Figma 85:59501 copy)
+const compareIssues = () => [
+  { id: 'retained', kind: 'question', title: 'Is the retained risk in the recommended scenario acceptable?', description: 'The recommended scenario still leaves some risk unresolved. Confirm whether that level of exposure is acceptable.', answer: true, upload: true,
+    solutions: [{ id: 'accept', title: 'Accept retained risk', description: 'The remaining exposure is within the risk tolerance for this cycle.', recommended: true },
+      { id: 'reduce', title: 'Reduce risk further', description: 'Re-optimize with a tighter aggregate-risk constraint.' }, { id: 'critical', title: 'Prioritize critical risk', description: 'Force the highest-risk investments into the plan.' }] },
+  { id: 'deferrals', kind: 'question', title: 'Are the deferred investments safe to defer?', description: 'Some deferred investments carry rising condition risk. Confirm the owners agree.', answer: true,
+    solutions: [{ id: 'owners', title: 'Ask the owners to confirm', description: 'Cooper asks each owner of a deferred investment to confirm.', recommended: true }, { id: 'keep', title: 'Keep them deferred', description: 'Revisit them in the next cycle.' }] },
+];
+// Cooper's evaluation of a scenario (Figma compare §5.3), from the real records
+function cooperEvaluation(id) {
+  const c = COMPARE_SCENARIOS.find(x => x.id === id) || COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK), b = COMPARE_BASE;
+  const d = (x, y) => `${x >= y ? '+' : '−'}${Math.abs(Math.round((x / y - 1) * 100))}%`;
+  return `${c.short} gives the most value per dollar of the optimized scenarios: ${fmtCompact(c.value)} of value (${d(c.value, b.value)} vs the requested plan) for ${fmtMoney(c.capex)} of CAPEX (${d(c.capex, b.capex)}). It keeps ${c.onSchedule} of ${PLAN_INVESTMENTS.length} investments on schedule and defers ${c.deferred}. The trade-off: retained risk in 2032 is ${c.risk2032 == null ? 'not reported' : `${fmtCompact(c.risk2032)} (${d(c.risk2032, b.risk2032)})`}.`;
+}
+const compareEvidence = id => { const c = COMPARE_SCENARIOS.find(x => x.id === id) || COMPARE_SCENARIOS[1];
+  return [
+    { title: 'Scenario setup', items: [{ type: 'file', title: 'Budget range tested', content: 'quote', children: `${COMPARE_SCENARIOS.length - 1} scenarios were created around the ${fmtMoney(COMPARE_BASE.capex)} requested plan to test lower and higher funding levels.` },
+      { type: 'file', title: 'Same optimization scope', content: 'quote', children: `All scenarios use the same ${PLAN_INVESTMENTS.length} investments, planning groups and horizon, so the comparison is consistent.` }] },
+    { title: 'System data', items: [{ type: 'file', title: 'Baseline retained risk', content: 'quote', children: `The requested plan’s retained risk (${COMPARE_BASE.risk2032 == null ? '—' : fmtCompact(COMPARE_BASE.risk2032)} in 2032) is the reference point for ${c.short}.` }] },
+  ]; };
+// Investments tab [Added]: per-investment changes derived from the real per-scenario counts (deferred, advanced, alternative changed)
+function scenarioChanges(id) {
+  const c = COMPARE_SCENARIOS.find(x => x.id === id); if (!c || c.baseline) return [];
+  const order = [...PLAN_INVESTMENTS].sort((a, b) => ((a.id * 2654435761) % 997) - ((b.id * 2654435761) % 997));
+  return order.map((inv, k) => {
+    const kind = k < c.deferred ? 'deferred' : k < c.deferred + (c.advanced || 0) ? 'advanced' : k < c.deferred + (c.advanced || 0) + c.altChanged ? 'alt' : 'none';
+    const months = kind === 'deferred' ? 4 + (inv.id % 21) : kind === 'advanced' ? -(2 + (inv.id % 9)) : 0;
+    const band = kind === 'alt' || Math.abs(months) >= 12 ? 'Highest shift' : months ? 'Moderate shift' : 'No shift';
+    return { id: inv.id, name: inv.name, code: inv.code, alternative: inv.alternative, start: inv.startDate, months, kind, band, capex: inv.capex };
+  });
+}

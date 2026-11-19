@@ -517,6 +517,11 @@ function Notifications({ open, notes, onClose, onOpen }) {
 /* ============================================================ Compare (Figma 85:65862; results stream in while optimizing, 85:83784) */
 function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval, onBack, onSetup }) {
   const [tab, setTab] = useState('overview');
+  // J18: System confidence (open questions gate Send for approval), Cooper's evaluation and the evidence chain
+  const conf = useIssueReport({ issues: useMemo(() => compareIssues(), []) });
+  const [cooperOpen, setCooperOpen] = useState(false), [evid, setEvid] = useState(false), [cmp, setCmp] = useState(null);
+  const answered = compareIssues().every(i => { const st = (conf.status || {})[i.id]; return st && (st.applied || st.answer || st.file); });
+  const evalId = final || COOPER_PICK;
   const [, tick] = useState(0);
   useEffect(() => { if (!run) return; const iv = setInterval(() => tick(t => t + 1), 500); return () => clearInterval(iv); }, [run]);
   const p = done ? 1 : runProgress(run);
@@ -565,15 +570,14 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
   return (
     <AppShell navBar={navBar} header={header}
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
-        prompts={['Explain gaps in confidence', 'Why this scenario?']} onPrompt={pr => toast({ title: `Cooper: ${pr}` })} />}>
+        prompts={['Explain gaps in confidence', 'Why this scenario?']} onPrompt={pr => /^Why/.test(pr) ? setCooperOpen(true) : toast({ title: 'Cooper', description: `${compareIssues().filter(i => !((conf.status || {})[i.id])).length} open question(s) before approval: see System confidence.` })} />}>
       {run && !done && <RunProgress run={run} onClose={() => {}} />}
-      <div className="page">
+      <div className="page-row"><div className="page">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <span className="t-heading-h2-medium">Scenario Comparison</span>
           <div className="row" style={{ gap: 'var(--space-200)' }}>
             <Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => toast({ title: 'New scenario isn’t part of this flow' })}>New scenario</Button>
-            <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => { const c = COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK);
-              toast({ title: `Cooper favours ${c.short}`, description: `Most value per dollar: ${fmtCompact(c.value)} value for ${fmtMoney(c.capex)} CAPEX, ${c.deferred} investments deferred.` }); }}>Cooper’s evaluation</Button>
+            <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => setCooperOpen(true)}>Cooper’s evaluation</Button>
           </div>
         </div>
         <div className="plan-cards">{COMPARE_SCENARIOS.map(c => <Card key={c.id} c={c} />)}</div>
@@ -597,8 +601,28 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
                 return <span className={cap && tot > cap ? 'plan-down' : ''}>{fmtUnit(tot, r.unit)}</span>; } }))]} />
           </div>
         </PSec>}
-        {tab === 'investments' && <EmptyState title="Investments by scenario" description="Per-investment changes between scenarios aren’t part of this flow yet." />}
+        {tab === 'investments' && (() => { const id = cmp || final || COOPER_PICK, rows = scenarioChanges(id).filter(r => r.band !== 'No shift' || true);
+          return <PSec title="Investments">
+            <div className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
+              <div className="row" style={{ gap: 'var(--space-300)' }}><span className="t-body-m-regular sec">Baseline</span><span className="t-body-m-regular sec">compared to</span>
+                <div style={{ width: 'var(--proto-picker-w)' }}><Select value={id} onChange={setCmp} options={COMPARE_SCENARIOS.filter(c => !c.baseline).map(c => ({ value: c.id, label: c.short }))} /></div>
+                <span className="t-body-m-regular muted">Derived from the scenario’s totals</span></div>
+              <Table rowHeight={48} groupBy="band" defaultCollapsed={['No shift']} rows={rows} columns={[
+                { key: 'name', title: 'Investment', width: '2fr', primary: true, render: r => <span className="col"><span className="t-label-m-medium plan-ellipsis">{r.name}</span><span className="t-body-m-regular muted">{r.code}</span></span> },
+                { key: 'alternative', title: 'Alternative', width: '1fr', render: r => r.kind === 'alt' ? <span className="row" style={{ gap: 'var(--space-150)' }}><s className="muted">{r.alternative}</s><span>Alternative 2</span></span> : r.alternative },
+                { key: 'start', title: 'Start date', width: '1fr', render: r => <span className="row" style={{ gap: 'var(--space-150)' }}>{fmtDate(r.start)}{r.months ? <Badge size="s" color="white">{`${r.months > 0 ? '+' : '−'}${Math.abs(r.months)}m`}</Badge> : null}</span> },
+                { key: 'capex', title: 'Cost', type: 'number', width: 'var(--table-col-number-min)', render: r => fmtMoney(r.capex) }]} />
+            </div></PSec>; })()}
       </div>
+      <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
+        <Panel title="System confidence" collapsible={false} dot={conf.dot || undefined} onEvidence={() => setEvid(true)} className="ifs-trc-panel" style={{ height: '100%' }}>
+          <ContentCard className="ifs-trc-card" title={<ConfidenceGates controller={conf} label="Approval readiness" />}
+            bottom={<div className="ifs-trc-card__issues"><IssueNavigator controller={conf} /></div>} />
+        </Panel>
+      </div></div>
+      {cooperOpen && !evid && <div className="rec-evidence"><AgentWindow text={cooperEvaluation(evalId)} onClose={() => setCooperOpen(false)} onAsk={() => {}}
+        secondaryAction={{ label: 'Evidence chain', onClick: () => setEvid(true) }} /></div>}
+      {evid && <div className="rec-evidence"><IFS.EvidenceChainDrawer open={evid} onOpenChange={setEvid} value={87} rationale={compareEvidence(evalId)} benchmark={{ empty: true }} /></div>}
     </AppShell>
   );
 }

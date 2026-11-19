@@ -2,6 +2,7 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-19** **J18 built** (tour 015): Compare gets System confidence (non-blocking), Cooper's evaluation, the evidence chain and a derived Investments tab. Source: user; spec `screens/plan-j15-j18-j21-figma-spec.md` §3.
 - **2026-11-19** **J21 built** (tour 014): Plan › Approve workspace (`#plan-approve`) with Executive / Technical / Financial gates, reviewer tables with push and Change reviewer, then Publish now / Schedule; Plan Home follows the new stages (In approval → Ready v1 → Scheduled / Published). Send for approval now opens Approve. Source: user; spec `screens/plan-j15-j18-j21-figma-spec.md`.
 - **2026-11-19** **J11 built** (tour 013): Send for review → owner approval chain; reviewer view (Noah Lindgren) with Readiness Evaluation and Decide (Proceed / Request info / Park / Stop); Refining → Refine → Send for approval → approval chain with push → Approved. **J25 skipped** (open question 57). Source: user ("skip unclear flows and flag them"); spec `screens/build-j11-figma-spec.md`.
 - **2026-11-19** **J10 built** (tour 012) on the existing Refine screens: a mention (#56) to the estimator, two stages flagged "Needs estimate" in Cost & Schedule, confirm each, resolve the comment. New persona Noah Lindgren, Estimator / Cost Modeller `[Added]`. Refine's comments now act as the signed-in persona. Source: user.

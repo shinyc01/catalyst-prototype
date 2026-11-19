@@ -17,6 +17,7 @@ function initialFromHash(h) {
   if (name === 'study-idea-done') { s.lenses = withEv(INITIAL_LENSES); s.chat = replay('idea', IDEA_ANSWERS, s.lenses); }
   if (name === 'plan') s.screen = 'plan';
   if (name === 'plan-compare') s.screen = 'plan-compare';
+  if (p.get('demo') === 'optimized') s.demoRun = true;            // J18 tour: arrive with the optimization already finished
   if (name === 'plan-approve') s.screen = 'plan-approve';
   if (name.startsWith('plan-') && name !== 'plan-compare' && name !== 'plan-approve') { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
   if (name === 'build') { s.lenses = withEv(INITIAL_LENSES); s.screen = 'build'; s.idea = { answers: IDEA_ANSWERS }; }
@@ -48,6 +49,7 @@ function App() {
   const [planSaved, setPlanSaved] = usePersisted('plan.confidence', {});
   const [planSetup, setPlanSetup] = usePersisted('plan.setup', {});
   const [run, setRun] = usePersisted('plan.run', null);                    // { startedAt, scenarios, done }
+  useEffect(() => { if (init.demoRun && !(run && run.done)) { setRun({ startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); } }, []);
   const [sentAt, setSentAt] = usePersisted('plan.sentAt', {});
   const [planStage, setPlanStage] = usePersisted('plan.stage', 'time');
   const [planGates, setPlanGates] = usePersisted('plan.gates', paInitialGates());   // J21 approval gates   // time → setup → (run) → approval
@@ -113,6 +115,7 @@ function App() {
       const n = initialFromHash(location.hash.slice(1));
       setScreen(n.screen); if (n.refinePage) setRefinePage(n.refinePage); if (n.valuePage) setValuePage(n.valuePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
       if (n.idea) setIdea(n.idea);
+      if (n.demoRun) { setRun(r => r && r.done ? r : { startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); }
     };
     window.addEventListener('hashchange', apply);
     return () => window.removeEventListener('hashchange', apply);
