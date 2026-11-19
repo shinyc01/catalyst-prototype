@@ -50,6 +50,7 @@ const PEOPLE = {
   HG: { name: 'Hollis Grant', initials: 'HG', type: 'orange', role: 'Investment Owner, Electrical Distribution' },
   MD: { name: 'Mara Delgado', initials: 'MD', type: 'blue', role: 'Asset Manager' },
   OF: { name: 'Owen Fitch', initials: 'OF', type: 'light-purple', role: 'Portfolio Owner, Electrical' },
+  IC: { name: 'Ines Calder', initials: 'IC', type: 'purple', role: 'CX Consultant', added: true },
   TQ: { name: 'Tara Quinn', initials: 'TQ', type: 'dark-orange', role: 'Field supervisor', added: true },
 };
 const short = p => { const [f, ...r] = PEOPLE[p].name.split(' '); return `${f[0]}. ${r.join(' ')}`; };

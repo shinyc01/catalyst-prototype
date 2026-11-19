@@ -6,4 +6,4 @@
 const COMPANY = { name: 'Alder Ridge Energy', short: 'Alder Ridge' };
 // Every person the prototype may show. Add invented people here (and to PEOPLE in whistler-command.js).
 const INVENTED_PEOPLE = ['Hollis Grant', 'Mara Delgado', 'Owen Fitch', 'Ravi Banerjee', 'Kenji Mori', 'Theo Marsh', 'Priyanka Iyer',
-  'Luca Ferri', 'Noah Lindgren', 'Tara Quinn'];
+  'Luca Ferri', 'Noah Lindgren', 'Tara Quinn', 'Ines Calder'];

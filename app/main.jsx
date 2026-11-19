@@ -21,6 +21,7 @@ function initialFromHash(h) {
   if (name === 'build') { s.lenses = withEv(INITIAL_LENSES); s.screen = 'build'; s.idea = { answers: IDEA_ANSWERS }; }
   if (name === 'build-library') s.screen = 'build-library';
   if (name === 'build-new') s.screen = 'build-new';
+  if (name === 'value' || name.startsWith('value-')) { s.screen = 'value'; s.valuePage = name.slice(6) || 'overview'; }
   if (name.startsWith('build-refine')) { s.screen = 'build-refine'; s.refinePage = name.slice('build-refine-'.length) || 'overview'; }
   return s;
 }
@@ -82,6 +83,10 @@ function App() {
   const [refinePage, setRefinePage] = useState(init.refinePage || 'overview');
   const [refine, setRefine] = usePersisted('build.refine', { recommended: altForIntent(IDEA_ANSWERS[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: RF_THREADS(),
     docs: RF_DOCS, status: 'refining' });
+  // J12–J14 Value: the page, the consultant's framework draft, and the Cooper recommendations already acted on
+  const [valuePage, setValuePage] = useState(init.valuePage || 'overview');
+  const [valueDraft, setValueDraft] = usePersisted('value.draft', vfNewDraft());
+  const [valueRecs, setValueRecs] = usePersisted('value.recs', []);
   const [, setTick] = useState(0);
   const notify = n => setNotes(l => [{ id: Date.now() + Math.random(), time: Date.now(), ...n }, ...l]);
 
@@ -89,7 +94,7 @@ function App() {
   useEffect(() => {
     const apply = () => {
       const n = initialFromHash(location.hash.slice(1));
-      setScreen(n.screen); if (n.refinePage) setRefinePage(n.refinePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
+      setScreen(n.screen); if (n.refinePage) setRefinePage(n.refinePage); if (n.valuePage) setValuePage(n.valuePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
       if (n.idea) setIdea(n.idea);
     };
     window.addEventListener('hashchange', apply);
@@ -129,6 +134,7 @@ function App() {
     let h = screen;
     if (screen === 'plan-setup') h = { readiness: 'plan-setup', groups: 'plan-groups', scenarios: 'plan-scenarios' }[tab];
     if (screen === 'explore' && details) h = 'explore-details';
+    if (screen === 'value') h = valuePage === 'overview' ? 'value' : `value-${valuePage}`;
     if (screen === 'build-refine') h = refinePage === 'overview' ? 'build-refine' : `build-refine-${refinePage}`;
     if (screen === 'study') {
       if (chat?.kind === 'lens') h = chat.done ? 'study-lens-added' : 'study-lens-chat';
@@ -141,7 +147,7 @@ function App() {
     if (persona !== 'owner') q.set('persona', persona);
     const full = h + (q.toString() ? '?' + q : '');
     if (location.hash.slice(1) !== full) history.replaceState(null, '', '#' + full);
-  }, [screen, details, sel, chat, asset, year, persona, tab, refinePage]);
+  }, [screen, details, sel, chat, asset, year, persona, tab, refinePage, valuePage]);
 
   // Opening a search result in its owning area (Figma "Opens in the owning area"); ⌘↵ opens it in a new tab
   const openFromSearch = (r, o = {}) => {
@@ -175,6 +181,7 @@ function App() {
     if (v === 'command') go('command');
     else if (v === 'explore') go('explore');
     else if (v === 'build') go('build-library');
+    else if (v === 'value') { setValuePage('overview'); go('value'); }
     else if (v === 'plan') go('plan');
     else toast({ title: `${v[0].toUpperCase() + v.slice(1)} isn’t part of this flow` });
   };
@@ -236,6 +243,7 @@ function App() {
           toast({ title: 'Sent for review', description: 'Reviewers are notified' }); }}
         onDismiss={() => { const prev = ideas[IDEA_INV.id]; setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
           toast({ title: 'The idea has been stopped.', duration: 5000, primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setIdeas(m => ({ ...m, [IDEA_INV.id]: prev || { status: 'shaping', modified: STORY_DAY } })) } }); }} />}
+      {screen === 'value' && <Value navBar={navBar} page={valuePage} setPage={setValuePage} draft={valueDraft} setDraft={setValueDraft} recsDone={valueRecs} setRecsDone={setValueRecs} persona={persona} />}
       {screen === 'build-refine' && <Refine navBar={navBar} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
         onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval' })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
           toast({ title: 'Sent for approval', description: 'Approve isn’t built yet — the approvers are notified' }); }} />}

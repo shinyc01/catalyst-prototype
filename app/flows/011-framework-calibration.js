@@ -1,0 +1,26 @@
+(window.FLOWS = window.FLOWS || []).push({
+  id: 'framework-calibration',
+  title: 'J14 · Value · Framework maintenance and calibration',
+  summary: 'Cooper sees that a value model drifted from observed outcomes. The modeller opens the model, recalibrates a draft copy, reads what the change will recalculate, and sends it through review and approval.',
+  persona: 'consultant',
+  added: '2026-11-19', addedBy: 'Shiny',
+  sources: [
+    { label: 'Journey J14 (Estimator / Cost Modeller) — saved verbatim', url: 'context/flows/framework-calibration.md' },
+    { label: 'Figma · Cooper recommendations', url: 'https://www.figma.com/design/8VmjGH9Ihg8TFzDQiKTPpi/?node-id=2365-48305' },
+    { label: 'Figma · Library: Value Models', url: 'https://www.figma.com/design/8VmjGH9Ihg8TFzDQiKTPpi/?node-id=2456-2307' },
+    { label: 'Figma · Shape mode', url: 'https://www.figma.com/design/8VmjGH9Ihg8TFzDQiKTPpi/?node-id=2841-29115' },
+  ],
+  steps: [
+    { hash: '#value?persona=consultant', target: '.ifs-cooper-chip', title: 'Learn where models drift', body: 'The active framework has recommendations. Open them.' },
+    { target: { text: 'Update Risk Calculation Inputs' }, title: 'A model drifted',
+      body: 'Observed failures diverged from WDRM’s predictions. Expand it.' },
+    { target: '.rf-cooper .ifs-rec-item > .ifs-button', title: 'See the evidence', body: 'The impact and the evidence behind it.' },
+    { target: { text: 'Do it', exact: true }, title: 'Open the model', body: 'Cooper opens WDRM v4 in Value Models.' },
+    { target: '.page .vf-model-flow', advance: 'next', title: 'The model behind the score',
+      body: 'Inputs, the measure calculation and its outputs. Active models are read-only.' },
+    { target: { text: 'Edit', exact: true }, title: 'Recalibrate', body: 'Edit makes a draft copy; the active version keeps scoring until the copy publishes.' },
+    { target: '.vf-trace', advance: 'next', title: 'Read the impact warning',
+      body: 'Existing investments scored by the model will be recalculated when it publishes.' },
+    { target: { text: 'Review', exact: true }, title: 'Check the consequences', body: 'Review the impact on the portfolio and the automated checks, then send it for approval as in J13.' },
+  ],
+});
