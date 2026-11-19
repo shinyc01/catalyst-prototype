@@ -245,8 +245,21 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .rf-grid__row { display: contents; }
 .rf-grid__row > * { display: flex; align-items: center; min-height: var(--size-40); padding: 0 var(--space-inset); border-top: var(--border-widths-border-100) solid var(--border-base); }
 .rf-fields { row-gap: var(--space-stack); }
+/* Refine field pairs (Figma Investment / Alternative details): label over value, two per row, a hairline between rows */
+.rf-pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-600); }
+.rf-pair { gap: var(--space-200); padding: var(--space-300) 0; border-bottom: var(--border-widths-border-100) solid var(--border-base); min-width: 0; }
+.rf-pair.is-full { grid-column: 1 / -1; }
+/* Alternative comparison: the alternative cards head the grid's columns (Figma 48:56129) */
+.rf-grid__corner, .rf-grid__card { padding: var(--space-200); }
+.rf-grid__card > * { height: 100%; }
 .rf-formula { gap: var(--space-200); min-height: var(--size-40); padding: 0 var(--space-300); border: var(--border-widths-border-100) solid var(--border-base); border-radius: var(--radius-radius-100); }
-.rf-sheet { display: grid; grid-template-columns: minmax(var(--proto-picker-w), 2fr) repeat(5, minmax(0, 1fr)) repeat(var(--rf-years), minmax(0, 1fr)); overflow-x: auto; }
+.rf-sheet { display: grid; grid-template-columns: var(--size-40) minmax(var(--proto-picker-w), max-content) repeat(5, max-content) repeat(var(--rf-years), minmax(var(--table-col-number-min), max-content)); overflow-x: auto; }
+.rf-sheet__l { justify-content: center; min-height: var(--size-24); background: var(--surface-secondary-alpha); }   /* spreadsheet column letters (Figma 76:8795) */
+.rf-sheet__n { justify-content: center; }                                                                          /* row numbers */
+.rf-sheet__sub { padding-left: var(--space-600); }
+.rf-sheet > .rf-sheet__stage { flex-wrap: wrap; white-space: normal; }                                           /* a stage name and its Needs estimate flag wrap instead of overlapping the next column */
+.rf-gantt { overflow-x: auto; }                                                                                    /* Gantt: at least one 48 px column per period, so months stay legible */
+.rf-gantt > * { min-width: calc(var(--proto-picker-w) + var(--rf-slots) * var(--size-48)); }                                                                 /* a sub-stage row, under its stage */
 .rf-sheet > * { display: flex; align-items: center; min-height: var(--size-32); padding: var(--space-100) var(--space-200); border-bottom: var(--border-widths-border-100) solid var(--border-base); white-space: nowrap; }
 .rf-sheet__h { color: var(--text-secondary); }
 .rf-cell { all: unset; cursor: cell; justify-content: flex-end; }

@@ -69,3 +69,6 @@ Answer these with the product designer, then move each answer into the right con
 65. **Opened records other than the pad-mount program** have no comments, dependencies or questionnaire, and their cost stages are generic `[Added]`. Should any of them get scripted content for demos?
 66. ~~**Approved investments in Build:**~~ **Answered 2026-11-19 (Shiny):** they stay in the Investments tab with status Approved after they go to Plan.
 67. **Executing investments** (3 real records) are not listed in Build `[Assumed]`: they are past Plan. Confirm they belong to Results (relates to 57).
+68. **Refine side navigation:** Figma draws two trees. Most frames put **Value** under the investment and give each alternative only Details and Cost & Schedule; the newest Gantt frame drops investment Value and gives each alternative **Details / Cost & Schedule / Value**. The prototype keeps both (investment Value and ↳ Value per alternative). Which is right?
+69. **Comparison chart view:** Figma's radar chart isn't in the DS; the prototype uses the kit's grouped column chart. Add a radar to the DS, or keep the substitute?
+70. **Alternative comparison rows without data:** ROI, payback, NPV, IRR, budget fit, priority and vendor show "—" (no source in the demo data). Should the prototype compute any of them, and how?
