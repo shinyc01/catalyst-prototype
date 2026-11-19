@@ -89,7 +89,7 @@ function MapView({ lenses, year, selected, onSelect, interactive = true, grid = 
         const f = hit(e); map.getCanvas().style.cursor = f ? 'pointer' : 'crosshair';
         if (!f) return tip.remove();
         const r = st.current.rows?.find(x => x.a.id === f.properties.id); if (!r) return;
-        tip.setLngLat(e.lngLat).setHTML(`<div class="t-body-m-medium">${r.a.label}</div><div class="t-body-s-regular">${r.band.label} · risk ${Math.round(r.risk)} / tolerance ${r.tol}${r.over ? ' · <b>over</b>' : ''}</div><div class="t-body-s-regular" style="color:var(--text-tertiary)">Click for details</div>`).addTo(map);
+        tip.setLngLat(e.lngLat).setHTML(`<div class="t-label-m-medium">${r.a.label}</div><div class="t-body-s-regular">${r.band.label} · risk ${Math.round(r.risk)} / tolerance ${r.tol}${r.over ? ' · <b>over</b>' : ''}</div><div class="t-body-s-regular" style="color:var(--text-tertiary)">Click for details</div>`).addTo(map);
       });
       map.on('click', e => {
         if (!st.current.ready) return;
@@ -105,7 +105,7 @@ function MapView({ lenses, year, selected, onSelect, interactive = true, grid = 
         const row = (name, color, v) => `<div class="tip-row"><i style="background:${color}"></i><span>${name}</span><b>${v}</b></div>`;
         st.current.cellPopup?.remove();
         st.current.cellPopup = new maplibregl.Popup({ closeButton: false, className: 'proto-tip', offset: 6 }).setLngLat([cLng, cLat]).setHTML(
-          `<div class="t-body-m-medium">Area risk ${Math.floor(b.total)} · ${band.label}</div><div class="t-body-s-regular" style="color:var(--text-tertiary)">${st.current.year} · this 110 m square</div>` +
+          `<div class="t-label-m-medium">Area risk ${Math.floor(b.total)} · ${band.label}</div><div class="t-body-s-regular" style="color:var(--text-tertiary)">${st.current.year} · this 110 m square</div>` +
           row('Base condition', 'var(--border-grey)', Math.round(b.base)) + b.parts.map(p => row(LENS_INFO[p.id].label, LENS_INFO[p.id].color, `+${Math.round(p.delta)}`)).join('')).addTo(map);
       });
     }
@@ -137,20 +137,20 @@ function MapView({ lenses, year, selected, onSelect, interactive = true, grid = 
   return <div ref={el} style={{ position: 'absolute', inset: 0 }} />;
 }
 const MapLegend = ({ style, grid = true }) => (
-  <NDS label="Map legend" className="box glass col" style={{ gap: 6, width: 210, ...style }}>
+  <NDS label="Map legend" className="box glass col" style={{ gap: 'var(--space-150)', width: 'var(--proto-legend-w)', ...style }}>
     {grid && <>
-      <span className="t-label-m-upper muted">Area risk · all active lenses</span>
-      <div style={{ height: 8, borderRadius: 4, background: `linear-gradient(90deg, ${AREA_BANDS.map(b => `var(${b.token})`).join(', ')})` }} />
+      <span className="t-label-m-medium muted">Area risk · all active lenses</span>
+      <div style={{ height: 'var(--size-8)', borderRadius: 'var(--radius-radius-100)', background: `linear-gradient(90deg, ${AREA_BANDS.map(b => `var(${b.token})`).join(', ')})` }} />
       <div className="row t-body-s-regular muted" style={{ justifyContent: 'space-between' }}><span>Low</span><span>High</span></div>
       <span className="t-body-s-regular muted">Click a square to see what adds up</span>
     </>}
-    <span className="t-label-m-upper muted" style={grid ? { marginTop: 4 } : undefined}>Asset risk</span>
-    <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>{BANDS.map(b => <InfoHintItem key={b.id} label={b.label} color={b.color} />)}</div>
+    <span className="t-label-m-medium muted" style={grid ? { marginTop: 'var(--space-100)' } : undefined}>Asset risk</span>
+    <div className="row" style={{ gap: 'var(--space-250)', flexWrap: 'wrap' }}>{BANDS.map(b => <InfoHintItem key={b.id} label={b.label} color={b.color} />)}</div>
     <span className="t-body-s-regular muted">Glowing = over intervention tolerance</span>
   </NDS>
 );
 const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen, onStudy }) => <>
-  <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 500 }}>
+  <div style={{ position: 'absolute', left: 'var(--page-margin)', top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
     {/* Figma Explore rail (29:191921 / 29:101050): 1 = asset structure, 2 = studies library, 3 = study */}
     <MapToolbar><MapToolCluster label="Map views">
       <MapToolButton icon="asset-structure" label="Asset structure" active={!!assetsOpen} onClick={() => onAssets ? onAssets() : toast({ title: 'Asset structure isn’t part of this flow' })} />
@@ -158,7 +158,7 @@ const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen
       <MapToolButton icon="system-book" label="Study" active={!!studyOpen} onClick={() => onStudy ? onStudy() : api.current?.fit()} />
     </MapToolCluster></MapToolbar>
   </div>
-  <div style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 500 }}>
+  <div style={{ position: 'absolute', left: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
     <MapToolbar onAction={id => id === 'zoom-in' ? api.current?.zoomIn() : id === 'zoom-out' ? api.current?.zoomOut() : toast({ title: `${id} isn’t part of this flow` })} />
   </div>
 </>;

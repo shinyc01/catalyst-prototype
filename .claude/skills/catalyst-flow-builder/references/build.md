@@ -15,10 +15,18 @@
 ## Design system rules
 - **Catalyst Design System 2.0 only**: `vendor/ds2/`. Its API is `vendor/ds2/api.md`, with examples in `examples.md`, and usage and placement rules in `rules.md`, `components.md` and `usage.md`. Look a component up with `bash scripts/entry.sh Name1 Name2` rather than reading the whole file.
 - Use props as the handovers use them (the **In handovers** line in api.md).
-- Use **tokens only**. Colours are `var(--…)`; typography uses the `.t-*` classes or the DS 2.0 type tokens (`--text-*`). No hex or rgba values, which `scripts/check.mjs` enforces. Canvas and WebGL colours are read from tokens at runtime.
+- Use **tokens only, for everything** (DS 2.0.2 foundations: `vendor/ds2/spacing.md`, `layout.md`, `typography.md`). `scripts/check.mjs` enforces it.
+  - Colours: `var(--…)`. Canvas and WebGL colours are read from tokens at runtime.
+  - Spacing: `--space-*` (100 = 4px: 50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1100). Containers (cards, panels, drawers, modals, popovers) pad with `--space-inset` on all four sides, blocks inside them sit `--space-stack` apart, page sections `--space-section`. Cards on a page: `--page-gap`. Inside controls, rows and gaps of 8 or less use fixed steps.
+  - Sizes: `--size-*` (ruler), `--control-h-s/m/l`, `--region-panel` (380), `--region-panel-l` (600), `--overlay-width-s/m/l` (320/440/600), `--table-col-*` for table columns (pass the token as the column `width` string).
+  - Map screens: add `ifs-slots` to the map container; right panels use `.ifs-slot-right`, the large left panel `.ifs-slot-left`; anything else on the map sits `--page-margin` from the side edges and `--space-300` from top and bottom.
+  - Text: the semantic `.t-*` classes or `font: var(--text-…)` + `letter-spacing: var(--text-…-tracking)`; never a font size, weight or line height number. No uppercase: Label/M/medium in sentence case. Card, panel and modal titles are `t-heading-h4-semibold` in Title Case; sub-sections inside them `t-label-m-medium`.
+  - Layers: `--z-index-*` or the `--proto-z-*` tokens.
+  - Anything the DS has no token for: add a `--proto-*` token to the `:root` block at the top of `app/styles.css`, built on `--proto-unit` (= `--space-100`) or a DS region, with a comment saying what it is. Never a raw number in a screen. JS geometry reads tokens with `tokenPx('--space-300')` (app/ui.jsx).
+  - Exceptions: MapLibre paint and camera padding (px by API), numbers passed to a DS component's own props (icon `size`, chart `height`), `opacity: 0/1`. Anything else needs a `tokens-ok` comment on the line and a note in `context/decisions.md`.
 - **Non-DS parts.** Anything the kit doesn't have is wrapped in `<NDS label="what it is">`, which shows the "Not in DS" flag when "Show non-DS parts" is on (Prototype settings, off by default). List each one in the hand-over.
 - **Updating DS 2.0** happens only on purpose: `bash scripts/update-ds.sh`, then re-check every screen and commit the update on its own.
-- **DS 2.0 content rules** (Title Case for titles and buttons, and so on) are in `vendor/ds2/rules.md`. Follow them in new copy.
+- **DS 2.0 content rules** are in `vendor/ds2/content.md` (voice, labels, messages) and the Case rule in `typography.md`: Title Case for page, card, panel and modal titles and navigation; sentence case for buttons, statuses, column headers and all content. Follow them in new copy.
 
 ## Fidelity
 - **The Figma frame is the spec.** Match layout, controls, labels and card order exactly. Logic changes values, never UI.

@@ -27,7 +27,7 @@ function Tour({ flow, step, setStep, onExit }) {
       if (el && el !== scrolled) {                                          // bring the target on screen once, so testers don't have to look for it
         scrolled = el;
         const r = el.getBoundingClientRect();
-        if (r.top < 60 || r.bottom > window.innerHeight - 60 || r.left < 0 || r.right > window.innerWidth) el.scrollIntoView({ block: 'center', inline: 'nearest' });
+        if (r.top < tokenPx('--size-60') || r.bottom > window.innerHeight - tokenPx('--size-60') || r.left < 0 || r.right > window.innerWidth) el.scrollIntoView({ block: 'center', inline: 'nearest' });
       }
       setRect(el ? el.getBoundingClientRect() : null);
       // `until`: the step moves on by itself once the app reaches that screen (e.g. search opens an asset in Explore)
@@ -43,25 +43,27 @@ function Tour({ flow, step, setStep, onExit }) {
     document.addEventListener('click', onClick, true);
     return () => { clearInterval(iv); document.removeEventListener('click', onClick, true); };
   }, [flow.id, step]);
-  const pad = 6, W = 340;
+  // Geometry from DS tokens (read at runtime, so the card moves with the system): spotlight padding, gap, card width
+  const pad = tokenPx('--space-150'), gap = tokenPx('--space-300'), W = tokenPx('--overlay-width-s');
+  const cardH = document.querySelector('.tour-card')?.offsetHeight || W / 2;
   const box = rect && { left: rect.left - pad, top: rect.top - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 };
   let card = { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
   if (box) {
-    const below = box.top + box.height + 12, left = Math.min(Math.max(12, box.left), window.innerWidth - W - 12);
-    card = below + 190 < window.innerHeight ? { left, top: below } : { left, top: Math.max(12, box.top - 200) };
+    const below = box.top + box.height + gap, left = Math.min(Math.max(gap, box.left), window.innerWidth - W - gap);
+    card = below + cardH + gap < window.innerHeight ? { left, top: below } : { left, top: Math.max(gap, box.top - cardH - gap) };
   }
   return (
     <div className="tour-layer" aria-live="polite">
       {box ? <div className="tour-spot" style={box} /> : <div className="tour-dim" />}
-      <NDS label="Guided tour" className="tour-card col" style={{ ...card, width: W }}>
+      <NDS label="Guided tour" className="tour-card col" style={{ ...card, width: 'var(--overlay-width-s)' }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <span className="t-label-m-upper muted">{flow.title} · {step + 1}/{flow.steps.length}</span>
+          <span className="t-label-m-medium muted">{flow.title} · {step + 1}/{flow.steps.length}</span>
           <IconButton icon="system-close" size="s" label="Exit tour" onClick={() => onExit(false)} />
         </div>
-        <span className="t-body-l-medium">{s.title}</span>
+        <span className="t-label-l-medium">{s.title}</span>
         {s.body && <span className="t-body-m-regular sec">{s.body}</span>}
         {s.target && !rect && <span className="t-body-s-regular muted">Looking for the highlighted item… if it doesn’t appear, press Next.</span>}
-        <div className="row" style={{ gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+        <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'flex-end', marginTop: 'var(--space-100)' }}>
           {step > 0 && <Button type="tertiary" size="s" onClick={() => setStep(step - 1)}>Back</Button>}
           <Button type="primary" size="s" onClick={() => (last ? onExit(true) : setStep(step + 1))}>{last ? 'Finish' : (s.target && s.advance !== 'next' ? 'Skip' : 'Next')}</Button>
         </div>
@@ -73,9 +75,9 @@ function Tour({ flow, step, setStep, onExit }) {
 // Prototype settings — opened from the gear in the NavBar. Everything a tester needs now and then, as simple card rows:
 // who you're signed in as, the guided tours, the non-DS outlines, and resetting the demo data.
 const SettingsSection = ({ title, children }) => (
-  <section className="col" style={{ gap: 8 }}>
-    <span className="t-label-m-upper muted">{title}</span>
-    <div className="col" style={{ gap: 4 }}>{children}</div>
+  <section className="col" style={{ gap: 'var(--space-200)' }}>
+    <span className="t-label-m-medium muted">{title}</span>
+    <div className="col" style={{ gap: 'var(--space-100)' }}>{children}</div>
   </section>
 );
 function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart, searchNetwork, setSearchNetwork }) {
@@ -83,7 +85,7 @@ function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, on
   const reset = () => { Store.reset(); location.hash = '#command'; location.reload(); };
   return (
     <Drawer open={open} onOpenChange={o => !o && onClose()} title="Prototype settings" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim (z 500) sits above the drawer (z 200) */}
-      <div className="col" style={{ gap: 24, padding: '0 var(--paddings-padding-400) var(--paddings-padding-400)' }}>
+      <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
         <span className="t-body-m-regular sec">Tools for testing and demos. They aren’t part of Catalyst.</span>
 
         <SettingsSection title="Signed in as">
