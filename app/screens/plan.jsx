@@ -206,7 +206,7 @@ function Readiness({ rows, setRows, filter, setFilter }) {
 
 /* ------------------------------------------------------------ Setup › Planning groups (gate passed) */
 function Groups() {
-  const extra = planFromBuild(Store.get('build.refine')), groups = planGroups(extra);   // an investment approved in Build joins New to Scenario
+  const extra = planFromBuild(Store.get('build.refine'), Store.get('build.refineOther')), groups = planGroups(extra);   // an investment approved in Build joins New to Scenario
   const [sel, setSel] = useState(extra.length ? 'New to Scenario' : groups[0].id);
   const data = groups.map(g => ({ label: g.label, value: g.count }));
   const rows = extra.concat(PLAN_INVESTMENTS).filter(i => i.planningGroup === sel).slice(0, 12);
@@ -300,7 +300,7 @@ function InvestmentGroups({ s, res, setSetup }) {
   const on = res.groups || PLAN_GROUPS.filter(g => g.adjustable).map(g => g.id);
   const [sel, setSel] = useState(on[0] || PLAN_GROUPS[0].id);
   const toggle = id => setSetup(st => ({ ...st, restrictions: { ...st.restrictions, [s.id]: { ...res, groups: on.includes(id) ? on.filter(x => x !== id) : [...on, id] } } }));
-  const extra = planFromBuild(Store.get('build.refine')), groups = planGroups(extra);
+  const extra = planFromBuild(Store.get('build.refine'), Store.get('build.refineOther')), groups = planGroups(extra);
   const rows = extra.concat(PLAN_INVESTMENTS).filter(i => i.planningGroup === sel).slice(0, 8);
   return (
     <PSec title="Investment Groups">

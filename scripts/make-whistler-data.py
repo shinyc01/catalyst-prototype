@@ -103,9 +103,11 @@ for aid in CLUSTER_ASSET_IDS:
 
 inv_fields = 'id,code,name,type,stage,owner,manager,division,portfolio,totalSpend,totalValue,description,createdDate'
 investments = run('investments', '--fields', inv_fields)
-alternatives = run('alternatives', '--investment', ','.join(map(str, CLUSTER_INVESTMENTS)))
+# Every curated investment's real alternatives (Build opens any of them; Cooper's rule of at least three is applied in shared/build-model.js)
+ALT_INVESTMENTS = [i['id'] for i in investments]
+alternatives = run('alternatives', '--investment', ','.join(map(str, ALT_INVESTMENTS)))
 RISK_PROFILE = {r['alternativeId']: r for r in json.loads((pathlib.Path(S).resolve().parent.parent / 'data' / 'whistler-demo-data.json').read_text(encoding='utf-8'))['riskProfiles']}
-detail = {d['id']: d for d in run('investment-detail', '--investment', ','.join(map(str, CLUSTER_INVESTMENTS)))}
+detail = {d['id']: d for d in run('investment-detail', '--investment', ','.join(map(str, ALT_INVESTMENTS)))}
 for alt in alternatives:
     d = detail[alt['investmentId']]
     full = next(x for x in d['alternatives'] if x['id'] == alt['id'])

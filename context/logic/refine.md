@@ -10,6 +10,8 @@ Code: `shared/refine-model.js`, `app/screens/refine.jsx`. One investment is refi
 
 ## Alternatives (all `[Whistler]` unless marked)
 - Cost = `spendTotal`; years from first and last spend; CAPEX and OPEX = `spendByAccountByYear`.
+- **Cost by year** (cost plan, yearly forecast) = every account except **Revenue**. CLTDEMO nets Revenue (income, negative) into `spendByYear`, while `spendTotal` is CAPEX + OPEX; some Expansion and Modernization records earn revenue for decades after delivery. The cost plan's window also widens to every year with cost, so the plan always adds up to the alternative's cost.
+- **Any investment:** `rfContext(id)` in `shared/refine-model.js` holds everything Refine shows for one investment (see logic/build.md › Which rows open). Without a risk profile (the CCS investments), risk reduced, risk level and residual risk show "—", alternatives rank by BCR, and value models are the real value measures (no per-year breakdown).
 - **Risk reduced** = 1 − Σ residual risk ÷ Σ baseline risk, 2026–2035, from the real risk profile. Risk level = residual ÷ baseline in 2035: under 20% Low, under 50% Medium, else High.
 - Units replaced `[Added]`: 12 / 6 / 3, the numbers in the alternative descriptions. Customers protected = the pad-mounts' customers × units ÷ 12 `[Added]`.
 - ROI, payback, NPV and IRR show "—": the demo data has no financial model. Value is the framework score; BCR is the existing `[Added]` rule.

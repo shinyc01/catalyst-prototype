@@ -27,7 +27,7 @@ const rfAlt = id => RF_ALTS.find(a => a.id === id);
 const RISK_LEVEL = { low: { type: 'green', label: 'Low' }, medium: { type: 'orange', label: 'Medium' }, high: { type: 'red', label: 'High' } };
 
 // ---- Cost & Schedule. [Added] stages: the plan's share of each year's spend; dates split the alternative's spend period
-const RF_STAGES = [
+const RF_STAGES_MAIN = [
   { id: 'design', name: 'Design & engineering', type: 'Internal', share: 0.08, from: 0, to: 0.2, color: 'teal' },
   { id: 'procure', name: 'Procurement & long-lead units', type: 'External', share: 0.22, from: 0.1, to: 0.45, color: 'muted-purple' },
   { id: 'replace', name: 'Pad-mount replacement', type: 'External', share: 0.58, from: 0.3, to: 0.92, color: 'rose' },
@@ -35,15 +35,18 @@ const RF_STAGES = [
 ];
 const rfDay = d => new Date(`${d.slice(0, 10)}T12:00:00`);
 const rfIso = t => new Date(t).toISOString().slice(0, 10);
-function costPlan(alt, adjust = {}) {
-  const t0 = rfDay(alt.first).getTime(), t1 = rfDay(alt.last).getTime() + 30 * 864e5, years = Object.keys(alt.spendByYear).sort();
+function costPlan(alt, adjust = {}, RF_STAGES = RF_STAGES_MAIN) {
+  const byYear0 = alt.costByYear || alt.spendByYear, years = Object.keys(byYear0).sort(), spent = years.filter(y => byYear0[y]);
+  // the plan's window: the alternative's spend dates, widened to every year that has spend (some records spend outside their own dates)
+  const t0 = Math.min(rfDay(alt.first).getTime(), spent.length ? rfDay(`${spent[0]}-01-01`).getTime() : Infinity),
+    t1 = Math.max(rfDay(alt.last).getTime() + 30 * 864e5, spent.length ? rfDay(`${spent[spent.length - 1]}-12-31`).getTime() : -Infinity);
   const yearSpan = y => [rfDay(`${y}-01-01`).getTime(), rfDay(`${y}-12-31`).getTime()];
   return RF_STAGES.map(st => {
     const s = t0 + (t1 - t0) * st.from, e = t0 + (t1 - t0) * st.to, k = 1 + (adjust[st.id] || 0) / 100;
     // the stage's cost each year: its share of the year's spend, weighted by how much of the stage falls in that year
     const w = years.map(y => { const [a, b] = yearSpan(y); return Math.max(0, Math.min(b, e) - Math.max(a, s)); });
     const wy = years.map((y, i) => { const [a, b] = yearSpan(y); const tot = RF_STAGES.reduce((t, x) => t + x.share * Math.max(0, Math.min(b, t0 + (t1 - t0) * x.to) - Math.max(a, t0 + (t1 - t0) * x.from)), 0);
-      return tot ? alt.spendByYear[y] * st.share * w[i] / tot : 0; });
+      return tot ? byYear0[y] * st.share * w[i] / tot : 0; });
     const byYear = Object.fromEntries(years.map((y, i) => [y, Math.round(wy[i] * k)]));
     return { ...st, start: rfIso(s), end: rfIso(e), days: Math.round((e - s) / 864e5), byYear, total: rfSum(byYear) };
   });
@@ -60,7 +63,7 @@ const RF_THREADS = () => {
         text: `Is ${min.years} realistic for ${min.name}? Crew availability in ${min.first.slice(0, 4)} is tight, and outage windows in Alpine Meadows are short.` }] },
     { id: 't56', number: 56, place: `${med.name} · Cost & Schedule`, type: 'action', unread: true, resolved: false, altId: med.id, forEstimator: true,
       comments: [{ id: 'c3', name: 'Hollis Grant', avatar: { initials: 'HG', type: 'blue' }, time: '1 h ago',
-        text: `@Noah Lindgren Cooper filled 3 of the 5 cost lines for ${med.name} from the unit cost model. ${RF_ESTIMATE_STAGES.map(id => RF_STAGES.find(x => x.id === id).name).join(' and ')} need a person: can you check them?` }] },
+        text: `@Noah Lindgren Cooper filled 3 of the 5 cost lines for ${med.name} from the unit cost model. ${RF_ESTIMATE_STAGES.map(id => RF_STAGES_MAIN.find(x => x.id === id).name).join(' and ')} need a person: can you check them?` }] },
     { id: 't55', number: 55, place: med.name, type: 'question', unread: false, resolved: false, altId: med.id,
       comments: [{ id: 'c2', name: PEOPLE.NL.name, avatar: { initials: 'NL', type: PEOPLE.NL.type }, time: '2 h ago',
         text: `Can we check the unit costs for ${med.name} against the 2025 actuals before this goes to approval?` }] },
@@ -138,3 +141,44 @@ const RF_QUESTIONS = [
   { id: 'q6', q: 'What is the replacement cost after a failure?', kind: 'Consequence · Required', model: 'Simple financial risk', answer: 'From the 2028 unit cost estimate', by: 'cooper' },
   { id: 'q7', q: 'What is the peak load on the units?', kind: 'Scope · Required', model: 'Delivery capacity', answer: 'From the Whistler load forecast', by: 'cooper' },
 ];
+
+// ---- Any Build investment (Shiny, 2026-11-19: the first three ideas and investments open too). rfContext(id) is everything Refine shows
+// for one investment. The pad-mount program keeps its full scripted content; any other investment gets its real record and alternatives
+// (altsOf: at least three) and [Added] generic content: generic stages, a few documents, no comments, no dependencies, no questionnaire.
+const RF_STAGES_GENERIC = RF_STAGES_MAIN.map(st => st.id === 'replace' ? { ...st, name: 'Delivery' } : st.id === 'procure' ? { ...st, name: 'Procurement' } : st);
+const RF_MAIN = { main: true, inv: RF_INV, raw: RF_ALT_RAW, alts: RF_ALTS, alt: rfAlt, assets: rfPadmounts, unit: 'pad-mounts', stages: RF_STAGES_MAIN,
+  threads: RF_THREADS, deps: RF_DEPENDENCIES, docs: RF_DOCS, models: RF_MODELS, measures: RF_RISK_MEASURES, questions: RF_QUESTIONS, issues: refineIssues,
+  estimate: RF_ESTIMATE_STAGES, upload: 'Alpine Meadows outage calendar 2028.xlsx', hasRisk: true };
+// Cost by year = every account except Revenue (CLTDEMO nets Revenue, an income, into spendByYear; spendTotal is CAPEX + OPEX)
+const rfCostByYear = a => { const acc = a.spendByAccountByYear || {}, keys = Object.keys(acc).filter(k => k !== 'Revenue'); if (!keys.length) return a.spendByYear;
+  const out = {}; keys.forEach(k => Object.entries(acc[k]).forEach(([y, v]) => { out[y] = (out[y] || 0) + v; })); return out; };
+const rfCtxCache = {};
+function rfContext(id) {
+  if (!id || id === CLUSTER.ideaInvestmentId) return RF_MAIN;
+  if (rfCtxCache[id]) return rfCtxCache[id];
+  const inv = invById(id), raw = altsOf(id), assets = ASSETS.filter(a => a.investmentId === id);
+  const customers = assets.reduce((t, a) => t + (a.customers || 0), 0);
+  const alts = raw.map(a => {
+    const base = rfSum(a.riskBaselineByYear), resid = rfSum(a.riskResidualByYear), has = base > 0;
+    const end = has ? ((a.riskResidualByYear || {})['2035'] || 0) / ((a.riskBaselineByYear || {})['2035'] || 1) : null;
+    return { id: a.id, name: a.name, type: a.type, cost: a.spendTotal, years: rfSpan(a), first: a.firstSpendDate, last: a.lastSpendDate,
+      capex: rfSum((a.spendByAccountByYear || {}).CAPEX), opex: rfSum((a.spendByAccountByYear || {}).OPEX), value: a.valueTotal, bcr: bcrOf(a.valueTotal, a.spendTotal),
+      reduced: has ? 1 - resid / base : null, residual2035: has ? (a.riskResidualByYear || {})['2035'] : null, riskLevel: has ? (end < 0.2 ? 'low' : end < 0.5 ? 'medium' : 'high') : null,
+      scope: assets.length || null, customers: assets.length ? customers : null, recommendedInData: a.isRecommended, selectedInData: a.isSelected, added: !!a.added,
+      spendByYear: a.spendByYear, costByYear: rfCostByYear(a), valueByMeasure: a.valueByMeasure || [], milestones: a.milestones || [], baselineByYear: a.riskBaselineByYear, residualByYear: a.riskResidualByYear };
+  });
+  const measures = Object.keys((raw.find(a => a.riskResidualByMeasure && Object.keys(a.riskResidualByMeasure).length) || {}).riskResidualByMeasure || {});
+  const rec = alts.find(a => a.recommendedInData) || alts.find(a => a.selectedInData) || alts[0];
+  const models = measures.length ? measures.map(m => ({ id: m, measure: m, name: m.replace(/ Risk$/, ' risk'), measures: 1, output: [m] }))   // the measure itself; RF_MODEL_META is pad-mount wording
+    : rec.valueByMeasure.filter(m => m.value > 0).map(m => ({ id: m.measure, measure: null, name: m.measure, measures: 1, output: [m.measure] }));
+  const docs = [`${inv.name} business case.docx`, `${inv.code} cost estimate.xlsx`, 'Capital plan guidance 2028.pdf', 'Reviewer checklist.docx']
+    .map((name, i) => ({ id: `d${i}`, name, date: ['Jan 15, 2026', 'Mar 2, 2026', 'Jun 11, 2026', 'Sep 30, 2026'][i] }));
+  const issues = () => [{ id: 'contingency', kind: 'question', gate: 'assume', title: 'What contingency should be carried on this estimate?', description: `${rec.name} is estimated at ${fmtMoney(rec.cost)} with no contingency line.`, answer: true,
+    solutions: [{ id: 'c10', title: 'Carry 10% contingency', description: 'Typical at this estimate class.', recommended: true }, { id: 'c5', title: 'Carry 5% contingency', description: 'The costs are recent and the scope is fixed.' }, { id: 'c15', title: 'Carry 15% contingency', description: 'Prices are still moving.' }] },
+    ...(alts.some(a => a.added) ? [{ id: 'suggested', kind: 'warning', gate: 'ready', title: 'Cooper suggested an alternative', description: `${alts.filter(a => a.added).map(a => a.name).join(' and ')} ${alts.filter(a => a.added).length > 1 ? 'were' : 'was'} added so there are at least ${ALT_MIN} alternatives. Review ${alts.filter(a => a.added).length > 1 ? 'them' : 'it'} before approval.`, okay: true }] : [])];
+  return (rfCtxCache[id] = { main: false, inv, raw, alts, alt: x => alts.find(a => a.id === x), rec, assets, unit: 'assets', stages: RF_STAGES_GENERIC,
+    threads: () => [], deps: [], docs, models, measures, questions: [], issues, estimate: [], upload: `${inv.name} site notes.pdf`, hasRisk: measures.length > 0 });
+}
+// The saved Refine draft for a newly opened investment: its recommended alternative; Executing investments are already past Approve
+const rfDraft = id => { const R = rfContext(id); return { recommended: (R.rec || R.alts[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: R.threads(), docs: R.docs,
+  status: R.inv.stage === 'Executing' ? 'executing' : 'refining' }; };

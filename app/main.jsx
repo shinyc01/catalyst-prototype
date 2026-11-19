@@ -7,6 +7,7 @@ function initialFromHash(h) {
   const p = new URLSearchParams(q || '');
   if (p.get('asset') && assetById(p.get('asset'))) s.asset = p.get('asset');
   if (p.get('persona') && PERSONAS[p.get('persona')]) s.persona = p.get('persona');
+  if (p.get('inv') && invById(+p.get('inv'))) s.inv = +p.get('inv');           // Build: which idea / investment Shape and Refine show
   if (p.get('year')) s.year = Math.min(END, Math.max(NOW, +p.get('year') || NOW));
   if (name.startsWith('explore')) { s.screen = 'explore'; s.details = name === 'explore-details'; s.recs = name === 'explore-recs'; }
   if (name.startsWith('study')) s.screen = 'study';
@@ -100,6 +101,12 @@ function App() {
   };
   // J08/J09 Build › Refine: the page, and the investment's Refine draft (recommended alternative, plan/compare selection, cost adjustments, comments, documents)
   const [refinePage, setRefinePage] = useState(init.refinePage || 'overview');
+  // Any openable idea / investment (first three of each, Shiny 2026-11-19): which one Shape and Refine show; the pad-mount program keeps build.refine
+  const [buildInv, setBuildInv] = useState(init.inv || CLUSTER.ideaInvestmentId);
+  const mainInv = buildInv === CLUSTER.ideaInvestmentId;
+  const [refineOther, setRefineOther] = usePersisted('build.refineOther', {});
+  const invRefine = mainInv ? null : (refineOther[buildInv] || rfDraft(buildInv));
+  const setInvRefine = f => setRefineOther(m => { const prev = m[buildInv] || rfDraft(buildInv); return { ...m, [buildInv]: typeof f === 'function' ? f(prev) : f }; });
   const [refine, setRefine] = usePersisted('build.refine', { recommended: altForIntent(IDEA_ANSWERS[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: RF_THREADS(),
     docs: RF_DOCS, status: 'refining' });
   // J12–J14 Value: the page, the consultant's framework draft, and the Cooper recommendations already acted on
@@ -113,7 +120,7 @@ function App() {
   useEffect(() => {
     const apply = () => {
       const n = initialFromHash(location.hash.slice(1));
-      setScreen(n.screen); if (n.refinePage) setRefinePage(n.refinePage); if (n.valuePage) setValuePage(n.valuePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
+      setScreen(n.screen); setBuildInv(n.inv || CLUSTER.ideaInvestmentId); if (n.refinePage) setRefinePage(n.refinePage); if (n.valuePage) setValuePage(n.valuePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
       if (n.idea) setIdea(n.idea);
       if (n.demoRun) { setRun(r => r && r.done ? r : { startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); }
     };
@@ -164,10 +171,11 @@ function App() {
     const q = new URLSearchParams();
     if (asset && screen !== 'command' && screen !== 'build') q.set('asset', asset);
     if (year !== NOW && screen === 'study') q.set('year', year);
+    if (['build', 'build-refine'].includes(screen) && buildInv !== CLUSTER.ideaInvestmentId) q.set('inv', buildInv);
     if (persona !== 'owner') q.set('persona', persona);
     const full = h + (q.toString() ? '?' + q : '');
     if (location.hash.slice(1) !== full) history.replaceState(null, '', '#' + full);
-  }, [screen, details, sel, chat, asset, year, persona, tab, refinePage, valuePage]);
+  }, [screen, details, sel, chat, asset, year, persona, tab, refinePage, valuePage, buildInv]);
 
   // Opening a search result in its owning area (Figma "Opens in the owning area"); ⌘↵ opens it in a new tab
   const openFromSearch = (r, o = {}) => {
@@ -180,7 +188,7 @@ function App() {
     }
     if (r.open.toast) { toast({ title: `${r.code} · ${r.name}`, description: `Opens in ${r.open.toast} — not part of this prototype yet` }); return; }
     if (o.newTab) { window.open(location.pathname + hashOf(r), '_blank'); return; }
-    if (r.open.screen === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); return; }
+    if (r.open.screen === 'build') { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); return; }
     go(r.open.screen);
     if (r.open.asset) { setAsset(r.open.asset); setSearchCtx({ query: o.query, ids: o.ids && o.ids.includes(r.open.asset) ? o.ids : [r.open.asset] }); }
   };
@@ -228,7 +236,7 @@ function App() {
       {screen === 'command' && <Command key={persona} navBar={navBar} lenses={lenses} persona={persona} onOpen={d => {
         if (d.open === 'explore') go('explore');
         else if (d.open === 'study') go('study');
-        else if (d.open === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
+        else if (d.open === 'build') { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
       {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
         recsOpenIds={recsOpenIds} recsAtStart={init.recs || /^#explore-recs/.test(location.hash)} onSendToBuild={r => {
@@ -240,12 +248,12 @@ function App() {
         scope={studyScope} persona={persona} trace={trace} setTrace={setTrace} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
         onSave={rec => setStudyScope(sc => ({ ...(sc || { id: rec.id, name: rec.name, ids: rec.ids }), studyId: rec.id }))}
         onClose={() => go('explore')}
-        onBuild={answers => { setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
+        onBuild={answers => { setBuildInv(CLUSTER.ideaInvestmentId); setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
       <GlobalSearch open={searchOpen} network={searchNetwork} onClose={() => setSearchOpen(false)} onOpen={openFromSearch} />
       {buildSnack && <div className="build-snack"><Snackbar title={buildSnack.text} showClose={false} secondaryAction={{ label: 'View in Build', onClick: () => {
-        setBuildSnack(null); if (buildSnack.invId === CLUSTER.ideaInvestmentId) { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); } else toast({ title: 'Build’s Idea Pad isn’t part of this prototype yet' }); } }} /></div>}
+        setBuildSnack(null); if (buildSnack.invId === CLUSTER.ideaInvestmentId) { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); } else toast({ title: 'Build’s Idea Pad isn’t part of this prototype yet' }); } }} /></div>}
       <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
-        onOpen={n => { setNotesOpen(false); if (n.link) { go(n.link); } }} />
+        onOpen={n => { setNotesOpen(false); if (!n.link) return; if (n.link.includes('?')) { location.hash = '#' + n.link; return; } if (n.link.startsWith('build')) setBuildInv(CLUSTER.ideaInvestmentId); go(n.link); }} />
       {screen === 'plan-setup' && <PlanSetup navBar={navBar} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}
         setup={planSetup} setSetup={setPlanSetup} run={running} onHome={() => go('plan')}
         onOptimize={() => { setRun({ startedAt: Date.now(), scenarios: SETUP_SCENARIOS.map(s => s.id), investments: PLAN_ROWS.filter(r => planRows[r.id] !== 'excluded').length,
@@ -263,7 +271,14 @@ function App() {
       {screen === 'plan-compare' && <PlanCompare navBar={navBar} run={running ? run : null} done={!!(run && run.done)} final={finalPlan} stage={planStage}
         onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
         onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
-      {screen === 'build' && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go(buildFrom)} recommendedId={refine.recommended} persona={persona} review={review} setReview={setReview} onDecide={decide} onOpenRefine={() => { setRefinePage('overview'); go('build-refine'); }} status={(ideas[IDEA_INV.id] || {}).status || 'shaping'}
+      {screen === 'build' && !mainInv && <Build key={buildInv} invId={buildInv} navBar={navBar} lenses={lenses} idea={null} onBack={() => go('build-library')} persona={persona}
+        recommendedId={invRefine.recommended} status={(ideas[buildInv] || {}).status || (IDEA_SEEDS.find(r => r.id === buildInv) || {}).status || 'shaping'}
+        onSendForReview={() => { const inv = invById(buildInv); setIdeas(m => ({ ...m, [buildInv]: { ...(m[buildInv] || {}), status: 'review', modified: STORY_DAY } }));
+          notify({ title: `${inv.name} sent for review`, details: 'Reviewers are notified. Review is the next stage.', meta: `${inv.code} · Build`, link: `build?inv=${buildInv}` });
+          toast({ title: 'Sent for review', description: 'Reviewers are notified' }); }}
+        onDismiss={() => { const prev = ideas[buildInv]; setIdeas(m => ({ ...m, [buildInv]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
+          toast({ title: 'The idea has been stopped.', duration: 5000, primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setIdeas(m => { const n = { ...m }; if (prev) n[buildInv] = prev; else delete n[buildInv]; return n; }) } }); }} />}
+      {screen === 'build' && mainInv && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go(buildFrom)} recommendedId={refine.recommended} persona={persona} review={review} setReview={setReview} onDecide={decide} onOpenRefine={() => { setRefinePage('overview'); go('build-refine'); }} status={(ideas[IDEA_INV.id] || {}).status || 'shaping'}
         onSendForReview={() => { setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(m[IDEA_INV.id] || {}), status: 'review', modified: STORY_DAY } }));
           setReview(v => ({ rows: (v.rows || REVIEWERS()).map(r => r.id === 'HG' ? r : { ...r, status: 'empty', comment: null }), round: (v.round || 0) + 1 }));
           notify({ title: `${IDEA_INV.name} sent for review`, details: 'Reviewers are notified. Review is the next stage.', meta: `${IDEA_INV.code} · Build`, link: 'build' });
@@ -271,13 +286,18 @@ function App() {
         onDismiss={() => { const prev = ideas[IDEA_INV.id]; setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
           toast({ title: 'The idea has been stopped.', duration: 5000, primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setIdeas(m => ({ ...m, [IDEA_INV.id]: prev || { status: 'shaping', modified: STORY_DAY } })) } }); }} />}
       {screen === 'value' && <Value navBar={navBar} page={valuePage} setPage={setValuePage} draft={valueDraft} setDraft={setValueDraft} recsDone={valueRecs} setRecsDone={setValueRecs} persona={persona} />}
-      {screen === 'build-refine' && <Refine persona={persona} navBar={navBar} onOpenPlan={() => { setTab('groups'); go('plan-setup'); }} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
+      {screen === 'build-refine' && !mainInv && <Refine key={buildInv} invId={buildInv} persona={persona} navBar={navBar} onOpenPlan={() => { setTab('groups'); go('plan-setup'); }} page={refinePage} setPage={setRefinePage}
+        refine={invRefine} setRefine={setInvRefine} onBack={() => go('build-library')}
+        onSendForApproval={() => { const inv = invById(buildInv); setInvRefine(r => ({ ...r, status: 'approval', approvers: FINAL_APPROVERS() }));
+          notify({ title: `${inv.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${inv.code} · Build`, link: `build-refine?inv=${buildInv}` });
+          toast({ title: 'Sent for approval', description: 'The approvers are notified' }); }} />}
+      {screen === 'build-refine' && mainInv && <Refine persona={persona} navBar={navBar} onOpenPlan={() => { setTab('groups'); go('plan-setup'); }} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
         onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval', approvers: FINAL_APPROVERS() })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
           toast({ title: 'Sent for approval', description: 'Approve isn’t built yet — the approvers are notified' }); }} />}
       {screen === 'build-library' && <BuildLibrary navBar={navBar} ideas={ideas} setIdeas={setIdeas} onNew={() => setChooser(true)}
-        onOpenIdea={() => { setIdea(i => i || { answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} onOpenRefine={() => { setRefinePage('compare'); go('build-refine'); }} />}
+        onOpenIdea={r => { setBuildInv(r.id); setIdea(i => i || { answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} onOpenRefine={r => { setBuildInv(r.id); setRefinePage(r.id === CLUSTER.ideaInvestmentId ? 'compare' : 'overview'); go('build-refine'); }} />}
       {screen === 'build-new' && <NewInvestment key={newKey} navBar={navBar} onBack={() => go('build-library')}
-        onShape={() => { setIdeas(m => ({ ...m, [IDEA_INV.id]: { status: 'shaping', modified: STORY_DAY, created: true } })); setIdea({ answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} />}
+        onShape={() => { setBuildInv(CLUSTER.ideaInvestmentId); setIdeas(m => ({ ...m, [IDEA_INV.id]: { status: 'shaping', modified: STORY_DAY, created: true } })); setIdea({ answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} />}
       <NewChooser open={chooser} onClose={() => setChooser(false)} onIdeas={() => { setChooser(false); setNewKey(k => k + 1); go('build-new'); }} />
     </div>
   );

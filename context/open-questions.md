@@ -65,4 +65,5 @@ Answer these with the product designer, then move each answer into the right con
 61. **J18: should open questions block Send for approval?** The spec assumes yes; the prototype shows them without blocking.
 62. **J18: per-investment results.** The data has per-scenario counts only; the Investments tab is derived `[Added]`. Real per-investment optimizer output would replace it.
 63. **J18: Scenario Details** (editable alternative and start date, "Re-optimize?") is not built.
-
+64. **Cooper's suggested alternatives:** when a record has fewer than three, the prototype adds Phased delivery and Defer and monitor by a fixed rule `[Assumed]` (see logic/build.md). Is that what Cooper would suggest, or should suggestions depend on the investment type?
+65. **Opened records other than the pad-mount program** have no comments, dependencies or questionnaire, and their cost stages are generic `[Added]`. Should any of them get scripted content for demos?
