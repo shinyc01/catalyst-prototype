@@ -107,8 +107,8 @@ function Command({ navBar, lenses, persona, onOpen }) {
 
   return (
     <AppShell navBar={navBar} bottom={<BottomSheet prompts={['Why is Alpine Meadows #1?', 'Brief me']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
-      <div style={{ display: 'flex', minHeight: '100%' }}>
-        <div className="col" style={{ flex: 1, minWidth: 0, padding: 'var(--space-300) var(--space-300) 0', gap: 'var(--space-300)' }}>
+      <div className="page"><div className="ifs-grid">
+        <div className="page-col ifs-span-rest">
           <PageTop eyebrow title={`Welcome back, ${P.first}.`} description="2.8M simulations completed while you were away. Here are the items that require your input and attention right now."
             style={{ gap: 'var(--space-300)' }} tabs={{ items: tabs, value: tab, onChange: setTab }} search={{ placeholder: 'Ask anything about your work', suggestions: ['Why is Alpine Meadows #1?', 'What changed since Friday?'] }} />
           <div className="col" style={{ gap: 'var(--space-400)' }}>
@@ -187,7 +187,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
           </div>
         </div>
 
-        <div className="col cmd-right" style={{ flex: 'none', width: 'var(--region-panel)', padding: 'var(--space-300)', boxSizing: 'border-box', gap: 'var(--space-300)' }}>
+        <div className="page-col cmd-right ifs-span-panel">
           <NDS label="Cooper’s work results gauge" className="box" style={{ height: 'var(--proto-gauge-h)', overflow: 'hidden' }}>
             <span className="t-heading-h4-semibold">Cooper’s Work Results</span>
             <div aria-hidden="true" style={{ position: 'absolute', left: '50%', top: 'var(--proto-gauge-top)', width: 'var(--proto-gauge-ring)', height: 'var(--proto-gauge-ring)', marginLeft: 'calc(-1 * var(--space-1100))', borderRadius: '50%', boxShadow: 'inset 0 0 0 var(--border-widths-border-100) var(--border-medium)', background: 'radial-gradient(circle at 50% 30%, var(--background-elevation-1-tertiary), transparent 70%)' }} />
@@ -211,7 +211,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
             </NDS>
           </div>
         </div>
-      </div>
+      </div></div>
 
       <AddEventModal by={P.initials} open={addOpen} onClose={() => setAddOpen(false)} onAdd={e => {
         setEvents(ev => [...ev, e]); setAddOpen(false);

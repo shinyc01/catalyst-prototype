@@ -80,7 +80,7 @@ const SettingsSection = ({ title, children }) => (
     <div className="col" style={{ gap: 'var(--space-100)' }}>{children}</div>
   </section>
 );
-function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart, searchNetwork, setSearchNetwork }) {
+function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart, searchNetwork, setSearchNetwork, density, setDensity }) {
   const flows = [...(window.FLOWS || [])].sort((a, b) => (a.added || '').localeCompare(b.added || ''));
   const reset = () => { Store.reset(); location.hash = '#command'; location.reload(); };
   return (
@@ -104,6 +104,8 @@ function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, on
         </SettingsSection>
 
         <SettingsSection title="Display">
+          <ContentCard size="s" title="Density" description="How much fits on screen. Spacing, text and controls follow it"
+            bottom={<SegmentedControl size="s" fullWidth value={density} onChange={setDensity} options={[{ value: 'spacious', label: 'Spacious' }, { value: 'comfortable', label: 'Comfortable' }, { value: 'compact', label: 'Compact' }]} />} />
           <ContentCard size="s" title="Show non-DS parts" description="Outline what isn’t in Catalyst Design System 2.0 yet"
             control={<Switch size="s" checked={flags} onChange={setFlags} aria-label="Show non-DS parts" />} onClick={() => setFlags(!flags)} />
         </SettingsSection>

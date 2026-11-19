@@ -105,9 +105,9 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
     <AppShell navBar={navBar} header={header}
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={tab === 'readiness' ? ['Explain why these are outliers', 'Summarize data readiness'] : ['Compare to peer', 'Compare to best practice']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
-      <div style={{ display: 'flex', minHeight: '100%' }}>
-        <div className="col" style={{ flex: 1, minWidth: 0, padding: 'var(--space-300)', gap: 'var(--space-500)' }}>
-          <span className="t-heading-h1">Setup</span>
+      <div className="page-row">
+        <div className="page">
+          <span className="t-heading-h2-medium">Setup</span>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <Tabs value={tab} onChange={setTab} aria-label="Setup" items={[{ value: 'readiness', label: 'Data readiness' }, { value: 'groups', label: 'Planning groups' },
               { value: 'scenarios', label: 'Scenarios', count: SETUP_SCENARIOS.length }]} />
@@ -117,7 +117,7 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
           {tab === 'groups' && <Groups />}
           {tab === 'scenarios' && <Scenarios setup={setup} setSetup={setSetup} />}
         </div>
-        <div style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', height: 'calc(100vh - var(--proto-sticky-offset))' }}>
+        <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
           <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
             className={panel ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
             <ContentCard className="ifs-trc-card" title={<ConfidenceGates controller={c} label="Optimization readiness" />}
@@ -449,7 +449,7 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
         sections={[{ label: 'Ad hoc plans', items: [{ id: 'mine', label: 'My investments' }] }]} onSelect={id => id !== 'dp' && toast({ title: 'Only the Demo Portfolio is part of this flow' })} />}
       bottom={<BottomSheet prompts={['What needs my attention?', 'Are we on track against strategy?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
       {run && !done && showRun && <RunProgress run={run} onClose={() => setShowRun(false)} />}
-      <div className="col" style={{ padding: 'var(--space-300)', gap: 'var(--space-500)' }}>
+      <div className="page">
         <span className="t-body-m-regular sec">The Demo Portfolio capital plan: {PLAN_INVESTMENTS.length} investments across the {PLAN_PORTFOLIO.children.join(' and ')} regions, optimized against the portfolio’s CAPEX, OPEX, resource and risk constraints.</span>
         <PSec title="Planning Cycles">
           <div className="row" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
@@ -484,7 +484,7 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
             <ReadinessStatus type={phase === 'approval' ? 'active' : 'in-progress'} right={phase === 'approval' ? 'In approval' : phase === 'final' ? 'Ready to send' : 'Queued'}>Approve</ReadinessStatus>
           </div>
         </PSec>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-300)' }}>
+        <div className="ifs-grid is-halves">
           <div className="col" style={{ gap: 'var(--space-200)' }}>
             <SegmentedControl size="s" value={measure} onChange={setMeasure} options={[{ value: 37, label: 'CAPEX' }, { value: 167, label: 'OPEX' }, { value: 223, label: 'Total Investment Cost' }]} />
             <ColumnChart title={`Yearly forecast vs budget · ${done ? (finalS ? 'final plan' : 'Optimized') : 'requested'}`} data={forecast} valueLabel={o.measure} referenceLabel="Budget (max)" format={fmtMoney} />
@@ -537,7 +537,7 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
         top={<div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
           <span className="t-label-l-medium">{c.short}</span>
           <div className="row" style={{ gap: 'var(--space-200)', alignItems: 'baseline' }}>
-            <span className="t-heading-h1">{fmtMoney(c.capex)}</span>
+            <span className="t-heading-h2-medium">{fmtMoney(c.capex)}</span>
             {c.baseline ? <span className="t-label-m-regular muted">baseline</span>
               : <span className={`t-label-m-medium ${c.capex >= COMPARE_BASE.capex ? 'plan-up' : 'plan-down'}`}>{pct(c.capex, COMPARE_BASE.capex)} <span className="t-label-m-regular muted">vs baseline</span></span>}
           </div>
@@ -564,9 +564,9 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={['Explain gaps in confidence', 'Why this scenario?']} onPrompt={pr => toast({ title: `Cooper: ${pr}` })} />}>
       {run && !done && <RunProgress run={run} onClose={() => {}} />}
-      <div className="col" style={{ padding: 'var(--space-300)', gap: 'var(--space-500)' }}>
+      <div className="page">
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <span className="t-heading-h1">Scenario comparison</span>
+          <span className="t-heading-h2-medium">Scenario Comparison</span>
           <div className="row" style={{ gap: 'var(--space-200)' }}>
             <Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => toast({ title: 'New scenario isn’t part of this flow' })}>New scenario</Button>
             <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => { const c = COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK);
