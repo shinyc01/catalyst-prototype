@@ -26,3 +26,18 @@ Five real 2028 Plan scenarios, least to most spend: 11_Min. CAPEX to meet target
 
 ## The run `[Assumed]`
 About 24 s: readiness check to 30%, solving to 85%, validating to 100%. Results are the real optimized scenarios; Plan home shows 02_Optimized 2028 Plan (CAPEX $4.22B, value 15.8M vs requested $4.80B, 14.3M). Owner fixes come back 6 s after routing.
+
+## Approve (J21)
+- Send for approval (Compare or Plan Home) opens `#plan-approve`. Cards: the final scenario's real cost, retained risk (2032) and funded / deferred investments.
+- Gates `[Added]`: Executive (Theo Marsh CFO, Kenji Mori Director of Capital Planning, Tara Quinn COO), Technical (Ravi Banerjee VP of Operations, Luca Ferri Field Engineering Lead), Financial (Noah Lindgren Capital Finance Analyst, Priyanka Iyer Controller). Executive opens first; Technical and Financial open together when it approves (Figma), set in `PA_OPENS_AFTER`.
+- `[Assumed]` reviewers approve 4 s after their gate opens, except the slow ones (`PA_SLOW`: the CFO, the COO and the Field Engineering Lead) who need a push (kit push, once per 24 h, approves 3 s later) or, for the COO, **Change reviewer** (Mara Delgado, VP of Planning, replaces Tara Quinn; she then needs a push).
+- All gates approved → stage `approved` (Plan Home tile Ready v1, button Publish) → Publish modal: no date = **Publish now** (stage `published`); date + time = **Schedule** (stage `scheduled`, button Re-schedule). Time is a Select of quarter hours (no DS time picker).
+- Not built: reviewer-side gate pages (CFO view), reject / changes requested, Update plan, budget / spend authority (J21 step 7, not designed).
+
+## Compare additions (J18)
+- **System confidence** on Compare: 2 open questions `[Assumed]` (retained risk acceptable?, deferrals safe?). It informs but does **not** block Send for approval (blocking would break J16's tour; the spec marks gating as assumed).
+- **Cooper's evaluation** (button and the "Why this scenario?" chip): the final plan, or Cooper's pick (most value per CAPEX dollar), described from its real record against the requested plan.
+- **Evidence chain** (87%, kit drawer): scenario setup and system data from the records; peer benchmark empty (no peer data).
+- **Investments tab** `[Added]`: per-investment changes derived from the scenario's real counts (deferred, advanced, alternative changed), assigned in a fixed order; deferred +4–24 months, advanced −2–10 months; bands Highest (alternative changed or ≥ 12 months) / Moderate / No shift.
+- `#plan-compare?demo=optimized` seeds a finished run (for tours).
+- Not built: Scenario Details with editable alternative / start date (spec §3.5).

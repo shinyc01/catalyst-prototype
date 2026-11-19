@@ -59,4 +59,10 @@ Answer these with the product designer, then move each answer into the right con
 55. **J11: Decide menu.** Only Proceed has a frame; Request info, Park and Stop are `[Assumed]` dialogs (comment required).
 56. **J11: the review counter** reads 0/3 for the owner but 1/4 and 2/4 for reviewers in Figma. The prototype counts the 3 reviewers.
 57. **J25 skipped (needs a decision):** none of the 3 real Executing investments has alternatives or milestones, there is no "Energization" milestone, and Executing maps to Results, not Build. Either add execution data to one Executing record (or re-stage an existing one), and decide which area owns executing investments. Spec ready: `screens/j25-execution-figma-spec.md`. The current Notifications drawer also differs from Figma (no tabs, cards have buttons, everything is marked read on close).
+58. **J21: who is "(You)" in Approve?** Figma signs the CFO in as an approver; the journey is the Capital Planning Manager's and the prototype's Plan persona is the Portfolio Owner. The prototype keeps the plan owner as the owner (not a reviewer).
+59. **J21: sequential or parallel gates?** The journey says sequential; Figma opens Technical and Financial together after Executive. The prototype follows Figma (one rule to change).
+60. **J21: how is a reviewer changed, and what happens on a rejection?** Neither is drawn; the prototype offers Change reviewer on the COO row only and has no reject state.
+61. **J18: should open questions block Send for approval?** The spec assumes yes; the prototype shows them without blocking.
+62. **J18: per-investment results.** The data has per-scenario counts only; the Investments tab is derived `[Added]`. Real per-investment optimizer output would replace it.
+63. **J18: Scenario Details** (editable alternative and start date, "Re-optimize?") is not built.
 
