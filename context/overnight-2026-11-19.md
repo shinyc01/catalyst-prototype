@@ -23,6 +23,6 @@ Built from the JTBD journey documents, Build and Value first. Live: https://shin
 
 **Decisions waiting for you** (details in `open-questions.md`):
 - 46–47: who owns Value, and where objective weights are edited (no control in Figma).
-- 54: the Build → Plan hand-off after approval isn't designed.
+- ~~54: the Build → Plan hand-off~~ answered: approved investments join Plan under New to Scenario.
 - 57: J25 needs execution data, and a decision on which area owns executing investments.
 - 58–59: the plan approver "(You)", and sequential vs parallel gates.

@@ -30,7 +30,9 @@
     { target: { text: 'Send for approval', exact: true }, title: 'Submit for final approval', body: 'The approval chain opens on the right.' },
     { target: '[aria-label^="Push"]', title: 'Chase a slow approver',
       body: 'Two approvers answer quickly; Luca Ferri hasn’t. Push him a reminder (once per 24 hours).' },
-    { target: '.page', advance: 'next', title: 'Approved at every gate',
-      body: 'Handing the investment to Plan’s next cycle isn’t designed yet; that’s the end of this journey for now.' },
+    { target: { text: 'Open in Plan', exact: true }, title: 'Approved at every gate',
+      body: 'It has belonged to its portfolio since it was created; approval is what makes it ready for the next planning cycle. Open it in Plan.' },
+    { target: '.page .ifs-table', advance: 'next', title: 'Ready to be planned',
+      body: 'Plan lists it under New to Scenario, next to the other investments new to this cycle, so the optimizer can consider it.' },
   ],
 });

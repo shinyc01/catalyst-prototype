@@ -101,8 +101,18 @@ const planOutcome = (sid, measureId) => (PLAN_SCENARIOS.find(x => x.id === sid).
 // [Added] restriction defaults per scenario (the source holds no optimizer settings)
 const SETUP_RESTRICTIONS = { altChanges: true, interpolate: false, shiftDates: true, maxShift: 3, granularity: 'Years' };
 // Planning groups: the real groups of the Requested scenario, and which are open to the optimizer by default [Added]
-const PLAN_GROUPS = ['Under Consideration', 'New to Scenario', 'Required by Management', 'Executing', 'Blankets']
-  .map(g => ({ id: g, label: g, count: PLAN_INVESTMENTS.filter(i => i.planningGroup === g).length, adjustable: ['Under Consideration', 'New to Scenario'].includes(g) }));
+const planGroups = (extra = []) => ['Under Consideration', 'New to Scenario', 'Required by Management', 'Executing', 'Blankets']
+  .map(g => ({ id: g, label: g, count: PLAN_INVESTMENTS.concat(extra).filter(i => i.planningGroup === g).length, adjustable: ['Under Consideration', 'New to Scenario'].includes(g) }));
+const PLAN_GROUPS = planGroups();
+// Build → Plan hand-off [Confirmed] (Shiny, 2026-11-19): an investment belongs to a portfolio (the company structure) from the moment it is created,
+// but it joins the planning cycle only once it is approved. The approved Build investment (refine.status 'approved') joins as "New to Scenario",
+// the real group new investments sit in, with its recommended alternative. The optimisation results stay those of the real run [Assumed].
+const planFromBuild = refine => {
+  if (!refine || refine.status !== 'approved') return [];
+  const a = rfAlt(refine.recommended) || RF_ALTS[0];
+  return [{ id: RF_INV.id, code: RF_INV.code, name: RF_INV.name, stage: RF_INV.stage, portfolio: RF_INV.portfolio, planningGroup: 'New to Scenario',
+    alternative: a.name, startDate: a.first, capex: a.cost, value: a.value, fromBuild: true }];
+};
 
 /* ---------------------------------------------------------------- warnings computed from the scenarios */
 const BASE = PLAN_SCENARIOS.find(s => s.id === PLAN_BASELINE_ID);
