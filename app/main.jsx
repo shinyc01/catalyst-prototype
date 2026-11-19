@@ -52,6 +52,9 @@ function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchCtx, setSearchCtx] = useState(null);                        // { query, ids }: Explore shows the results bar after a search
   const [searchNetwork, setSearchNetwork] = usePersisted('search.network', 'normal');   // prototype setting: normal | slow | error (Figma 8)
+  // DS 2.0 density: spacing roles, type sizes and control heights follow it. Comfortable by default. IFS.setDensity sets data-density on <html>.
+  const [density, setDensity] = usePersisted('density', 'comfortable');
+  useEffect(() => { (IFS.setDensity || (d => document.documentElement.setAttribute('data-density', d)))(density); }, [density]);
   // Search opens from the icon, ⌘K / Ctrl+K, or / on any screen (Figma 1 · Start)
   useEffect(() => {
     const k = e => {
@@ -177,7 +180,7 @@ function App() {
 
   return (
     <div className={flags ? 'nds-on' : ''} style={{ height: '100%' }}>
-      <SettingsPanel searchNetwork={searchNetwork} setSearchNetwork={setSearchNetwork} open={settingsOpen} onClose={() => setSettingsOpen(false)} persona={persona} setPersona={setPersona} flags={flags} setFlags={setFlags}
+      <SettingsPanel density={density} setDensity={setDensity} searchNetwork={searchNetwork} setSearchNetwork={setSearchNetwork} open={settingsOpen} onClose={() => setSettingsOpen(false)} persona={persona} setPersona={setPersona} flags={flags} setFlags={setFlags}
         onStart={f => { setSettingsOpen(false); setTour({ flow: f, step: 0 }); }} />
       {tour && <Tour flow={tour.flow} step={tour.step} setStep={n => setTour(t => ({ ...t, step: n }))}
         onExit={done => { setTour(null); if (done) toast({ title: `Flow complete: ${tour.flow.title}`, description: 'Open Flows to try another one.' }); }} />}

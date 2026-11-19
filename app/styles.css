@@ -63,6 +63,16 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .scroll { overflow: auto; min-height: 0; }
 .click { cursor: pointer; border-radius: var(--radius-radius-100); }
 .click: hover { background: var(--surface-secondary-alpha); }
+/* Page layout (DS 2.0.2 layout.md): page margin and gap follow screen width; content capped at 1600 and centred;
+   cards and regions snap to the 12-column .ifs-grid (.ifs-span-N, .ifs-span-panel / .ifs-span-rest). Docked panels sit outside .page, flush to the edge. */
+.page { box-sizing: border-box; width: 100%; max-width: calc(var(--layout-max-content-width) + 2 * var(--page-margin)); margin: 0 auto;
+  padding: var(--page-gap) var(--page-margin); display: flex; flex-direction: column; gap: var(--page-gap); min-width: 0; }
+.page-row { display: flex; min-height: 100%; }
+.page-row > .page { flex: 1; }
+.page-col { display: flex; flex-direction: column; gap: var(--page-gap); min-width: 0; }
+.ifs-grid.is-halves > * { grid-column: span 6; }      /* two cards side by side: 6 + 6 columns */
+@media (max-width: 1023px) { .ifs-grid.is-halves > * { grid-column: 1 / -1; } }   /* tokens-ok: CSS can’t read tokens in @media; = --bp-md */
+.page-dock { flex: none; position: sticky; top: 0; align-self: flex-start; }
 /* Non-DS flags: dashed outline + label, toggled from the top bar */
 .nds-on .nds { outline: var(--border-widths-border-100) dashed var(--border-warning); outline-offset: calc(-1 * var(--size-1)); }
 .nds-on .nds: :after { content: 'Not in DS · ' attr(data-label); position: absolute; z-index: var(--proto-z-flag); pointer-events: none;

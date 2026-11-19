@@ -60,8 +60,8 @@ function Build({ navBar, lenses, idea, onBack }) {
     <AppShell navBar={navBar} header={header}
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={['Find similar past ideas', 'What could block this idea?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
-      <div style={{ display: 'flex', minHeight: '100%' }}>
-        <div className="col" style={{ flex: 1, minWidth: 0, padding: 'var(--space-300)', gap: 'var(--space-300)' }}>
+      <div className="page-row">
+        <div className="page">
           <Sec title="Idea Overview">
             <div className="col" style={{ gap: 'var(--space-150)', padding: '0 var(--space-150) var(--space-150)' }}>
               <span className="t-label-l-medium">{IDEA_INV.name}</span>
@@ -69,8 +69,8 @@ function Build({ navBar, lenses, idea, onBack }) {
             </div>
           </Sec>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-300)', alignItems: 'stretch' }}>
-            <div className="col" style={{ gap: 'var(--space-300)' }}>
+          <div className="ifs-grid is-halves">
+            <div className="page-col">
               <Sec title="The Need">
                 <p className="t-body-m-regular" style={{ margin: 0, padding: 'var(--space-100) var(--space-150) var(--space-150)' }}>The 12 pad-mount transformers in Alpine Meadows have been in service since 1944–45 and are now at {ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][0]}× their design life. With the study’s {s.act.length} lenses applied, {s.now.over} of {ASSETS.length} assets in the cluster cross their intervention tolerance by {END}, the next new crossing in {s.first ?? '—'}. Left alone, outages affect ~{CLUSTER.customers.toLocaleString()} Alpine Meadows customers.</p>
               </Sec>
@@ -153,7 +153,7 @@ function Build({ navBar, lenses, idea, onBack }) {
             </div>
           </Sec>
         </div>
-        <div style={{ flex: 'none', position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100%' }}>
+        <div className="page-dock" style={{ height: '100%' }}>
           <Panel title="Cooper" expanded={false} onExpandedChange={() => toast({ title: 'Cooper side panel isn’t part of this flow' })} dot="error" style={{ height: '100%' }} />
         </div>
       </div>
