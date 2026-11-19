@@ -206,17 +206,17 @@ function Readiness({ rows, setRows, filter, setFilter }) {
 
 /* ------------------------------------------------------------ Setup › Planning groups (gate passed) */
 function Groups() {
-  const [sel, setSel] = useState(PLAN_GROUPS[0].id);
-  const stages = ['Initial', 'Long Term Planning', 'Short Term Planning', 'Executing'];
-  const data = PLAN_GROUPS.map(g => ({ label: g.label, value: g.count }));
-  const rows = PLAN_INVESTMENTS.filter(i => i.planningGroup === sel).slice(0, 12);
+  const extra = planFromBuild(Store.get('build.refine')), groups = planGroups(extra);   // an investment approved in Build joins New to Scenario
+  const [sel, setSel] = useState(extra.length ? 'New to Scenario' : groups[0].id);
+  const data = groups.map(g => ({ label: g.label, value: g.count }));
+  const rows = extra.concat(PLAN_INVESTMENTS).filter(i => i.planningGroup === sel).slice(0, 12);
   return (
     <div className="col" style={{ gap: 'var(--space-500)' }}>
       <BarChart title="Investments count by planning group" data={data} valueLabel="Investments" labelWidth={170} height={220} />
       <PSec title="Investment Groups">
         <div style={{ display: 'grid', gridTemplateColumns: 'var(--proto-plan-side-w) 1fr', gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
           <div className="col" style={{ gap: 'var(--space-100)' }}>
-            {PLAN_GROUPS.map(g => <ContentCard key={g.id} size="s" iconLeft="arrow-caret-right-filled" selected={sel === g.id} onClick={() => setSel(g.id)}
+            {groups.map(g => <ContentCard key={g.id} size="s" iconLeft="arrow-caret-right-filled" selected={sel === g.id} onClick={() => setSel(g.id)}
               title={g.label} description={g.adjustable ? 'The optimizer may change these' : 'Kept as the scenario holds them'} control={<Counter>{g.count}</Counter>} />)}
           </div>
           <Table rowHeight={48} rows={rows} columns={[
@@ -300,12 +300,13 @@ function InvestmentGroups({ s, res, setSetup }) {
   const on = res.groups || PLAN_GROUPS.filter(g => g.adjustable).map(g => g.id);
   const [sel, setSel] = useState(on[0] || PLAN_GROUPS[0].id);
   const toggle = id => setSetup(st => ({ ...st, restrictions: { ...st.restrictions, [s.id]: { ...res, groups: on.includes(id) ? on.filter(x => x !== id) : [...on, id] } } }));
-  const rows = PLAN_INVESTMENTS.filter(i => i.planningGroup === sel).slice(0, 8);
+  const extra = planFromBuild(Store.get('build.refine')), groups = planGroups(extra);
+  const rows = extra.concat(PLAN_INVESTMENTS).filter(i => i.planningGroup === sel).slice(0, 8);
   return (
     <PSec title="Investment Groups">
       <div style={{ display: 'grid', gridTemplateColumns: 'var(--proto-plan-side-w) 1fr', gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
         <div className="col" style={{ gap: 'var(--space-100)' }}>
-          {PLAN_GROUPS.map(g => <ContentCard key={g.id} size="s" selected={sel === g.id} onClick={() => setSel(g.id)} title={g.label}
+          {groups.map(g => <ContentCard key={g.id} size="s" selected={sel === g.id} onClick={() => setSel(g.id)} title={g.label}
             control={<Checkbox checked={on.includes(g.id)} onChange={() => toggle(g.id)} aria-label={`Let the optimizer change ${g.label}`} />} iconRight={undefined}
             description={`${g.count} investments`} />)}
         </div>

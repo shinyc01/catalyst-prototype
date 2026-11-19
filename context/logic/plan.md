@@ -41,3 +41,7 @@ About 24 s: readiness check to 30%, solving to 85%, validating to 100%. Results 
 - **Investments tab** `[Added]`: per-investment changes derived from the scenario's real counts (deferred, advanced, alternative changed), assigned in a fixed order; deferred +4–24 months, advanced −2–10 months; bands Highest (alternative changed or ≥ 12 months) / Moderate / No shift.
 - `#plan-compare?demo=optimized` seeds a finished run (for tours).
 - Not built: Scenario Details with editable alternative / start date (spec §3.5).
+
+## Investments from Build [Confirmed]
+
+Created investments live in a portfolio but are not in a plan. Only an investment approved in Build joins the plan: `planFromBuild(refine)` adds the approved Build investment to **New to Scenario** (counts and lists in Setup › Planning groups and each scenario's Investment Groups). The optimisation results and scenario totals stay those of the real run `[Assumed]`, so it is not yet in Compare or Approve figures.

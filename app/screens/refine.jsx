@@ -20,7 +20,7 @@ const RfTitle = ({ title, text, right }) => (
   </div>
 );
 
-function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval, persona = 'owner' }) {
+function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval, onOpenPlan, persona = 'owner' }) {
   const me = PERSONAS[persona] || PERSONAS.owner;
   const recId = refine.recommended, alts = RF_ALTS, rec = rfAlt(recId);
   const toPlan = id => refine.toPlan[id] !== false, compared = id => refine.compare[id] !== false;
@@ -76,7 +76,7 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
           else toast({ title: `Cooper: ${p}` }); }} />}>
       <div className="page-row">
         <div className="page">
-          {refine.status === 'approved' && <IFS.Alert type="success" title="Approved at every gate">Sending the investment to Plan’s next planning cycle isn’t designed yet (J11 gap).</IFS.Alert>}
+          {refine.status === 'approved' && <IFS.Alert type="success" title="Approved at every gate" action="Open in Plan" onAction={onOpenPlan}>{`It stays in the ${RF_INV.portfolio} portfolio and is now ready for the next planning cycle: Plan lists it under New to Scenario.`}</IFS.Alert>}
           {page === 'compare' && <RfCompare refine={refine} setRefine={setRefine} toPlan={toPlan} compared={compared} onOpen={id => setPage(`alt-${id}-details`)}
             onEvaluate={() => setCooper({ kind: 'text', text: `I compared the ${alts.length} alternatives on cost, risk reduced and value. ${rec.name} reduces ${rfPct(rec.reduced)} of the scored risk for ${fmtMoney(rec.cost)} (BCR ${rec.bcr ?? '—'}). ${[...alts].sort((a, b) => b.reduced - a.reduced)[0].name} reduces the most risk but costs ${fmtMoney([...alts].sort((a, b) => b.reduced - a.reduced)[0].cost)}. I’d keep ${rec.name} as recommended.` })} />}
           {altPage && altPage.tab === 'details' && <RfAltDetails alt={rfAlt(altPage.id)} recId={recId} toPlan={toPlan(altPage.id)} />}
