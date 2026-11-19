@@ -230,3 +230,25 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 /* J07 Shape: Edit with Cooper — card highlight and the Cooper bar (Figma 43:73812) */
 .build-sec--cooper { box-shadow: inset 0 0 0 var(--border-widths-border-200) var(--border-accent-cooper); border-radius: var(--radius-radius-200); }
 .build-askbar { position: fixed; right: var(--page-margin); bottom: var(--space-1000); z-index: var(--proto-z-map-window); width: var(--region-panel); display: flex; flex-direction: column; gap: var(--space-200); }
+/* J08/J09 Build › Refine */
+.rf-comment-btn { position: relative; display: inline-flex; }
+.rf-callout, .rf-cooper { position: fixed; right: calc(var(--page-margin) + var(--region-panel) + var(--page-gap)); top: var(--proto-under-header); width: var(--region-panel); z-index: var(--proto-z-map-window); }
+.rf-cooper { right: var(--page-margin); }
+.rf-cooper > * { max-height: calc(100vh - var(--proto-under-header) - var(--space-1000)); }
+.rf-docs { position: fixed; left: var(--page-margin); bottom: var(--space-1000); width: var(--overlay-width-s); z-index: var(--proto-z-map-window); }
+.rf-doc { gap: var(--space-200); padding: var(--space-150) var(--space-100); border-radius: var(--radius-radius-100); }
+.rf-doc:hover { background: var(--background-elevation-1-secondary); }
+.rf-pick { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-200) var(--space-300); align-items: center; }
+.rf-card--rec { box-shadow: inset 0 0 0 var(--border-widths-border-100) var(--border-strong); border-radius: var(--radius-radius-200); }
+.rf-grid { display: grid; grid-template-columns: var(--proto-detail-nav-w) repeat(var(--rf-cols), minmax(0, 1fr)); border: var(--border-widths-border-100) solid var(--border-base); border-radius: var(--radius-radius-200); overflow: hidden; }
+.rf-grid__group { all: unset; grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-200); min-height: var(--size-32); padding: 0 var(--space-inset); cursor: pointer; background: var(--surface-secondary-alpha); }
+.rf-grid__row { display: contents; }
+.rf-grid__row > * { display: flex; align-items: center; min-height: var(--size-40); padding: 0 var(--space-inset); border-top: var(--border-widths-border-100) solid var(--border-base); }
+.rf-fields { row-gap: var(--space-stack); }
+.rf-formula { gap: var(--space-200); min-height: var(--size-40); padding: 0 var(--space-300); border: var(--border-widths-border-100) solid var(--border-base); border-radius: var(--radius-radius-100); }
+.rf-sheet { display: grid; grid-template-columns: minmax(var(--proto-picker-w), 2fr) repeat(5, minmax(0, 1fr)) repeat(var(--rf-years), minmax(0, 1fr)); overflow-x: auto; }
+.rf-sheet > * { display: flex; align-items: center; min-height: var(--size-32); padding: var(--space-100) var(--space-200); border-bottom: var(--border-widths-border-100) solid var(--border-base); white-space: nowrap; }
+.rf-sheet__h { color: var(--text-secondary); }
+.rf-cell { all: unset; cursor: cell; justify-content: flex-end; }
+.rf-cell:hover { background: var(--background-elevation-1-secondary); }
+.rf-cell.is-on { box-shadow: inset 0 0 0 var(--border-widths-border-200) var(--border-info); }

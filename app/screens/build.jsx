@@ -30,7 +30,7 @@ const Sec = ({ title, extra, actions, children, style, cooper }) => (
 );
 const SubHead = ({ children }) => <span className="t-label-m-medium" style={{ display: 'block', padding: 'var(--space-100) 0 var(--space-200)' }}>{children}</span>;
 
-function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview }) {
+function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview, recommendedId }) {
   const s = study(lenses, END);
   // J07: System confidence sidebar (Figma 43:76732): the kit's issue report, gates and open questions from shared/build-model.js
   const c = IFS.useIssueReport({ issues: useMemo(() => shapeIssues(), []), gates: SHAPE_GATES });
@@ -44,7 +44,8 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
   const [askText, setAskText] = useState('');
   const [cooperSaid, setCooperSaid] = useState(null);
   const ans = idea?.answers || [];
-  const recAlt = altForIntent(ans[0]) || IDEA_ALTS.find(a => a.isRecommended);
+  // the recommended alternative is shared with Refine (Set as recommended there changes it here too)
+  const recAlt = (recommendedId && IDEA_ALTS.find(a => a.id === recommendedId)) || altForIntent(ans[0]) || IDEA_ALTS.find(a => a.isRecommended);
   const rec = ALTERNATIVES.find(a => a.id === recAlt.id), others = ALTERNATIVES.filter(a => a.id !== rec.id);
   const overRows = s.now.rows.filter(r => r.over);
   const [metric, setMetric] = useState('bcr');

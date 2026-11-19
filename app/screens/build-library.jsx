@@ -3,7 +3,7 @@
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 
 /* ============================================================ Build Library */
-function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onNew }) {
+function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onOpenRefine, onNew }) {
   const [tab, setTab] = useState('ideas');
   const [kind, setKind] = useState('all');
   const rows = ideaPadRows(ideas);
@@ -40,10 +40,10 @@ function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onNew }) {
             search={<IFS.SmartSearch placeholder="Ask anything about idea pad" />}
             onRowClick={r => r.mine ? onOpenIdea(r) : toast({ title: r.name, description: 'Only the pad-mount idea is shaped in this flow' })} />
         ) : (
-          <IFS.Table columns={invCols} rows={invRows} defaultSort={{ key: 'cost', dir: 'desc' }}
+          <IFS.Table columns={invCols} rows={invRows} defaultSort={{ key: 'cost', dir: 'desc' }} rowProps={r => ({ 'data-inv': r.id })}
             tabs={<SegmentedControl size="s" value="all" onChange={() => {}} options={[{ value: 'all', label: `All investments ${invRows.length}` }]} />}
             search={<IFS.SmartSearch placeholder="Ask anything about investments" />}
-            onRowClick={r => r.id === CLUSTER.ideaInvestmentId && ideas[r.id] ? onOpenIdea(r) : toast({ title: r.name, description: 'Opening other investments isn’t part of this flow' })} />
+            onRowClick={r => r.id === CLUSTER.ideaInvestmentId ? onOpenRefine(r) : toast({ title: r.name, description: 'Opening other investments isn’t part of this flow' })} />
         )}
       </div>
     </AppShell>

@@ -21,6 +21,7 @@ function initialFromHash(h) {
   if (name === 'build') { s.lenses = withEv(INITIAL_LENSES); s.screen = 'build'; s.idea = { answers: IDEA_ANSWERS }; }
   if (name === 'build-library') s.screen = 'build-library';
   if (name === 'build-new') s.screen = 'build-new';
+  if (name.startsWith('build-refine')) { s.screen = 'build-refine'; s.refinePage = name.slice('build-refine-'.length) || 'overview'; }
   return s;
 }
 
@@ -77,6 +78,10 @@ function App() {
   const [chooser, setChooser] = useState(false);
   const [newKey, setNewKey] = useState(0);
   const [buildFrom, setBuildFrom] = useState('study');
+  // J08/J09 Build › Refine: the page, and the investment's Refine draft (recommended alternative, plan/compare selection, cost adjustments, comments, documents)
+  const [refinePage, setRefinePage] = useState(init.refinePage || 'overview');
+  const [refine, setRefine] = usePersisted('build.refine', { recommended: altForIntent(IDEA_ANSWERS[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: RF_THREADS(),
+    docs: RF_DOCS, status: 'refining' });
   const [, setTick] = useState(0);
   const notify = n => setNotes(l => [{ id: Date.now() + Math.random(), time: Date.now(), ...n }, ...l]);
 
@@ -84,7 +89,7 @@ function App() {
   useEffect(() => {
     const apply = () => {
       const n = initialFromHash(location.hash.slice(1));
-      setScreen(n.screen); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
+      setScreen(n.screen); if (n.refinePage) setRefinePage(n.refinePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
       if (n.idea) setIdea(n.idea);
     };
     window.addEventListener('hashchange', apply);
@@ -124,6 +129,7 @@ function App() {
     let h = screen;
     if (screen === 'plan-setup') h = { readiness: 'plan-setup', groups: 'plan-groups', scenarios: 'plan-scenarios' }[tab];
     if (screen === 'explore' && details) h = 'explore-details';
+    if (screen === 'build-refine') h = refinePage === 'overview' ? 'build-refine' : `build-refine-${refinePage}`;
     if (screen === 'study') {
       if (chat?.kind === 'lens') h = chat.done ? 'study-lens-added' : 'study-lens-chat';
       else if (chat?.kind === 'idea') h = chat.done ? 'study-idea-done' : 'study-idea';
@@ -135,7 +141,7 @@ function App() {
     if (persona !== 'owner') q.set('persona', persona);
     const full = h + (q.toString() ? '?' + q : '');
     if (location.hash.slice(1) !== full) history.replaceState(null, '', '#' + full);
-  }, [screen, details, sel, chat, asset, year, persona, tab]);
+  }, [screen, details, sel, chat, asset, year, persona, tab, refinePage]);
 
   // Opening a search result in its owning area (Figma "Opens in the owning area"); ⌘↵ opens it in a new tab
   const openFromSearch = (r, o = {}) => {
@@ -224,14 +230,17 @@ function App() {
       {screen === 'plan-compare' && <PlanCompare navBar={navBar} run={running ? run : null} done={!!(run && run.done)} final={finalPlan} stage={planStage}
         onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
         onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
-      {screen === 'build' && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go(buildFrom)} status={(ideas[IDEA_INV.id] || {}).status || 'shaping'}
+      {screen === 'build' && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go(buildFrom)} recommendedId={refine.recommended} status={(ideas[IDEA_INV.id] || {}).status || 'shaping'}
         onSendForReview={() => { setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(m[IDEA_INV.id] || {}), status: 'review', modified: STORY_DAY } }));
           notify({ title: `${IDEA_INV.name} sent for review`, details: 'Reviewers are notified. Review is the next stage.', meta: `${IDEA_INV.code} · Build`, link: 'build' });
           toast({ title: 'Sent for review', description: 'Reviewers are notified' }); }}
         onDismiss={() => { const prev = ideas[IDEA_INV.id]; setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
           toast({ title: 'The idea has been stopped.', duration: 5000, primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setIdeas(m => ({ ...m, [IDEA_INV.id]: prev || { status: 'shaping', modified: STORY_DAY } })) } }); }} />}
+      {screen === 'build-refine' && <Refine navBar={navBar} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
+        onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval' })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
+          toast({ title: 'Sent for approval', description: 'Approve isn’t built yet — the approvers are notified' }); }} />}
       {screen === 'build-library' && <BuildLibrary navBar={navBar} ideas={ideas} setIdeas={setIdeas} onNew={() => setChooser(true)}
-        onOpenIdea={() => { setIdea(i => i || { answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} />}
+        onOpenIdea={() => { setIdea(i => i || { answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} onOpenRefine={() => { setRefinePage('compare'); go('build-refine'); }} />}
       {screen === 'build-new' && <NewInvestment key={newKey} navBar={navBar} onBack={() => go('build-library')}
         onShape={() => { setIdeas(m => ({ ...m, [IDEA_INV.id]: { status: 'shaping', modified: STORY_DAY, created: true } })); setIdea({ answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} />}
       <NewChooser open={chooser} onClose={() => setChooser(false)} onIdeas={() => { setChooser(false); setNewKey(k => k + 1); go('build-new'); }} />

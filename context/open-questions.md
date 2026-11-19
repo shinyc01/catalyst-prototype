@@ -40,4 +40,8 @@ Answer these with the product designer, then move each answer into the right con
 36. **J07: how does Cooper's context % grow?** Figma shows 0 / 20 / 55 % / READY only. The prototype's gains per input are `[Assumed]` (logic/build.md).
 37. **J07: should an idea from Explore skip Input?** (J07 validation question.) The prototype's Explore → Build path lands on Shape directly.
 38. **J07: Duplicate Investment** is designed (pick, name, Shape of the copy) but not built: the prototype's Shape page is for one idea. Build it when Shape can show any investment.
+39. **J08: is "Option 2" (Send to plan separate from Compare) the chosen pattern?** (J08 validation question.) The prototype builds Option 2.
+40. **J08: Add alternative** has no frame. The New button and the + show a "not designed yet" message.
+41. **J08: ROI, payback, NPV and IRR** have no source in the demo data, so they show "—". Should the prototype compute them, and how?
+42. **J08: cost stages.** The data has yearly spend only; stage names, shares and dates are `[Added]`. Which stages does a real Catalyst cost plan use?
 
