@@ -1,0 +1,26 @@
+(window.FLOWS = window.FLOWS || []).push({
+  id: 'cost-estimation',
+  title: 'J10 · Build · Cost estimation support',
+  summary: 'The Estimator is asked to check the two cost lines Cooper could not estimate from the unit cost model: he reads the request, checks Cooper’s basis in Cost & Schedule, confirms or adjusts the lines, and resolves the comment.',
+  persona: 'estimator',
+  added: '2026-11-19', addedBy: 'Shiny',
+  sources: [
+    { label: 'Journey J10 (Estimator / Cost Modeller) — saved verbatim', url: 'context/flows/cost-estimation.md' },
+    { label: 'Figma · Comments — Shape with Cooper', url: 'https://www.figma.com/design/BmOuH8YCHltiitqwNW2ARt/?node-id=55-52663' },
+    { label: 'Figma · Cost & Schedule — table', url: 'https://www.figma.com/design/BmOuH8YCHltiitqwNW2ARt/?node-id=76-8792' },
+  ],
+  steps: [
+    { hash: '#build-refine-compare?persona=estimator', target: '[aria-label="Comments"]', title: 'You’re needed',
+      body: 'Hollis Grant mentioned you on the pad-mount program. Open Comments.' },
+    { target: '.page-dock .ifs-cdcard', title: 'Read what is asked',
+      body: 'Comment #56: Cooper filled 3 of the 5 cost lines from the unit cost model; 2 need a person.' },
+    { hash: '#build-refine-alt-9301-cost?persona=estimator', target: '.rf-cell', title: 'Check Cooper’s cost basis',
+      body: 'Median Replacement’s cost plan. Select a cell: the formula bar shows where the number comes from.' },
+    { target: '.rf-formula', advance: 'next', title: 'Apply your judgement',
+      body: 'Adjust by % changes the selected line if Cooper’s basis is off.' },
+    { target: '.rf-needs', title: 'Confirm a flagged line', body: 'Lines Cooper couldn’t estimate say Needs estimate. Confirm it once it’s right.' },
+    { target: '.rf-needs', title: 'And the other one', body: 'Both lines now carry your reviewed basis.' },
+    { target: '.page-dock .ifs-cdcard', title: 'Close the loop', body: 'Back in comment #56: reply if you like, then resolve it. Hollis is told it’s done.' },
+    { target: '.rf-callout [aria-label="Resolve thread"]', title: 'Resolve it', body: 'The comment moves to Resolved.' },
+  ],
+});

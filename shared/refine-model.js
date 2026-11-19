@@ -49,6 +49,8 @@ function costPlan(alt, adjust = {}) {
   });
 }
 
+// J10: the cost lines Cooper couldn't estimate from the unit cost model and routed to the estimator [Added]
+const RF_ESTIMATE_STAGES = ['procure', 'close'];
 // ---- Comments on the investment [Added] (Figma 55:52663: a reviewer questions an alternative's timeline)
 const RF_THREADS = () => {
   const min = RF_ALTS.find(a => /Minimal/.test(a.name)) || RF_ALTS[RF_ALTS.length - 1], med = RF_ALTS.find(a => /Median/.test(a.name)) || RF_ALTS[1];
@@ -56,6 +58,9 @@ const RF_THREADS = () => {
     { id: 't54', number: 54, place: min.name, type: 'action', unread: true, resolved: false, altId: min.id,
       comments: [{ id: 'c1', name: PEOPLE.LF.name, avatar: { initials: 'LF', type: PEOPLE.LF.type }, time: '30 min ago',
         text: `Is ${min.years} realistic for ${min.name}? Crew availability in ${min.first.slice(0, 4)} is tight, and outage windows in Alpine Meadows are short.` }] },
+    { id: 't56', number: 56, place: `${med.name} · Cost & Schedule`, type: 'action', unread: true, resolved: false, altId: med.id, forEstimator: true,
+      comments: [{ id: 'c3', name: 'Hollis Grant', avatar: { initials: 'HG', type: 'blue' }, time: '1 h ago',
+        text: `@Noah Lindgren Cooper filled 3 of the 5 cost lines for ${med.name} from the unit cost model. ${RF_ESTIMATE_STAGES.map(id => RF_STAGES.find(x => x.id === id).name).join(' and ')} need a person: can you check them?` }] },
     { id: 't55', number: 55, place: med.name, type: 'question', unread: false, resolved: false, altId: med.id,
       comments: [{ id: 'c2', name: PEOPLE.NL.name, avatar: { initials: 'NL', type: PEOPLE.NL.type }, time: '2 h ago',
         text: `Can we check the unit costs for ${med.name} against the 2025 actuals before this goes to approval?` }] },

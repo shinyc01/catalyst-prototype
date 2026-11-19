@@ -122,6 +122,8 @@ walk(path.join(ROOT, 'app')).filter(f => /\.(jsx|css)$/.test(f)).forEach(f => {
   const seen = new Map();
   APP.js.concat(APP.babel).filter(f => /^(shared|app)\//.test(f) && !/flows\//.test(f)).forEach(f => {
     fs.readFileSync(path.join(ROOT, f), 'utf8').split('\n').forEach((line, i) => {
+      // Babel turns object-rest destructuring into a top-level `_excluded` helper per file; two of them crash the app
+      if (f.endsWith('.jsx') && f !== 'app/ui.jsx' && /(\b(const|let|var)\s*\{[^{}]*\.\.\.[A-Za-z_$][\w$]*\s*\}\s*=)|(\(\{[^{}()]*\.\.\.[A-Za-z_$][\w$]*\s*\}\)\s*=>)|(function\s*[\w$]*\s*\(\{[^{}()]*\.\.\.[A-Za-z_$][\w$]*\s*\}\))/.test(line.replace(/\/\/.*$/, ''))) err(`${f}:${i + 1}: object-rest destructuring ({ ...rest }) — copy and delete instead (Babel _excluded clash)`);
       const m = line.match(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/) || line.match(/^const \{([^}]*)\}\s*=/);
       if (!m) return;
       const names = m[0].startsWith('const {') ? m[1].split(',').map(x => x.split(':').pop().trim()).filter(Boolean) : [m[1]];

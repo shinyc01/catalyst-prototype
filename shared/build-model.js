@@ -77,3 +77,28 @@ function shapeIssues() {
     { id: 'goals', kind: 'warning', gate: 'context', title: 'One goal has no measure yet', description: 'Maintain public & worker safety is aligned, but no safety measure is filled in this draft.', okay: true },
   ];
 }
+
+// ---- J11 · Review (gate 0) and Approve: reviewers and approvers are invented people; roles from Figma [Added]
+IDEA_STATUS.refining = { type: 'purple', label: 'Refining' };
+IDEA_STATUS.approved = { type: 'green', label: 'Approved' };
+const owRow = { id: 'HG', name: 'Hollis Grant', role: 'Investment owner', avatar: { initials: 'HG', type: 'blue' }, status: 'success' };
+const REVIEWERS = () => [owRow, { id: 'NL', name: PEOPLE.NL.name, role: 'Finance Lead', avatar: { initials: 'NL', type: PEOPLE.NL.type }, status: 'empty', note: null },
+  { id: 'LF', name: PEOPLE.LF.name, role: 'Field Team Lead', avatar: { initials: 'LF', type: PEOPLE.LF.type }, status: 'empty', note: null },
+  { id: 'KM', name: PEOPLE.KM.name, role: 'Value Framework Owner', avatar: { initials: 'KM', type: PEOPLE.KM.type }, status: 'empty', note: null }];
+const FINAL_APPROVERS = () => [owRow, { id: 'MD', name: 'Mara Delgado', role: 'Asset Manager', avatar: { initials: 'MD', type: 'green' }, status: 'awaiting', lastNotified: 'Nov 17, 2026' },
+  { id: 'LF', name: PEOPLE.LF.name, role: 'Field Team Lead', avatar: { initials: 'LF', type: PEOPLE.LF.type }, status: 'awaiting', lastNotified: 'Nov 17, 2026' },
+  { id: 'KM', name: PEOPLE.KM.name, role: 'Value Framework Owner', avatar: { initials: 'KM', type: PEOPLE.KM.type }, status: 'awaiting', lastNotified: 'Nov 17, 2026' }];
+const reviewCount = rows => `${rows.filter(r => r.id !== 'HG' && r.status === 'success').length}/${rows.filter(r => r.id !== 'HG').length}`;
+// Cooper's Readiness Evaluation for reviewers (Figma 43:141215); the facts are from the study and the real records, the wording [Assumed]
+function readinessEvaluation(notes) {
+  const s = study(INITIAL_LENSES, END), alts = WHISTLER_ALTERNATIVES.filter(a => a.investmentId === CLUSTER.ideaInvestmentId);
+  const rec = alts.find(a => a.isRecommended) || alts[0], dep = invById(CLUSTER.investments.find(id => id !== CLUSTER.ideaInvestmentId));
+  return { summary: { title: 'Strong Investment Need', text: `This ladders cleanly to reliability and safety goals, ${s.now.over} of ${ASSETS.length} cluster assets cross tolerance by ${END}, and the cost range (${fmtMoney(Math.min(...alts.map(a => a.spendTotal)))}–${fmtMoney(Math.max(...alts.map(a => a.spendTotal)))}) is modest against the risk removed.` },
+    sections: [
+      { id: 'align', title: 'Strategic alignment', badge: { label: 'Strong', tone: 'success' }, rows: [['Aligned goals', `${ENTERPRISE_GOALS.length}`], ['Main objective', 'Reliability']] },
+      { id: 'worth', title: 'Worth pursuing', badge: { label: 'Favourable', tone: 'success' }, rows: [['BCR of the recommended alternative', `${bcrOf(rec.valueTotal, rec.spendTotal) ?? '—'}`], ['Cost', fmtMoney(rec.spendTotal)]] },
+      { id: 'fit', title: 'Portfolio fit', badge: { label: '1 overlap', tone: 'neutral' }, rows: [['Overlaps with', dep ? dep.name : '—', 'danger']] },
+      { id: 'flags', title: 'Red flags', badge: { label: '1 to note', tone: 'neutral' }, rows: [['Condition data', 'Pad-mount condition is estimated from age', 'danger']] },
+      { id: 'notes', title: 'Approval notes', count: notes.length, notes },
+    ] };
+}

@@ -79,6 +79,21 @@ function App() {
   const [chooser, setChooser] = useState(false);
   const [newKey, setNewKey] = useState(0);
   const [buildFrom, setBuildFrom] = useState('study');
+  // J11: the gate-0 review round (owner + 3 reviewers) for the pad-mount idea
+  const [review, setReview] = usePersisted('build.review', { rows: REVIEWERS(), round: 0 });
+  const setIdeaStatus = st => setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(m[IDEA_INV.id] || {}), status: st, modified: STORY_DAY } }));
+  const decide = (k, note) => {
+    const row = { proceed: { status: 'success', comment: note || null }, request: { status: 'revisions', comment: note }, park: { status: 'rejected', comment: note }, stop: { status: 'rejected', comment: note } }[k];
+    setReview(v => ({ ...v, rows: v.rows.map(r => r.id === 'NL' ? { ...r, ...row } : r), revisions: k === 'request', reopened: false }));
+    if (k === 'request') { setIdeaStatus('shaping'); toast({ title: 'Sent back to Shape', description: 'Hollis Grant is notified' }); return; }
+    if (k === 'park') { setIdeaStatus('deferred'); toast({ title: 'The idea is deferred' }); return; }
+    if (k === 'stop') { setIdeaStatus('rejected'); toast({ title: 'The idea is stopped' }); return; }
+    toast({ title: 'The investment has been approved.', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setReview(v => ({ ...v, rows: v.rows.map(r => r.id === 'NL' ? { ...r, status: 'empty', comment: null } : r) })) } });
+    // [Assumed] the other two reviewers approve a few seconds later; then the idea becomes an investment in Refine
+    setTimeout(() => { setReview(v => v.rows.find(r => r.id === 'NL').status !== 'success' ? v : { ...v, rows: v.rows.map(r => r.status === 'empty' ? { ...r, status: 'success' } : r) });
+      setIdeas(m => (m[IDEA_INV.id] || {}).status === 'review' ? { ...m, [IDEA_INV.id]: { ...m[IDEA_INV.id], status: 'refining', modified: STORY_DAY } } : m);
+      notify({ title: `${IDEA_INV.name} approved by all reviewers`, details: 'It is now an investment in Refine.', meta: `${IDEA_INV.code} · Build`, link: 'build' }); }, 4000);
+  };
   // J08/J09 Build › Refine: the page, and the investment's Refine draft (recommended alternative, plan/compare selection, cost adjustments, comments, documents)
   const [refinePage, setRefinePage] = useState(init.refinePage || 'overview');
   const [refine, setRefine] = usePersisted('build.refine', { recommended: altForIntent(IDEA_ANSWERS[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: RF_THREADS(),
@@ -237,15 +252,16 @@ function App() {
       {screen === 'plan-compare' && <PlanCompare navBar={navBar} run={running ? run : null} done={!!(run && run.done)} final={finalPlan} stage={planStage}
         onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
         onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
-      {screen === 'build' && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go(buildFrom)} recommendedId={refine.recommended} status={(ideas[IDEA_INV.id] || {}).status || 'shaping'}
+      {screen === 'build' && <Build navBar={navBar} lenses={lenses} idea={idea} onBack={() => go(buildFrom)} recommendedId={refine.recommended} persona={persona} review={review} setReview={setReview} onDecide={decide} onOpenRefine={() => { setRefinePage('overview'); go('build-refine'); }} status={(ideas[IDEA_INV.id] || {}).status || 'shaping'}
         onSendForReview={() => { setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(m[IDEA_INV.id] || {}), status: 'review', modified: STORY_DAY } }));
+          setReview(v => ({ rows: (v.rows || REVIEWERS()).map(r => r.id === 'HG' ? r : { ...r, status: 'empty', comment: null }), round: (v.round || 0) + 1 }));
           notify({ title: `${IDEA_INV.name} sent for review`, details: 'Reviewers are notified. Review is the next stage.', meta: `${IDEA_INV.code} · Build`, link: 'build' });
           toast({ title: 'Sent for review', description: 'Reviewers are notified' }); }}
         onDismiss={() => { const prev = ideas[IDEA_INV.id]; setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
           toast({ title: 'The idea has been stopped.', duration: 5000, primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setIdeas(m => ({ ...m, [IDEA_INV.id]: prev || { status: 'shaping', modified: STORY_DAY } })) } }); }} />}
       {screen === 'value' && <Value navBar={navBar} page={valuePage} setPage={setValuePage} draft={valueDraft} setDraft={setValueDraft} recsDone={valueRecs} setRecsDone={setValueRecs} persona={persona} />}
-      {screen === 'build-refine' && <Refine navBar={navBar} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
-        onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval' })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
+      {screen === 'build-refine' && <Refine persona={persona} navBar={navBar} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
+        onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval', approvers: FINAL_APPROVERS() })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
           toast({ title: 'Sent for approval', description: 'Approve isn’t built yet — the approvers are notified' }); }} />}
       {screen === 'build-library' && <BuildLibrary navBar={navBar} ideas={ideas} setIdeas={setIdeas} onNew={() => setChooser(true)}
         onOpenIdea={() => { setIdea(i => i || { answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} onOpenRefine={() => { setRefinePage('compare'); go('build-refine'); }} />}
