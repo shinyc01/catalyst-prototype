@@ -116,6 +116,7 @@ for alt in alternatives:
     if rp:
         alt['riskBaselineByYear'] = {y: r2(v) for y, v in rp['baselineTotal'].items()}
         alt['riskResidualByYear'] = {y: r2(sum(m['decemberValueByYear'].get(y, 0) for m in rp['residualByMeasure'].values())) for y in rp['baselineTotal']}
+        alt['riskResidualByMeasure'] = {k: {y: r2(v) for y, v in m['decemberValueByYear'].items()} for k, m in rp['residualByMeasure'].items()}   # J09 value models
 users = [{'id': re.sub(r'[^a-z]', '', u['displayName'].lower()), 'displayName': u['displayName'], 'groups': u['groups']} for u in run('users')]
 
 # Selected alternative's spend by year for EVERY curated investment (Command needs CPV = discounted spend, and V/C)

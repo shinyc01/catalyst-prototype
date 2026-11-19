@@ -42,7 +42,7 @@
       body: 'Adjust by % changes every year of the stage. Try 10%.' },
     { target: { text: 'Gantt', exact: true }, title: 'See the schedule',
       body: 'The same stages on a time axis, with the real milestones.' },
-    { hash: '#build-refine-details?persona=owner', target: '.page .ifs-table-card', advance: 'next', title: 'Capture dependencies',
+    { hash: '#build-refine-details?persona=owner', target: '.page .ifs-table', advance: 'next', title: 'Capture dependencies',
       body: 'Cooper linked the other Alpine Meadows investments that share feeders, value or a program with this one. Click a row to see why.' },
   ],
 });

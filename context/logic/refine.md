@@ -26,3 +26,16 @@ Code: `shared/refine-model.js`, `app/screens/refine.jsx`. One investment is refi
 
 ## Dependencies `[Added]` type and progress
 - The other 4 Alpine Meadows investments, with their real cost and value. Cooper explains each link.
+
+## Value (J09)
+- **Value models:** one per real risk measure on the alternatives (Delivery capacity, Environmental, Simple financial, Reliability benefit, Safety). Model names, measure counts and outputs are `[Added]`.
+- **Risk reduction per model** `[Whistler]`: baseline by measure = the real baseline total × the measure's share of 2026 residual risk (before any spend the residual equals the baseline). Reduction = 1 − Σ residual ÷ Σ baseline, 2026–2035. Avg risk reduction = the mean over the models.
+- **Model page:** baseline and each alternative's avoided risk (baseline − residual, never below 0) per year, and a residual-risk chart.
+- **Questionnaire** `[Added]`: 7 questions; 5 answered by Cooper, 2 (Safety risk) need you. My answer or Upload file answers one; upload adds a document (16 → 17). Safety risk turns Ready when both are answered.
+- Add a model from the library (drawer); remove one (Undo). "Edit with Cooper" shows "Value updated" (Figma has no frame for the result).
+
+## Overview (J09)
+- KPIs: BCR (`[Added]` rule), estimated cost, value (score), baseline risk (Σ real baseline 2026–2035), all for the recommended alternative.
+- Cards: investment details (real), affected area (map), yearly forecast (real spend), investment value by measure (real).
+- **Generate widget with Cooper** (prompt chip or Widgets): adds "Annualized outcome risk by risk type" (real residual risk by measure) and the snackbar "Widget shared with your team".
+- Attachments: the 16 `[Added]` documents in Cooper's context; Upload adds one.

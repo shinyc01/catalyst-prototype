@@ -100,3 +100,36 @@ const RF_DOCS = ['Pad-mount condition assessment 2025.pdf', 'Alpine Meadows feed
   'Asset health scores export.csv', 'Replacement program charter.docx', 'Crew availability plan 2028.xlsx', 'Environmental screening memo.pdf', 'Customer impact summary.docx',
   'Vendor quote: pad-mount transformers.pdf', 'Inspection photos index.pdf', 'Load forecast Whistler 2026–2036.xlsx', 'Wildfire season outlook.pdf', 'Safety review notes.docx',
   'Capital plan guidance 2028.pdf', 'Reviewer checklist.docx'].map((name, i) => ({ id: `d${i}`, name, date: ['Jan 15, 2026', 'Mar 2, 2026', 'Jun 11, 2026', 'Sep 30, 2026'][i % 4] }));
+
+// ---- J09 Value: one value model per real measure of the alternatives (valueByMeasure + residual risk by measure) [Whistler]
+// Baseline by measure = the 2026 residual (before any spend the residual equals the baseline) scaled by the real baseline total per year.
+const RF_RISK_MEASURES = Object.keys((RF_ALT_RAW[0] || {}).riskResidualByMeasure || {});
+function measureBaseline(alt, m) {
+  const r = alt.riskResidualByMeasure || {}, share = (r[m] || {})['2026'] / (rfSum(Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v['2026']]))) || 1);
+  return Object.fromEntries(RF_RISK_YEARS.map(y => [y, (alt.riskBaselineByYear || {})[y] * share]));
+}
+const measureReduced = (alt, m) => { const b = rfSum(measureBaseline(alt, m)), r = rfSum((alt.riskResidualByMeasure || {})[m]); return b ? Math.max(0, 1 - r / b) : 0; };
+// [Added] model names, measure counts and outputs (Figma "Selected models"); the measure names and numbers are real
+const RF_MODEL_META = {
+  'Reliability Risk': { name: 'Reliability benefit', measures: 12, output: ['SAIDI / SAIFI improvement', 'Customer minutes avoided'] },
+  'Safety Risk': { name: 'Safety risk', measures: 2, output: ['Public & crew safety exposure', 'Incident likelihood'], needs: 2 },
+  'Environmental Risk': { name: 'Environmental risk', measures: 4, output: ['Oil spill exposure', 'Fire ignition likelihood'] },
+  'Financial Risk': { name: 'Simple financial risk', measures: 3, output: ['Expected financial risk', 'Avoided failure cost'] },
+  'Electrical Delivery Capacity Risk': { name: 'Delivery capacity', measures: 2, output: ['Load at risk'] },
+  'Public Safety Risk': { name: 'Public safety risk', measures: 2, output: ['Public safety exposure'] },
+};
+const RF_MODELS = RF_RISK_MEASURES.map(m => ({ id: m, measure: m, ...(RF_MODEL_META[m] || { name: m, measures: 1, output: [m] }) }));
+// Models you can add (Figma drawer "MODELS") [Added]
+const RF_MODEL_LIBRARY = [['Public Safety Risk', 'Expected harm to the public from asset failure.'], ['Employee Safety Risk', 'Expected harm to crews working on or near the asset.'],
+  ['Asset Integrity Risk', 'Likelihood of structural or insulation failure.'], ['Outage / Service Interruption Risk', 'Customer minutes lost to unplanned outages.'],
+  ['Emissions Reduction', 'Greenhouse gas avoided over the asset life.'], ['Capital Carbon', 'Embodied carbon of the new equipment.']].map(([name, text]) => ({ id: `lib-${name}`, name, text }));
+// Questionnaire answers [Added]: 2 need input (Safety risk), 5 answered by Cooper from the documents
+const RF_QUESTIONS = [
+  { id: 'q1', q: 'How many people live or work within 10 m of the units?', kind: 'Consequence · Required', model: 'Safety risk', answer: null, by: 'you' },
+  { id: 'q2', q: 'Have any of the units had an oil leak in the last 5 years?', kind: 'Likelihood · Required', model: 'Safety risk', answer: null, by: 'you' },
+  { id: 'q3', q: 'What is the average customer count per unit?', kind: 'Consequence · Required', model: 'Reliability benefit', answer: `${Math.round(rfCustomers / rfPadmounts.length)} customers`, by: 'cooper' },
+  { id: 'q4', q: 'What is the restoration time after a failure?', kind: 'Consequence · Required', model: 'Reliability benefit', answer: '6 hours (outage history 2020–2025)', by: 'cooper' },
+  { id: 'q5', q: 'Is the unit inside a wildfire risk zone?', kind: 'Likelihood · Required', model: 'Environmental risk', answer: 'Yes, 4 of 12 units', by: 'cooper' },
+  { id: 'q6', q: 'What is the replacement cost after a failure?', kind: 'Consequence · Required', model: 'Simple financial risk', answer: 'From the 2028 unit cost estimate', by: 'cooper' },
+  { id: 'q7', q: 'What is the peak load on the units?', kind: 'Scope · Required', model: 'Delivery capacity', answer: 'From the Whistler load forecast', by: 'cooper' },
+];

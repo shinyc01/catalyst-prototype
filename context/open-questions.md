@@ -44,4 +44,7 @@ Answer these with the product designer, then move each answer into the right con
 40. **J08: Add alternative** has no frame. The New button and the + show a "not designed yet" message.
 41. **J08: ROI, payback, NPV and IRR** have no source in the demo data, so they show "—". Should the prototype compute them, and how?
 42. **J08: cost stages.** The data has yearly spend only; stage names, shares and dates are `[Added]`. Which stages does a real Catalyst cost plan use?
+43. **J09: Investment value "$" vs score.** Figma shows value in dollars ($23k, $2.05M per year); the demo data's value is a framework score. The prototype shows the score.
+44. **J09: should the three-state triage (Cooper-answered / needs-you / you answered) be the standard for every questionnaire?** (J09 validation question.)
+45. **J09: Widgets drawer** (add, hide, resize, reorder) isn't built; Widgets and the prompt chip generate the one scripted widget.
 

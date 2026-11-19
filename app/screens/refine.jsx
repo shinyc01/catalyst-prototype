@@ -58,7 +58,8 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
       sideNav={<RfSideNav title="Investment" items={nav} value={page} onSelect={id => !/^alt-\d+$/.test(id) && setPage(id)} defaultCollapsed={wide} />}
       bottom={<BottomSheet type="value" documents={{ label: `${refine.docs.length} Documents`, onClick: () => setRefine(r => ({ ...r, docsOpen: !r.docsOpen })) }}
         onUpload={() => { setRefine(r => ({ ...r, docs: [...r.docs, { id: `d${r.docs.length}`, name: 'Alpine Meadows outage calendar 2028.xlsx', date: 'Nov 17, 2026' }] })); toast({ title: 'Document added', description: 'Cooper’s context now has one more source' }); }}
-        prompts={prompts} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
+        prompts={prompts} onPrompt={p => { if (/^Generate Annualized/.test(p)) { setRefine(x => ({ ...x, widgets: [...new Set([...(x.widgets || []), 'risk-type'])], shared: true })); setPage('overview'); toast({ title: 'Cooper generated a widget', description: 'Annualized outcome risk by risk type' }); }
+          else toast({ title: `Cooper: ${p}` }); }} />}>
       <div className="page-row">
         <div className="page">
           {page === 'compare' && <RfCompare refine={refine} setRefine={setRefine} toPlan={toPlan} compared={compared} onOpen={id => setPage(`alt-${id}-details`)}
@@ -261,6 +262,94 @@ function RfInvDetails({ onCooper }) {
   </>;
 }
 
-/* ---------------------------------------------------------------- J09 pages (Value, Overview): placeholders until J09 is built */
-function RfValue() { return <RfTitle title="Value" text="Shows the investment value model baseline and the value models assigned to this investment." />; }
-function RfOverview() { return <RfTitle title="Investment overview" text="High-level investment summary, key metrics, and current progress" />; }
+/* ---------------------------------------------------------------- J09 · Value: models, a model's measures, questionnaire (Figma 48:146320) */
+function RfValue({ refine, setRefine, alt: scoped }) {
+  const alt = scoped || rfAlt(refine.recommended), raw = RF_ALT_RAW.find(a => a.id === alt.id);
+  const models = (refine.models || RF_MODELS.map(m => m.id)).map(id => RF_MODELS.find(m => m.id === id) || (refine.added || []).find(m => m.id === id)).filter(Boolean);
+  const answers = refine.answers || {};
+  const qs = RF_QUESTIONS.map(q => answers[q.id] ? { ...q, answer: answers[q.id], by: 'you-done' } : q);
+  const needs = m => qs.filter(q => q.model === m.name && !q.answer).length;
+  const [open, setOpen] = useState(null), [tab, setTab] = useState('measures'), [lib, setLib] = useState(false), [answering, setAnswering] = useState(null);
+  const avg = models.length ? models.reduce((t, m) => t + (m.measure ? measureReduced(raw, m.measure) : 0), 0) / models.filter(m => m.measure).length : 0;
+  const fy = y => `FY${String(y).slice(2)}`, yrs = Object.keys(alt.spendByYear).sort();
+  if (open) {
+    const m = models.find(x => x.id === open), base = measureBaseline(raw, m.measure);
+    const rows = [{ id: 'base', rank: '', name: 'Baseline', note: 'Shared reference', byYear: base },
+      ...[...RF_ALTS].sort((a, b) => measureReduced(RF_ALT_RAW.find(x => x.id === b.id), m.measure) - measureReduced(RF_ALT_RAW.find(x => x.id === a.id), m.measure)).map((a, k) => {
+        const r = RF_ALT_RAW.find(x => x.id === a.id), b = measureBaseline(r, m.measure);
+        return { id: a.id, rank: k + 1, name: a.name, note: 'Change · avoided risk', byYear: Object.fromEntries(RF_RISK_YEARS.map(y => [y, Math.max(0, b[y] - ((r.riskResidualByMeasure[m.measure] || {})[y] || 0))])) }; })];
+    const shown = RF_RISK_YEARS.slice(0, 6);
+    return <>
+      <div className="row" style={{ gap: 'var(--space-200)' }}><IconButton icon="arrow-left" type="ghost" size="s" label="Back to value models" onClick={() => setOpen(null)} />
+        <span className="t-heading-h2-medium">{m.name}</span></div>
+      <span className="t-body-m-regular sec">{`Risk on the ${m.measure.toLowerCase()} measure, before and after each alternative. Change = baseline − outcome.`}</span>
+      <RfTabs value={tab} onChange={setTab} items={[{ value: 'measures', label: 'Value measures' }, { value: 'q', label: 'Questionnaire answers', count: qs.filter(q => q.model === m.name).length }]} />
+      {tab === 'measures' ? <>
+        <RfCard title={`${m.measure}, by year`} actions={<Button type="secondary" size="s" iconLeft="cooper-system-icon" onClick={() => toast({ title: 'Value updated', description: 'Cooper recalculated the measure with the latest answers' })}>Edit with Cooper</Button>}>
+          <div className="col" style={{ gap: 'var(--space-200)' }}>
+            <NDS label="Formula line" className="rf-formula row"><span className="t-code-m-regular muted">ƒx</span><span className="t-code-m-regular">Change = Baseline − Outcome, where Outcome = Risk likelihood × Risk consequence</span></NDS>
+            <RfTable rowHeight={48} columns={[{ key: 'rank', title: 'Rank', width: 'var(--table-col-check)' }, { key: 'name', title: 'Value', width: '1.6fr', primary: true, render: r => <span className="col"><span className="t-label-m-medium">{r.name}</span><span className="t-body-m-regular muted">{r.note}</span></span> },
+              ...shown.map(y => ({ key: y, title: fy(y), type: 'number', render: r => Math.round(r.byYear[y]).toLocaleString() })), { key: 'sum', title: 'Σ', type: 'number', render: r => <span className="t-label-m-medium">{Math.round(rfSum(r.byYear)).toLocaleString()}</span> }]} rows={rows} />
+          </div>
+        </RfCard>
+        <RfCard title="Residual Risk"><div style={{ height: 'var(--proto-chart-l)' }}><LineChart data={RF_RISK_YEARS.map(y => ({ label: fy(y), base: Math.round(base[y]), ...Object.fromEntries(RF_ALTS.map(a => [a.id, Math.round(((RF_ALT_RAW.find(x => x.id === a.id).riskResidualByMeasure[m.measure]) || {})[y] || 0)])) }))}
+          series={[{ key: 'base', label: 'Baseline', dashed: true }, ...RF_ALTS.map(a => ({ key: String(a.id), label: a.name }))]} /></div></RfCard>
+      </> : <RfCard title="Questionnaire Answers">
+        <RfTable rowHeight={60} groupBy={r => r.answer ? 'Ready' : 'Need input'} columns={[{ key: 'q', title: 'Question', width: '2fr', primary: true, render: r => <span className="col"><span className="t-label-m-medium">{r.q}</span><span className="t-body-m-regular muted">{r.kind}</span></span> },
+          { key: 'model', title: 'Value model', width: '1fr', render: r => <Badge size="s" color="white">{r.model}</Badge> },
+          { key: 'answer', title: 'Answer', width: '1.4fr', render: r => r.answer ? <span className="row" style={{ gap: 'var(--space-150)' }}>{r.answer}{r.by === 'cooper' && <Badge size="s" color="white">Cooper</Badge>}</span>
+            : answering === r.id ? <IFS.IssueAnswerField onSubmit={t => { setRefine(x => ({ ...x, answers: { ...(x.answers || {}), [r.id]: t } })); setAnswering(null); toast({ title: 'Value updated', description: `${r.model} recalculated with your answer` }); }} onCancel={() => setAnswering(null)} />
+            : <span className="row" style={{ gap: 'var(--space-200)' }}><Button type="secondary" size="s" onClick={() => setAnswering(r.id)}>My answer</Button><Button type="tertiary" size="s" iconLeft="system-upload"
+                onClick={() => { setRefine(x => ({ ...x, answers: { ...(x.answers || {}), [r.id]: 'From Safety review notes.docx' }, docs: [...x.docs, { id: `d${x.docs.length}`, name: 'Field safety report — Alpine Meadows.pdf', date: 'Nov 17, 2026' }] })); toast({ title: 'Value updated', description: 'Cooper read the file and answered the question' }); }}>Upload file</Button></span> }]}
+          rows={qs.filter(q => q.model === m.name)} />
+      </RfCard>}
+    </>;
+  }
+  return <>
+    <RfTitle title={scoped ? 'Alternative value' : 'Value'} text={scoped ? `${alt.name}: the value models applied to this alternative.` : 'Shows the investment value model baseline and the value models assigned to this investment.'} />
+    <RfStats cards={[{ size: 's', title: 'Total value created', value: fmtValue(alt.value), caption: 'framework score' }, { size: 's', title: 'Avg risk reduction', value: rfPct(avg) },
+      { size: 's', title: 'Benefit-cost ratio', value: alt.bcr ? `${alt.bcr}x` : '—' }, { size: 's', title: 'Evaluation horizon', value: `${fy(yrs[0])}–${fy(RF_RISK_YEARS[RF_RISK_YEARS.length - 1])}` }]} />
+    <RfCard title="Selected Models" actions={<Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => setLib(true)}>Add</Button>}>
+      <RfTable rowHeight={48} rowProps={r => ({ 'data-model': r.id })} onRowClick={r => { setOpen(r.id); setTab(needs(r) ? 'q' : 'measures'); }} columns={[
+        { key: 'name', title: 'Value model', width: '1.4fr', primary: true },
+        { key: 'status', title: 'Status', width: '1fr', render: r => needs(r) ? <span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type="orange">Needs input</Indicator><IFS.Counter>{`0/${needs(r)}`}</IFS.Counter></span> : <Indicator type="green">Ready</Indicator> },
+        { key: 'measures', title: 'Measures', type: 'number', width: 'var(--table-col-number-min)' },
+        { key: 'output', title: 'Output', width: '1.6fr', render: r => <span className="row" style={{ gap: 'var(--space-100)', minWidth: 0 }}><Badge size="s" color="white">{r.output[0]}</Badge>{r.output.length > 1 && <Badge size="s" color="white">{`+${r.output.length - 1}`}</Badge>}</span> },
+        { key: 'red', title: 'Risk reduction', type: 'number', width: 'var(--table-col-number-min)', render: r => r.measure ? rfPct(measureReduced(raw, r.measure)) : '—' },
+        { key: 'del', title: '', width: 'var(--table-col-action)', render: r => <IconButton icon="system-trash-delete" type="ghost" size="s" label={`Remove ${r.name}`}
+          onClick={e => { e.stopPropagation(); setRefine(x => ({ ...x, models: (x.models || RF_MODELS.map(mm => mm.id)).filter(id => id !== r.id) })); toast({ title: `${r.name} removed`, description: 'Cooper recalculated the investment value',
+            primaryAction: { label: 'Undo', onClick: () => setRefine(x => ({ ...x, models: [...(x.models || []), r.id] })) } }); }} /> }]} rows={models} />
+    </RfCard>
+    {lib && <div className="rf-cooper"><Panel title="Models" collapsible={false} onClose={() => setLib(false)}>
+      <div className="col" style={{ gap: 'var(--space-stack)' }}>{RF_MODEL_LIBRARY.filter(l => !models.some(m => m.id === l.id)).map(l => <ContentCard key={l.id} size="s" title={l.name} description={l.text} iconRight="system-plus"
+        onClick={() => { setRefine(x => ({ ...x, added: [...(x.added || []), { id: l.id, name: l.name, measures: 1, output: [l.name] }], models: [...(x.models || RF_MODELS.map(mm => mm.id)), l.id] })); setLib(false); toast({ title: `${l.name} added`, description: 'Cooper will ask for its inputs' }); }} />)}</div>
+    </Panel></div>}
+  </>;
+}
+
+/* ---------------------------------------------------------------- J09 · Investment overview, widgets (Figma 58:31703) */
+function RfOverview({ refine, setRefine }) {
+  const alt = rfAlt(refine.recommended), widgets = refine.widgets || [];
+  const baseRisk = rfSum(alt.baselineByYear);
+  const generate = () => { if (!widgets.includes('risk-type')) setRefine(x => ({ ...x, widgets: [...(x.widgets || []), 'risk-type'], shared: true })); };
+  const raw = RF_ALT_RAW.find(a => a.id === alt.id);
+  return <>
+    <RfTitle title="Investment overview" text="High-level investment summary, key metrics, and current progress"
+      right={<Button type="secondary" size="s" iconLeft="system-plus" onClick={generate}>Widgets</Button>} />
+    <RfStats cards={[{ size: 's', title: 'Benefit-cost ratio', value: alt.bcr ? `${alt.bcr}x` : '—', caption: 'Benefit returned per $1 spent' }, { size: 's', title: 'Estimated cost', value: fmtMoney(alt.cost), caption: 'Expected delivery cost' },
+      { size: 's', title: 'Investment value', value: fmtValue(alt.value), caption: 'Total expected value' }, { size: 's', title: 'Baseline risk', value: Math.round(baseRisk).toLocaleString(), caption: 'Risk before intervention, 2026–2035' }]} />
+    <div className="ifs-grid is-halves">
+      <RfCard title="Investment Details"><div className="ad-field rf-fields">
+        {[['Name', RF_INV.name], ['Code', RF_INV.code], ['Type', RF_INV.type || 'Program'], ['Planning portfolio', RF_INV.portfolio || '—'], ['Problem statement', RF_INV.description]].map(([l, v]) => <React.Fragment key={l}><span className="t-body-m-regular sec">{l}</span><span className="t-body-m-regular">{v}</span></React.Fragment>)}
+      </div></RfCard>
+      <RfCard title="Affected Assets & area"><NDS label="3D map (MapLibre)" style={{ position: 'relative', height: 'var(--proto-map-h)', borderRadius: 'var(--radius-radius-200)', overflow: 'hidden' }}>
+        <MapView labels={false} lenses={INITIAL_LENSES} year={END} interactive={false} focus={rfPadmounts.map(a => a.id)} /></NDS></RfCard>
+      <RfCard title="Yearly Forecast"><div style={{ height: 'var(--proto-chart-l)' }}><ColumnChart data={Object.keys(alt.spendByYear).sort().map(y => ({ label: `FY${y.slice(2)}`, value: alt.spendByYear[y] }))} valueLabel="Spend" format={v => fmtMoney(v)} /></div></RfCard>
+      <RfCard title="Investment Value"><div style={{ height: 'var(--proto-chart-l)' }}><IFS.BarChart data={alt.valueByMeasure.map(m => ({ label: m.measure.replace(' Risk', ''), value: Math.round(m.value) }))} valueLabel="Value" labelWidth={160} /></div></RfCard>
+      {widgets.includes('risk-type') && <RfCard title="Annualized Outcome Risk by Risk Type"><div style={{ height: 'var(--proto-chart-l)' }}>
+        <LineChart data={RF_RISK_YEARS.map(y => ({ label: `FY${y.slice(2)}`, ...Object.fromEntries(RF_RISK_MEASURES.map(m => [m, Math.round((raw.riskResidualByMeasure[m] || {})[y] || 0)])) }))} series={RF_RISK_MEASURES.map(m => ({ key: m, label: m.replace(' Risk', '') }))} /></div></RfCard>}
+    </div>
+    {refine.shared && <div className="build-snack"><IFS.Snackbar title="Widget shared with your team" primaryAction={{ label: 'Okay', onClick: () => setRefine(x => ({ ...x, shared: false })) }} onClose={() => setRefine(x => ({ ...x, shared: false }))}>
+      {`${PEOPLE.LF.name} · ${PEOPLE.NL.name}`}</IFS.Snackbar></div>}
+  </>;
+}
