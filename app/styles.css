@@ -62,7 +62,7 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .glass { background: var(--surface-primary-alpha); }
 .scroll { overflow: auto; min-height: 0; }
 .click { cursor: pointer; border-radius: var(--radius-radius-100); }
-.click: hover { background: var(--surface-secondary-alpha); }
+.click:hover { background: var(--surface-secondary-alpha); }
 /* Page layout (DS 2.0.2 layout.md): page margin and gap follow screen width; content capped at 1600 and centred;
    cards and regions snap to the 12-column .ifs-grid (.ifs-span-N, .ifs-span-panel / .ifs-span-rest). Docked panels sit outside .page, flush to the edge. */
 .page { box-sizing: border-box; width: 100%; max-width: calc(var(--layout-max-content-width) + 2 * var(--page-margin)); margin: 0 auto;
@@ -85,14 +85,14 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .cmd-row .cmd-handle { position: absolute; left: calc(-1 * var(--space-50)); top: 50%; transform: translateY(-50%); opacity: 0; color: var(--icon-tertiary); cursor: grab; z-index: var(--proto-z-raised); transition: opacity var(--proto-motion-fast); }
 .cmd-row .cmd-kebab { position: absolute; right: var(--space-900); top: 50%; transform: translateY(-50%); opacity: 0; z-index: var(--proto-z-raised); transition: opacity var(--proto-motion-fast); }
 .cmd-row.featured .cmd-kebab { top: auto; bottom: var(--space-400); transform: none; }
-.cmd-row: hover .cmd-handle, .cmd-row:hover .cmd-kebab, .cmd-row:focus-within .cmd-kebab { opacity: 1; }
+.cmd-row:hover .cmd-handle, .cmd-row:hover .cmd-kebab, .cmd-row:focus-within .cmd-kebab { opacity: 1; }
 .cmd-row.dragging { opacity: var(--proto-dim); }
 .cmd-trunc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cmd-note { display: block; max-width: var(--proto-note-w); }
 .cmd-divider { width: var(--size-1); height: var(--size-20); background: var(--border-base); }
 .cmd-archived { height: var(--size-32); padding: 0 var(--space-300); border-radius: var(--radius-radius-200); background: var(--surface-secondary-alpha); justify-content: space-between; gap: var(--space-200); }
 .cmd-convo { gap: var(--space-300); padding: var(--space-300) var(--space-400) var(--space-300) var(--space-300); border-radius: var(--radius-radius-200); background: var(--surface-secondary-alpha); box-sizing: border-box; }
-.cmd-convo: hover { background: var(--background-elevation-1-secondary); }
+.cmd-convo:hover { background: var(--background-elevation-1-secondary); }
 .cmd-rank { width: var(--size-20); height: var(--size-20); border-radius: var(--radius-radius-100); background: var(--background-elevation-1-secondary); display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--text-secondary); }
 
 
@@ -126,8 +126,8 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .plan-metric { width: var(--proto-metric-w); flex: none; padding-left: var(--space-300); border-left: var(--border-widths-border-100) solid var(--border-base); gap: var(--space-50); }
 .plan-cell { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: var(--space-100); padding: var(--space-100) var(--space-150); border-radius: var(--radius-radius-100); }
 .plan-cell svg, .plan-cell .ifs-icon { opacity: 0; }
-.plan-cell: hover { background: var(--background-elevation-1-secondary); }
-.plan-cell: hover svg, .plan-cell:hover .ifs-icon, .plan-cell:focus-visible svg { opacity: 1; }
+.plan-cell:hover { background: var(--background-elevation-1-secondary); }
+.plan-cell:hover svg, .plan-cell:hover .ifs-icon, .plan-cell:focus-visible svg { opacity: 1; }
 .plan-badge { all: unset; cursor: pointer; margin-right: var(--space-100); }
 .plan-spin { display: inline-flex; animation: plan-spin 1.2s linear infinite; }
 @keyframes plan-spin { to { transform: rotate(360deg); } }
@@ -206,9 +206,9 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .study-row { display: flex; align-items: center; gap: var(--space-200); min-height: var(--size-36); padding: 0 var(--space-200); border-radius: var(--radius-radius-100); }
 .study-row.is-click { cursor: pointer; }
 .study-row .study-acts { display: none; }
-.study-row.is-click: hover { background: var(--background-elevation-1-secondary); }
-.study-row.is-click: hover .study-acts, .study-row.is-click:focus-within .study-acts { display: flex; }
-.study-row.is-click: hover .study-time { display: none; }
+.study-row.is-click:hover { background: var(--background-elevation-1-secondary); }
+.study-row.is-click:hover .study-acts, .study-row.is-click:focus-within .study-acts { display: flex; }
+.study-row.is-click:hover .study-time { display: none; }
 .study-alert { position: absolute; top: var(--space-300); right: var(--page-margin); width: var(--overlay-width-s); z-index: var(--proto-z-alert); }
 /* J05: Cooper recommendations window, evidence drawer, send-to-Build snackbar */
 .recs-wrap { position: absolute; right: var(--page-margin); top: var(--space-300); bottom: var(--space-300); width: var(--region-panel); z-index: var(--proto-z-map-window); display: flex; flex-direction: column; }
