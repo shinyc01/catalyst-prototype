@@ -43,3 +43,5 @@
 - **`SystemConfidence` hard-codes "Approval readiness":** it doesn't pass a label to `ConfidenceGates`. For another label (Plan: "Optimization readiness"), compose it from `Panel` + `ContentCard` + `ConfidenceGates label=…` + `IssueKindSwitch` + `IssueNavigator`, with the kit's `ifs-trc-*` class names (see `app/screens/plan.jsx`). Found 2026-11-18.
 - **Icons only exist at some sizes.** A size-S button draws 12 px icons, and an icon without a 12 px version renders as an empty dotted box (`ifs-icon--missing`). Check the sizes in `vendor/ds2/ifs-ds.js` before using an icon in a small button (e.g. `system-mail-message` has 12 px; `system-mail-user` doesn't).
 - **`TextField` doesn't forward `onBlur` / `onKeyDown`.** Control it (`value` + `onChange`) and put those handlers on a wrapper element.
+
+- **One global scope gotchas** (all app files share it): never declare a top-level name twice (check.mjs now fails on it), and avoid object-rest destructuring (`const { a, ...rest } = x`) outside `app/ui.jsx`: Babel emits a top-level `_excluded` helper per file, and two of them crash the app. Copy and `delete` instead.

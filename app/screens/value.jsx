@@ -340,7 +340,7 @@ function VfApproval({ draft, setDraft, setPage }) {
   }, [draft.status, draft.rounds]);
   const send = () => { setDraft(d => ({ ...d, status: 'pending', rounds: d.rounds + 1, approvers: d.approvers.map(a => a.status === 'success' && d.rounds ? a : { ...a, status: 'awaiting', lastNotified: 'Nov 17, 2026' }) }));
     toast({ title: 'Sent for approval', description: 'The approvers are notified' }); };
-  const approvers = draft.approvers.map(a => a.status === 'rejected' ? { ...a, action: { label: 'Shape', icon: 'system-flag', onClick: () => { setDraft(d => ({ ...d, stage: 'shape', status: 'draft' })); setPage('shape'); } } } : a);
+  const approvers = draft.approvers.map(a => a.status === 'rejected' ? { ...a, action: { label: 'Shape', icon: 'flag', onClick: () => { setDraft(d => ({ ...d, stage: 'shape', status: 'draft' })); setPage('shape'); } } } : a);
   return <div className="page">
     <RfTitle title="Send for approval" text={`These approvers were added earlier in the framework setup. Notify them or send ${draft.name} for approval — required approvers must respond before it can publish.`}
       right={draft.status === 'ready' ? <Menu label="Publish" trigger={<Button type="primary" size="s" iconRight="arrow-caret-down-filled">Publish</Button>} items={[

@@ -30,7 +30,15 @@ const Sec = ({ title, extra, actions, children, style, cooper }) => (
 );
 const SubHead = ({ children }) => <span className="t-label-m-medium" style={{ display: 'block', padding: 'var(--space-100) 0 var(--space-200)' }}>{children}</span>;
 
-function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview, recommendedId }) {
+function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview, recommendedId, persona = 'owner', review, setReview, onDecide, onOpenRefine }) {
+  // J11: the reviewer (Noah Lindgren, Finance Lead) sees the idea read-only with Cooper's Readiness Evaluation and Decide;
+  // the owner sees the approval chain in place of the canvas while the idea is with the reviewers
+  const rows = (review && review.rows) || REVIEWERS();
+  const reviewer = persona === 'estimator' && status === 'review';
+  const myRow = rows.find(r => r.id === 'NL') || {};
+  const ownerChain = !reviewer && (['review', 'deferred', 'rejected', 'refining'].includes(status) || (status === 'shaping' && review && review.revisions && !review.reopened));
+  const [decide, setDecide] = useState(null);       // 'proceed' | 'request' | 'park' | 'stop' while its dialog is open
+  const [decideNote, setDecideNote] = useState('');
   const s = study(lenses, END);
   // J07: System confidence sidebar (Figma 43:76732): the kit's issue report, gates and open questions from shared/build-model.js
   const c = IFS.useIssueReport({ issues: useMemo(() => shapeIssues(), []), gates: SHAPE_GATES });
@@ -60,10 +68,21 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
   const unit = metric === 'bcr' ? 'BCR' : 'value';
   const fmtV = v => metric === 'bcr' ? v.toFixed(2) : fmtValue(v);
 
+  const DECIDE = { proceed: { label: 'Proceed', description: 'The idea becomes an investment.' }, request: { label: 'Request info', description: 'Send it back to Shape with what you need.' },
+    park: { label: 'Park', description: 'Revisit it after a set time.' }, stop: { label: 'Stop', description: 'Close the idea.' } };
   const header = <PageHeader title={IDEA_INV.name} id={IDEA_INV.code} onBack={onBack}
-    status={<Indicator type={IDEA_STATUS[status].type}>{IDEA_STATUS[status].label}</Indicator>}
-    center={<Stepper current={0} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
-    actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
+    status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={IDEA_STATUS[status].type}>{IDEA_STATUS[status].label}</Indicator>{status === 'review' && <IFS.Counter>{reviewCount(rows)}</IFS.Counter>}</span>}
+    center={reviewer ? <Stepper current={0} steps={[{ label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />
+      : <Stepper current={ownerChain ? (status === 'refining' ? 2 : 1) : 0} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
+    actions={reviewer ? <div className="row" style={{ gap: 'var(--space-200)' }}>
+      <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+      {myRow.status === 'success' ? <Button type="secondary" size="s" iconLeft="system-check" disabled>Proceed</Button>
+        : <SplitButton size="s" onClick={() => setDecide('proceed')} menuLabel="More decisions" items={Object.entries(DECIDE).map(([k, d]) => ({ label: d.label, description: d.description, onClick: () => setDecide(k) }))}>Decide</SplitButton>}
+    </div> : ownerChain ? <div className="row" style={{ gap: 'var(--space-200)' }}>
+      <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+      <Button type="secondary" size="s" onClick={() => setDismiss('')}>Dismiss</Button>
+      <Button type="primary" size="s" disabled={status !== 'refining'} onClick={onOpenRefine}>Refine</Button>
+    </div> : <div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
       <Button type="secondary" size="s" onClick={() => setDismiss('')}>Dismiss</Button>
@@ -73,7 +92,15 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
     <AppShell navBar={navBar} header={header}
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={['Find similar past ideas', 'What could block this idea?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
-      <div className="page-row">
+      {ownerChain ? <div className="page">
+        {status === 'shaping' && <IFS.Alert type="warning" title="Revisions required">{`${(rows.find(r => r.status === 'revisions') || {}).name || 'A reviewer'} asked for more information. Open Shape from their row, update the idea and send it for review again.`}</IFS.Alert>}
+        {status === 'refining' && <IFS.Alert type="success" title="Approved by all reviewers">The idea is now an investment. Continue in Refine.</IFS.Alert>}
+        <IFS.ApprovalChainPanel mode="full" title="Approval chain"><IFS.ApprovalChainTable view="full" currentUserId="HG" ownerId="HG"
+          approvers={rows.map(r => r.status === 'revisions' ? { ...r, action: { label: 'Shape', icon: 'flag', onClick: () => setReview(v => ({ ...v, reopened: true })) } }
+            : r.status === 'rejected' && status === 'deferred' ? { ...r, action: { label: 'Set reminder', icon: 'calendar-time', onClick: () => toast({ title: 'Reminder set', description: 'The idea comes back to your Command in 90 days' }) } } : r)}
+          onChange={a => setReview(v => ({ ...v, rows: a.map(x => { const rest = { ...x }; delete rest.action; return rest; }) }))}
+          onNoteChange={(a, note) => setReview(v => ({ ...v, rows: v.rows.map(x => x.id === a.id ? { ...x, note } : x) }))} /></IFS.ApprovalChainPanel>
+      </div> : <div className="page-row">
         <div className="page">
           <Sec title="Idea Overview">
             <div className="col" style={{ gap: 'var(--space-150)', padding: '0 var(--space-150) var(--space-150)' }}>
@@ -175,6 +202,12 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
           </Sec>
         </div>
         <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
+          {reviewer ? (() => { const ev = readinessEvaluation(rows.filter(r => r.note && r.note.text).map(r => ({ name: r.name, text: r.note.text })));
+            return <Panel title="Readiness evaluation" collapsible={false} style={{ height: '100%', width: 'var(--region-panel)' }}>
+              <IFS.ReadinessEvaluation summary={ev.summary} defaultOpenSections={['notes']} sections={ev.sections.map(x => ({ id: x.id, title: x.title, badge: x.badge, count: x.count,
+                content: x.rows ? <IFS.ReadinessFacts rows={x.rows} /> : <div className="col" style={{ gap: 'var(--space-200)' }}>{x.notes.length ? x.notes.map((n, k) => <div key={k} className="col rf-note" style={{ gap: 'var(--space-50)' }}><span className="t-label-m-medium">{n.name}</span><span className="t-body-m-regular sec">{`“${n.text}”`}</span></div>)
+                  : <span className="t-body-m-regular muted">No notes from the owner.</span>}</div> }))} />
+            </Panel>; })() :
           <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
             className={panel ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
             <ContentCard className="ifs-trc-card" title={<IFS.ConfidenceGates controller={c} label="Review readiness" />}
@@ -182,9 +215,19 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
                 {c.present.length > 1 && <div className="ifs-trc-card__kinds"><IFS.IssueKindSwitch controller={c} /></div>}
                 <IFS.IssueNavigator controller={c} />
               </div>} />
-          </Panel>
+          </Panel>}
         </div>
-      </div>
+      </div>}
+      <Modal open={decide !== null} onOpenChange={o => !o && setDecide(null)} title={decide === 'proceed' ? 'Proceed to Investment' : decide ? DECIDE[decide].label : ''}
+        secondaryAction={{ label: 'Cancel', onClick: () => setDecide(null) }}
+        primaryAction={{ label: decide === 'proceed' ? 'Approve investment' : decide ? DECIDE[decide].label : '', disabled: decide && decide !== 'proceed' && !decideNote.trim(),
+          onClick: () => { const k = decide, n = decideNote.trim(); setDecide(null); setDecideNote(''); onDecide && onDecide(k, n); } }}>
+        <div className="col" style={{ gap: 'var(--space-stack)' }}>
+          <span className="t-body-m-regular sec">{decide === 'proceed' ? 'This idea will leave Shape and become an investment. Its context, history, and approvals stay attached.'
+            : decide === 'request' ? 'The idea goes back to Shape. Say what the owner needs to add.' : decide === 'park' ? 'The idea is deferred. Say why and when to revisit it.' : 'The idea is closed. Say why.'}</span>
+          <IFS.TextArea size="l" label={decide === 'proceed' ? 'Note' : 'Comment'} placeholder={decide === 'proceed' ? 'Add a short approval note for the investment record.' : 'Required'} value={decideNote} onChange={e => setDecideNote(e.target ? e.target.value : e)} />
+        </div>
+      </Modal>
       <Modal open={dismiss !== null} onOpenChange={o => !o && setDismiss(null)} title="Dismiss Idea"
         secondaryAction={{ label: 'Cancel', onClick: () => setDismiss(null) }}
         primaryAction={{ label: 'Dismiss idea', onClick: () => { const n = dismiss; setDismiss(null); onDismiss ? onDismiss(n) : toast({ title: 'The idea has been stopped.' }); } }}>

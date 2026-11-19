@@ -25,6 +25,18 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
   const recId = refine.recommended, alts = RF_ALTS, rec = rfAlt(recId);
   const toPlan = id => refine.toPlan[id] !== false, compared = id => refine.compare[id] !== false;
   const c = IFS.useIssueReport({ issues: useMemo(() => refineIssues(), []), gates: RF_GATES });
+  // J11 final approval: after Send for approval the right panel shows the approval chain. [Assumed] two approvers answer within seconds;
+  // Luca Ferri stays awaiting until the owner pushes a reminder
+  useEffect(() => {
+    if (refine.status !== 'approval') return;
+    const t = setTimeout(() => setRefine(r => r.status !== 'approval' ? r : { ...r, approvers: r.approvers.map(a => ['MD', 'KM'].includes(a.id) ? { ...a, status: 'success' } : a) }), 4000);
+    return () => clearTimeout(t);
+  }, [refine.status]);
+  useEffect(() => {
+    if (refine.status === 'approval' && refine.approvers && refine.approvers.every(a => a.status === 'success')) {
+      setRefine(r => ({ ...r, status: 'approved' })); toast({ title: 'Investment approved', description: 'Approved at every gate' });
+    }
+  }, [refine.approvers]);
   const [side, setSide] = useState('confidence');        // right panel: confidence | comments | null
   const [thread, setThread] = useState(null);           // open comment thread id
   const [cooper, setCooper] = useState(null);           // Cooper window: { kind: 'recs' | 'detail' | 'text', ... }
@@ -44,14 +56,14 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
     comments: reply ? [...t.comments, { id: `r${Date.now()}`, name: 'Cooper', avatar: { type: 'cooper' }, time: 'Just now', text: reply }] : t.comments } : t) }));
   const shapeWithCooper = t => { setThread(null); setCooper({ kind: 'recs', thread: t }); };
   const header = <PageHeader title={RF_INV.name} id={RF_INV.code} onBack={onBack}
-    status={<Indicator type={refine.status === 'approval' ? 'orange' : 'purple'}>{refine.status === 'approval' ? 'In approval' : 'Refining'}</Indicator>}
-    center={<Stepper current={2} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
+    status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={refine.status === 'approval' ? 'orange' : refine.status === 'approved' ? 'green' : 'purple'}>{refine.status === 'approval' ? 'Under review' : refine.status === 'approved' ? 'Approved' : 'Refining'}</Indicator>{refine.status === 'approval' && refine.approvers && <IFS.Counter>{reviewCount(refine.approvers)}</IFS.Counter>}</span>}
+    center={<Stepper current={['approval', 'approved'].includes(refine.status) ? 3 : 2} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
     actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <span className="rf-comment-btn"><IconButton icon="system-comment" type={side === 'comments' ? 'secondary' : 'tertiary'} size="s" label="Comments" onClick={() => setSide(s => s === 'comments' ? 'confidence' : 'comments')} />
         {openCount > 0 && <span className="ifs-navbar__dot" aria-hidden="true" />}</span>
       <Button type="secondary" size="s" onClick={() => toast({ title: 'Dismiss is on Shape', description: 'An investment in Refine is withdrawn from Approve' })}>Dismiss</Button>
-      <Button type="primary" size="s" disabled={refine.status === 'approval'} onClick={onSendForApproval}>{refine.status === 'approval' ? 'Sent for approval' : 'Send for approval'}</Button>
+      <Button type="primary" size="s" disabled={['approval', 'approved'].includes(refine.status)} onClick={onSendForApproval}>{refine.status === 'approved' ? 'Approved' : refine.status === 'approval' ? 'Sent for approval' : 'Send for approval'}</Button>
     </div>} />;
   const prompts = page === 'compare' || altPage?.tab === 'details' ? ['Explain gaps in confidence', 'Why this alternative?'] : wide ? ['Increase budget by 15%', 'Create new phase']
     : page === 'value' || altPage?.tab === 'value' ? ['Explain these value models', 'Explain the baseline value'] : ['Generate Annualized outcome risk by risk type chart', 'Compare to best practice'];
@@ -64,6 +76,7 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
           else toast({ title: `Cooper: ${p}` }); }} />}>
       <div className="page-row">
         <div className="page">
+          {refine.status === 'approved' && <IFS.Alert type="success" title="Approved at every gate">Sending the investment to Plan’s next planning cycle isn’t designed yet (J11 gap).</IFS.Alert>}
           {page === 'compare' && <RfCompare refine={refine} setRefine={setRefine} toPlan={toPlan} compared={compared} onOpen={id => setPage(`alt-${id}-details`)}
             onEvaluate={() => setCooper({ kind: 'text', text: `I compared the ${alts.length} alternatives on cost, risk reduced and value. ${rec.name} reduces ${rfPct(rec.reduced)} of the scored risk for ${fmtMoney(rec.cost)} (BCR ${rec.bcr ?? '—'}). ${[...alts].sort((a, b) => b.reduced - a.reduced)[0].name} reduces the most risk but costs ${fmtMoney([...alts].sort((a, b) => b.reduced - a.reduced)[0].cost)}. I’d keep ${rec.name} as recommended.` })} />}
           {altPage && altPage.tab === 'details' && <RfAltDetails alt={rfAlt(altPage.id)} recId={recId} toPlan={toPlan(altPage.id)} />}
@@ -74,7 +87,11 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
           {page === 'overview' && <RfOverview refine={refine} setRefine={setRefine} />}
         </div>
         {side && <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
-          {side === 'comments' ? <RfCommentsPanel threads={threads} selectedId={thread} onOpen={t => setThread(t.id || t)} onResolve={t => resolveThread(t.id || t)}
+          {side !== 'comments' && refine.approvers && ['approval', 'approved'].includes(refine.status) ? <IFS.ApprovalChainPanel mode="sidebar" title="Approval chain" style={{ height: '100%', width: 'var(--region-panel-l)' }}>
+              <IFS.ApprovalChainTable view="full" details currentUserId="HG" ownerId="HG" approvers={refine.approvers} onChange={a => setRefine(r => ({ ...r, approvers: a }))}
+                onPush={a => setTimeout(() => setRefine(r => ({ ...r, approvers: r.approvers.map(x => x.id === a.id ? { ...x, status: 'success' } : x) })), 3000)} />
+            </IFS.ApprovalChainPanel>
+          : side === 'comments' ? <RfCommentsPanel threads={threads} selectedId={thread} onOpen={t => setThread(t.id || t)} onResolve={t => resolveThread(t.id || t)}
               onClose={() => setSide('confidence')} currentUser={{ name: me.name }} style={{ height: '100%' }} />
             : <Panel title="System confidence" expanded={!wide && refine.panel !== false} onExpandedChange={v => setRefine(r => ({ ...r, panel: v }))} dot={c.dot || undefined}
                 onEvidence={() => toast({ title: 'Evidence chain' })} className="ifs-trc-panel" style={{ height: '100%' }}>

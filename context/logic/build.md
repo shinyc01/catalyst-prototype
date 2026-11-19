@@ -19,3 +19,10 @@ Code: `shared/build-model.js` (rules and data), `app/screens/build-library.jsx` 
 - **Edit The Need:** by hand (pencil → text area → Save) or with Cooper (copper card outline + Cooper's bar; Cooper adds the recommended alternative, its cost and years).
 - **Dismiss:** modal with a note → Idea Pad + "The idea has been stopped." with Undo (5 s).
 - **Send for review:** status Under review, a notification, the button reads "Sent for review". Review itself is not built yet (J11).
+
+## Review and approval (J11)
+- **Gate 0 (Review):** Send for review → the owner sees the approval chain in place of the canvas: Hollis Grant (owner) + 3 reviewers, Noah Lindgren (Finance Lead), Luca Ferri (Field Team Lead), Kenji Mori (Value Framework Owner) `[Added]`. Counter = approved reviewers / 3.
+- **Reviewer view** (persona Noah Lindgren): the idea read-only, Cooper's **Readiness Evaluation** (summary + Strategic alignment, Worth pursuing, Portfolio fit, Red flags from the study and the real records; Approval notes = the owner's notes) and **Decide**: Proceed (modal "Proceed to investment" → toast with Undo), Request info (→ Shaping, the owner gets Shape on the row), Park (→ Deferred, Set reminder), Stop (→ Rejected). Only Proceed is drawn in Figma; the other three dialogs are `[Assumed]`.
+- `[Assumed]` After Noah proceeds, the other two reviewers approve 4 s later; the idea becomes **Refining** and the owner's Refine button opens it.
+- **Final approval (Approve):** Refine › Send for approval → the approval chain (Mara Delgado, Luca Ferri, Kenji Mori) replaces System confidence. Mara and Kenji approve after 4 s; Luca waits until the owner pushes him (kit push, once per 24 h), then approves 3 s later → **Approved at every gate**.
+- **Not built:** sending the approved investment to Plan (no design), automatic reminders at day 3 / 5 / 7, Restore idea and Activity on a rejected idea.
