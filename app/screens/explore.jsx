@@ -158,7 +158,7 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
       <div className="row assets-panel__head">
         <span className="t-heading-h4-semibold">Assets</span><Counter>{ASSETS.length}</Counter>
         <span style={{ flex: 1 }} />
-        <SegmentedControl size="s" value={view} onChange={setView} options={[{ value: 'tree', iconLeft: 'asset-structure', label: '' }, { value: 'list', iconLeft: 'layout-list', label: '' }]} aria-label="Tree or list" />
+        <SegmentedControl size="s" value={view} onChange={setView} options={[{ value: 'tree', iconLeft: 'asset-structure', ariaLabel: 'Tree' }, { value: 'list', iconLeft: 'layout-list', ariaLabel: 'List' }]} aria-label="Tree or list" />
         <IconButton icon="arrow-diagonal-collapse" type="ghost" size="s" label="Collapse the tree" onClick={() => setOpen(new Set(['co']))} />
         <IconButton icon="system-close" type="ghost" size="s" label="Close assets" onClick={onClose} />
       </div>
