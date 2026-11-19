@@ -8,7 +8,7 @@ function initialFromHash(h) {
   if (p.get('asset') && assetById(p.get('asset'))) s.asset = p.get('asset');
   if (p.get('persona') && PERSONAS[p.get('persona')]) s.persona = p.get('persona');
   if (p.get('year')) s.year = Math.min(END, Math.max(NOW, +p.get('year') || NOW));
-  if (name.startsWith('explore')) { s.screen = 'explore'; s.details = name === 'explore-details'; }
+  if (name.startsWith('explore')) { s.screen = 'explore'; s.details = name === 'explore-details'; s.recs = name === 'explore-recs'; }
   if (name.startsWith('study')) s.screen = 'study';
   if (name === 'study-flood') s.sel = 'flood';
   if (name === 'study-lens-chat') s.chat = { kind: 'lens', msgs: [{ role: 'cooper', ...LENS_SCRIPT[0] }], i: 0, busy: false, answers: [] };
@@ -62,7 +62,9 @@ function App() {
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
   }, []);
   const [trace, setTrace] = usePersisted('explore.trace', {});
-  const [studies, setStudies] = usePersisted('studies', STUDY_SEEDS);      // J03 Study Library (seeded from the real asset groups)
+  const [studies, setStudies] = usePersisted('studies', STUDY_SEEDS);
+  const [recsOpenIds, setRecsOpenIds] = usePersisted('recs.open', RECOMMENDATIONS.map(r => r.id));   // J05: recommendations not yet sent to Build
+  const [buildSnack, setBuildSnack] = useState(null);      // J03 Study Library (seeded from the real asset groups)
   const [studyScope, setStudyScope] = usePersisted('study.scope', null);    // { id, name, ids, studyId } — the population the Study is on           // J02 Trace Report answers (the flood fix changes the lens source)
   const [showRun, setShowRun] = useState(true);
   const [, setTick] = useState(0);
@@ -184,13 +186,20 @@ function App() {
         else if (d.open === 'study') go('study');
         else if (d.open === 'build') { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
-      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={g => { const ex = g && studies.find(x => x.ids && x.ids.length === g.assets.length && g.assets.every(id => x.ids.includes(id))); setStudyScope(g ? { id: g.id, name: ex ? ex.name : g.label, ids: g.assets, studyId: ex?.id } : null); go('study'); }} onBack={() => go('command')} />}
+      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
+        recsOpenIds={recsOpenIds} recsAtStart={init.recs || /^#explore-recs/.test(location.hash)} onSendToBuild={r => {
+          setRecsOpenIds(l => l.filter(x => x !== r.id));
+          setBuildSnack({ text: `${r.interventions.length} strategies sent to Build for ${r.area}`, invId: r.invId });
+          notify({ title: `${r.inv.name} sent to Build`, details: `${r.interventions.length} strategies from Cooper’s recommendation for ${r.area}.`, meta: `${r.inv.code} · Build` });
+          setTimeout(() => setBuildSnack(null), 5000); }} details={details} setDetails={d => { setDetails(d); if (d) setAsset(null); }} onStudy={g => { const ex = g && studies.find(x => x.ids && x.ids.length === g.assets.length && g.assets.every(id => x.ids.includes(id))); setStudyScope(g ? { id: g.id, name: ex ? ex.name : g.label, ids: g.assets, studyId: ex?.id } : null); go('study'); }} onBack={() => go('command')} />}
       {screen === 'study' && <Study {...shared} key={studyScope?.id || 'cluster'} {...{ sel, setSel, setLenses, chat, setChat, setYear }}
         scope={studyScope} persona={persona} trace={trace} setTrace={setTrace} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
         onSave={rec => setStudyScope(sc => ({ ...(sc || { id: rec.id, name: rec.name, ids: rec.ids }), studyId: rec.id }))}
         onClose={() => go('explore')}
         onBuild={answers => { setIdea({ answers }); go('build'); toast({ title: 'Idea created', description: 'From the Alpine Meadows study — lenses and your answers carried over' }); }} />}
       <GlobalSearch open={searchOpen} network={searchNetwork} onClose={() => setSearchOpen(false)} onOpen={openFromSearch} />
+      {buildSnack && <div className="build-snack"><Snackbar title={buildSnack.text} showClose={false} secondaryAction={{ label: 'View in Build', onClick: () => {
+        setBuildSnack(null); if (buildSnack.invId === CLUSTER.ideaInvestmentId) { setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); } else toast({ title: 'Build’s Idea Pad isn’t part of this prototype yet' }); } }} /></div>}
       <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
         onOpen={n => { setNotesOpen(false); if (n.link) { go(n.link); } }} />
       {screen === 'plan-setup' && <PlanSetup navBar={navBar} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}

@@ -238,8 +238,99 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
   );
 }
 
+/* ============================================================ J05 · Cooper recommendations (Figma 29:351117, 29:352263, 29:354522, 29:358931, 29:357809)
+   list (grouped) → Take me there (fly-in) → Live signal (risk drivers · affected areas · recent outages) → Create idea (interventions) → sent to Build */
+const { RecommendationGroup, RecommendationItem, RecommendationImpact, CooperChip, EvidenceButton, EvidenceChainDrawer } = IFS;
+function Collapse({ title, count, open, onToggle, children }) {
+  return (
+    <div className="col rec-sec">
+      <button className="ad-sec__head t-label-m-upper muted" onClick={onToggle} aria-expanded={open}>
+        <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={12} />{title}{count != null && <Counter>{count}</Counter>}</button>
+      {open && <div className="col" style={{ gap: 8 }}>{children}</div>}
+    </div>
+  );
+}
+function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onFly, onStudy, onCreate }) {
+  const r = RECOMMENDATIONS.find(x => x.id === recId);
+  const [exp, setExp] = useState(null);
+  const [sec, setSec] = useState('drivers');
+  const [others, setOthers] = useState(false);
+  const [evid, setEvid] = useState(false);
+  const groups = recGroups(openIds), n = openIds.length;
+  if (mode === 'loading') return <AgentWindow text="Taking you there: Bringing the assets into view…" onClose={onClose} />;
+  const evidence = r && <div className="rec-evidence"><EvidenceChainDrawer open={evid} onOpenChange={setEvid} value={Math.round(70 + r.pof * 25)} rationale={r.evidence}
+    benchmark={{ empty: true }} /></div>;
+  if (mode === 'signal' && r) return <>
+    {evid && evidence}
+    <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => setMode('draft') }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
+      <div className="col" style={{ gap: 12 }}>
+        <div className="row" style={{ gap: 8, justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+        <span className="t-body-m-regular sec">{r.signal.text}</span>
+        <Collapse title="Risk drivers" open={sec === 'drivers'} onToggle={() => setSec(sec === 'drivers' ? null : 'drivers')}>
+          <ContentCard size="s" title={r.signal.driver.title} description={r.signal.driver.text} bottom={<div style={{ width: '100%' }}>
+            <RecommendationImpact rows={r.signal.driver.rows} />
+            <div style={{ height: 150, overflow: 'hidden' }}><LineChart data={r.signal.chart} series={[{ key: 'pof', label: 'Failure likelihood' }, { key: 'base', label: 'Condition only', dashed: true }]} format={v => `${v}%`} zeroBased /></div>
+          </div>} />
+        </Collapse>
+        <Collapse title="Affected areas" open={sec === 'areas'} onToggle={() => setSec(sec === 'areas' ? null : 'areas')}>
+          <ContentCard size="s" title={r.area} description={r.signal.areaText} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={r.signal.areaRows} /></div>} />
+        </Collapse>
+        <Collapse title="Recent outages" count={r.signal.outages.length} open={sec === 'outages'} onToggle={() => setSec(sec === 'outages' ? null : 'outages')}>
+          {r.signal.outages.map((o, i) => <ContentCard key={o} size="s" iconLeft="arrow-caret-right-filled" title={`${i + 1}. ${o}`} onClick={() => toast({ title: o, description: 'Outage records aren’t part of this prototype yet' })} />)}
+        </Collapse>
+      </div>
+    </AgentWindow>
+  </>;
+  if (mode === 'draft' && r) { const rec = r.interventions[0], alts = r.interventions.slice(1);
+    const rows = x => [{ label: 'Cost', value: `~${fmtMoney(x.cost)}` }, { label: 'Value', value: `${fmtValue(x.value)} value score` }, { label: 'Timeline', value: x.timeline }, { label: 'Risk reduced', value: `${pctTxt(x.reduced)} of the group’s risk` }];
+    return <>
+      {evid && evidence}
+      <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => onCreate(r) }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
+        <div className="col" style={{ gap: 12 }}>
+          <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => setMode('signal')}>Back</Button></div>
+          <div className="row" style={{ gap: 8, justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+          <Collapse title="Recommended intervention" open onToggle={() => {}}>
+            <ContentCard size="s" title={rec.name} description={`Cooper’s pick for ${r.inv.name}: the recommended alternative in the investment.`}
+              control={<Badge size="s" color="white">{`${r.assets.length} assets`}</Badge>} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={rows(rec)} /></div>} />
+          </Collapse>
+          <Collapse title="Other interventions" count={alts.length} open={others} onToggle={() => setOthers(!others)}>
+            {alts.map(x => <ContentCard key={x.id} size="s" title={x.name} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={rows(x)} /></div>} />)}
+          </Collapse>
+        </div>
+      </AgentWindow>
+    </>; }
+  return (
+    <AgentWindow onClose={onClose} onAsk={() => toast({ title: 'Cooper chat isn’t part of this flow' })}
+      text={`I’ve surfaced ${n} recommendation${n === 1 ? '' : 's'} that need your attention — grouped by risk, value and impact.`}>
+      <div className="col" style={{ gap: 12 }}>
+        {groups.map(g => (
+          <RecommendationGroup key={g.title} title={g.title} count={g.items.length}>
+            {g.items.map(x => (
+              <RecommendationItem key={x.id} title={x.title} impact={x.impact} expanded={exp === x.id}
+                description={<span className="col" style={{ gap: 8 }}><span>{x.description}</span>
+                  <NDS label="Includes + If no action is taken" className="col rec-extra">
+                    <span className="t-label-m-upper muted">Includes</span>
+                    {x.includes.map(i => <span key={i.label} className="row t-body-m-regular" style={{ gap: 6 }}>• {i.label}{i.root && <Badge size="s" color="black">Root</Badge>}</span>)}
+                    <span className="t-label-m-upper muted">If no action is taken</span>
+                    {x.ifNoAction.map(i => <span key={i} className="t-body-m-regular sec">• {i}</span>)}
+                  </NDS></span>}
+                onExpandedChange={o => { setExp(o ? x.id : null); onFocus(o ? x.assets : null); }} action={{ label: 'Take me there', onClick: () => onFly(x) }} />
+            ))}
+          </RecommendationGroup>
+        ))}
+        {!groups.length && <EmptyState cause="empty-container" size="section" heading="Nothing needs your attention" body="Every recommendation has been sent to Build." />}
+      </div>
+    </AgentWindow>
+  );
+}
+
 /* ============================================================ Screen 2 — Explore arrival */
-function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, onStudy, onBack, persona, trace, setTrace, searchCtx, setSearchCtx, studies, setStudies, onOpenStudy }) {
+function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, onStudy, onBack, persona, trace, setTrace, searchCtx, setSearchCtx, studies, setStudies, onOpenStudy,
+  recsOpenIds = [], setRecsOpenIds, onSendToBuild, recsAtStart }) {
+  const [recs, setRecs] = useState(!!recsAtStart);              // J05: the Cooper recommendations window
+  const [recMode, setRecMode] = useState('list');               // list | loading | signal | draft
+  const [recId, setRecId] = useState(null);
+  const [recFocus, setRecFocus] = useState(null);
   const [libOpen, setLibOpen] = useState(false);
   const [barOpen, setBarOpen] = useState(true);
   const api = useRef(null);
@@ -262,8 +353,17 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
     if (groupById(id)) { setGroup(id); setGroupOpen(false); setAsset(null); setBarOpen(true); return; }
     if (assetById(id)) { setGroup(groupOfAsset(id).id); setAsset(id); setDetails(false); api.current?.flyTo(id); }
   };
-  const header = <ExploreHeader search={{ placeholder: 'Search for…', ...(fromSearch ? { value: `${assetById(asset).label} details`, onClear: () => setSearchCtx(null) } : {}) }}>
+  const flyTo = r => { setRecMode('loading'); setRecId(r.id); setRecFocus(r.assets); setTreeOpen(false); setAsset(null); setGroupOpen(false);
+    r.assets.forEach((id, i) => i === 0 && api.current?.flyTo(id)); setTimeout(() => setRecMode('signal'), 1600); };
+  const recR = recId && RECOMMENDATIONS.find(x => x.id === recId);
+  const header = <ExploreHeader search={{ placeholder: 'Search for…', ...(fromSearch ? { value: `${assetById(asset).label} details`, onClear: () => setSearchCtx(null) } : {}) }}
+    actions={am ? <div className="row" style={{ gap: 8 }}>
+      {recs && recMode !== 'list' ? null : <CooperChip selected={recs} onClick={() => { setRecs(!recs); setRecMode('list'); setRecFocus(null); }}>{`${recsOpenIds.length} risk${recsOpenIds.length === 1 ? '' : 's'} surfaced`}</CooperChip>}
+      <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+      <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
+    </div> : undefined}>
     {!am && <Button type="ghost" size="s" iconLeft="arrow-left" onClick={onBack}>{CLUSTER.name}</Button>}
+    {am && recs && recMode !== 'list' && recR && <Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => { setRecMode('list'); setRecFocus(null); }}>{recR.area}</Button>}
   </ExploreHeader>;
   const right = !!(details || asset || (am && groupOpen));
   const ri = fromSearch ? searchCtx.ids.indexOf(asset) : -1;
@@ -273,13 +373,17 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
       <div style={{ display: 'flex', height: '100%', minHeight: 700 }}>
       <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}>
         <NDS label="3D map (MapLibre + OpenFreeMap)" className="fill">
-          <MapView lenses={lenses} year={END} selected={asset} onSelect={id => { if (am && id) pick(id); else { setAsset(id); if (id) setDetails(false); } }} apiRef={api}
+          <MapView lenses={lenses} year={END} selected={asset} focus={recs ? recFocus : null} onSelect={id => { if (am && id) pick(id); else { setAsset(id); if (id) setDetails(false); } }} apiRef={api}
             pad={{ tl: [am && treeOpen ? 460 : 80, 120], br: [right ? 580 : 220, 60] }} />
         </NDS>
         <MapTools api={api} assetsOpen={am && treeOpen && !libOpen} onAssets={am ? () => { setLibOpen(false); setTreeOpen(o => !o); } : undefined}
           libraryOpen={libOpen} onLibrary={am ? () => { setLibOpen(o => !o); } : undefined} onStudy={() => onStudy(am && g ? g : null)} />
         {am && libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={onOpenStudy} onClose={() => setLibOpen(false)} />}
-        {am && treeOpen && !libOpen && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
+        {am && recs && <div className="recs-wrap"><RecsWindow open={recsOpenIds} mode={recMode} recId={recId} setMode={setRecMode} onFocus={setRecFocus} onFly={flyTo}
+          onClose={() => { setRecs(false); setRecMode('list'); setRecFocus(null); }}
+          onStudy={r => onStudy({ id: r.id, label: r.area === 'Alpine Meadows Station' && r.assets.length === 1 ? r.inv.name : r.area, assets: r.assets })}
+          onCreate={r => { onSendToBuild(r); setRecs(false); setRecMode('list'); setRecFocus(null); }} /></div>}
+        {am && treeOpen && !libOpen && !recs && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
         {am ? <>
           {fromSearch && <FloatingBar style={{ top: 12, zIndex: 500 }} open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
               actions={<div className="row" style={{ gap: 8 }}>

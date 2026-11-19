@@ -33,4 +33,7 @@ Answer these with the product designer, then move each answer into the right con
 29. **How is a study's System Confidence % worked out,** and does resolving a question move it? The prototype: 96 − 6 per open question − 4 per open warning affecting the study's assets.
 30. **What does a saved study keep** (population, lenses and sources, horizon year, notes?), and can you "Save as new"?
 31. **Horizon end:** Figma's Study runs to 2045; the demo outlook data ends in 2036.
+32. **Which three metrics does each recommendation show, and who decides?** (J05 validation question, dev note 29:357176.) The prototype always shows cost, risk reduced and failure likelihood.
+33. **How do you dismiss a recommendation or say "not now"?** It isn't designed (J05 gap).
+34. **What are "Other interventions" and where do "View in Study" and "View in Build" land?** They aren't designed. The prototype uses the investment's real alternatives, a study on its assets, and the Build idea.
 

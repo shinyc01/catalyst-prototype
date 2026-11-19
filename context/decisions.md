@@ -2,6 +2,8 @@
 
 Newest first. Each entry gives the date, the decision, who or what it came from, and why.
 
+- **2026-11-18** **J05 built** (tour 005): Cooper's recommendations in the Asset Manager's Explore, one per real cluster investment, using the DS RecommendationGroup / Item / Impact, AgentWindow, CooperChip and EvidenceChainDrawer. Figma's Northgate copy and its 7 recommendations are placeholders; the data gives 5. Source: user ("J05 next").
+
 - **2026-11-18** **J03 built as the Asset Manager's study flow** (tour 004): studies have a population, there's a System Confidence tab, Save study and a Studies library. The map rail follows Figma (1 Asset structure, 2 Studies library, 3 Study). The J03 + J06 tour (Investment Owner, whole cluster) is unchanged. Source: user ("choose whatever Asset Manager flow").
 - **2026-11-18** **Create idea ▾ menu = "Save study" only**, as in Figma 29:239507; the earlier "Create idea with Cooper / Create blank idea" items were removed. Source: Figma spec.
 
