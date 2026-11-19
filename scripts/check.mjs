@@ -108,6 +108,8 @@ walk(path.join(ROOT, 'app')).filter(f => /\.(jsx|css)$/.test(f)).forEach(f => {
       if (/(^|[^\w-])\d+(\.\d+)?px\b/.test(code)) err(`${at}: raw px — use a token`);
       if (/(font-size|font-weight|line-height|letter-spacing)\s*:\s*\d/.test(code)) err(`${at}: raw font value — use a --text-* style`);
       if (/z-index\s*:\s*-?\d/.test(code)) err(`${at}: raw z-index — use --z-index-* or a --proto-z-* token`);
+      // a space after the colon (".row: hover") makes the selector invalid, and the browser drops the whole rule
+      if (/[\w)\]]: (hover|focus|focus-visible|focus-within|active|disabled|checked|first-child|last-child|not|nth-child|before|after)\b[^;]*\{/.test(code)) err(`${at}: broken pseudo-class (space after the colon) — the browser ignores this rule`);
     } else {
       for (const m of code.matchAll(/style=\{\{(.*?)\}\}/g)) {
         if (STYLE_NUM.test(m[1] + '}')) err(`${at}: raw number in an inline style — use a token ('var(--space-…)')`);
