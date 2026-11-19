@@ -18,7 +18,9 @@ function initialFromHash(h) {
   if (name === 'study-idea-done') { s.lenses = withEv(INITIAL_LENSES); s.chat = replay('idea', IDEA_ANSWERS, s.lenses); }
   if (name === 'plan') s.screen = 'plan';
   if (name === 'plan-compare') s.screen = 'plan-compare';
-  if (p.get('demo') === 'optimized') s.demoRun = true;            // J18 tour: arrive with the optimization already finished
+  if (p.get('demo') === 'optimized') s.demoRun = true;
+  if (p.get('demo') === 'refining') s.demoRefining = true;
+  if (p.get('demo') === 'shaping') s.demoShaping = true;          // J11 tour: the pad-mount idea back in Shape, before review (replayable)        // J08 tour: the pad-mount idea has already passed review, so it is an investment            // J18 tour: arrive with the optimization already finished
   if (name === 'plan-approve') s.screen = 'plan-approve';
   if (name.startsWith('plan-') && name !== 'plan-compare' && name !== 'plan-approve') { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
   if (name === 'build') { s.lenses = withEv(INITIAL_LENSES); s.screen = 'build'; s.idea = { answers: IDEA_ANSWERS }; }
@@ -106,6 +108,23 @@ function App() {
   const mainInv = buildInv === CLUSTER.ideaInvestmentId;
   const [refineOther, setRefineOther] = usePersisted('build.refineOther', {});
   const invRefine = mainInv ? null : (refineOther[buildInv] || rfDraft(buildInv));
+  // Review (gate 0) of the other ideas: the same reviewers; [Assumed] they answer on their own, one every 3 s (only the pad-mount review is scripted)
+  const [reviewOther, setReviewOther] = usePersisted('build.reviewOther', {});
+  const invReview = reviewOther[buildInv] || { rows: REVIEWERS(), round: 0 };
+  const setInvReview = f => setReviewOther(m => { const prev = m[buildInv] || { rows: REVIEWERS(), round: 0 }; return { ...m, [buildInv]: typeof f === 'function' ? f(prev) : f }; });
+  useEffect(() => {
+    const id = Object.keys(reviewOther).find(k => (ideas[k] || {}).status === 'review' && reviewOther[k].rows.some(r => r.id !== 'HG' && r.status === 'empty'));
+    const done = Object.keys(reviewOther).find(k => (ideas[k] || {}).status === 'review' && reviewOther[k].rows.every(r => r.status === 'success'));
+    if (done) { const inv = invById(+done); setIdeas(m => ({ ...m, [done]: { ...m[done], status: 'refining', modified: STORY_DAY } }));
+      notify({ title: `${inv.name} approved by all reviewers`, details: 'It is now an investment in Refine.', meta: `${inv.code} · Build`, link: `build?inv=${done}` });
+      toast({ title: `${inv.name} approved by all reviewers`, description: 'It is now an investment: find it in the Investments tab' }); return; }
+    if (!id) return;
+    const t = setTimeout(() => setReviewOther(m => { const rows = m[id].rows, k = rows.findIndex(r => r.id !== 'HG' && r.status === 'empty');
+      return k < 0 ? m : { ...m, [id]: { ...m[id], rows: rows.map((r, j) => j === k ? { ...r, status: 'success' } : r) } }; }), 3000);
+    return () => clearTimeout(t);
+  }, [reviewOther, ideas]);
+  useEffect(() => { if (init.demoShaping) { setIdeas(m => ({ ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'shaping', modified: STORY_DAY, created: true } })); setReview({ rows: REVIEWERS(), round: 0 }); setRefine(r => { const n = { ...r, status: 'refining' }; delete n.approvers; return n; }); } }, []);
+  useEffect(() => { if (init.demoRefining && !IDEA_PROMOTED.includes((ideas[CLUSTER.ideaInvestmentId] || {}).status)) setIdeas(m => ({ ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'refining', modified: STORY_DAY, created: true } })); }, []);
   const setInvRefine = f => setRefineOther(m => { const prev = m[buildInv] || rfDraft(buildInv); return { ...m, [buildInv]: typeof f === 'function' ? f(prev) : f }; });
   const [refine, setRefine] = usePersisted('build.refine', { recommended: altForIntent(IDEA_ANSWERS[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: RF_THREADS(),
     docs: RF_DOCS, status: 'refining' });
@@ -122,6 +141,8 @@ function App() {
       const n = initialFromHash(location.hash.slice(1));
       setScreen(n.screen); setBuildInv(n.inv || CLUSTER.ideaInvestmentId); if (n.refinePage) setRefinePage(n.refinePage); if (n.valuePage) setValuePage(n.valuePage); setTab(n.tab); setDetails(n.details); setSel(n.sel); setLenses(n.lenses); setChat(n.chat); setAsset(n.asset); setYear(n.year); setPersona(n.persona);
       if (n.idea) setIdea(n.idea);
+      if (n.demoShaping) { setIdeas(m => ({ ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'shaping', modified: STORY_DAY, created: true } })); setReview({ rows: REVIEWERS(), round: 0 }); setRefine(r => { const n = { ...r, status: 'refining' }; delete n.approvers; return n; }); }
+      if (n.demoRefining) setIdeas(m => IDEA_PROMOTED.includes((m[CLUSTER.ideaInvestmentId] || {}).status) ? m : { ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'refining', modified: STORY_DAY, created: true } });
       if (n.demoRun) { setRun(r => r && r.done ? r : { startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); }
     };
     window.addEventListener('hashchange', apply);
@@ -272,8 +293,10 @@ function App() {
         onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
         onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
       {screen === 'build' && !mainInv && <Build key={buildInv} invId={buildInv} navBar={navBar} lenses={lenses} idea={null} onBack={() => go('build-library')} persona={persona}
+        review={invReview} setReview={setInvReview} onOpenRefine={() => { setRefinePage('overview'); go('build-refine'); }}
         recommendedId={invRefine.recommended} status={(ideas[buildInv] || {}).status || (IDEA_SEEDS.find(r => r.id === buildInv) || {}).status || 'shaping'}
         onSendForReview={() => { const inv = invById(buildInv); setIdeas(m => ({ ...m, [buildInv]: { ...(m[buildInv] || {}), status: 'review', modified: STORY_DAY } }));
+          setInvReview(v => ({ rows: (v.rows || REVIEWERS()).map(r => r.id === 'HG' ? r : { ...r, status: 'empty', comment: null }), round: (v.round || 0) + 1 }));
           notify({ title: `${inv.name} sent for review`, details: 'Reviewers are notified. Review is the next stage.', meta: `${inv.code} · Build`, link: `build?inv=${buildInv}` });
           toast({ title: 'Sent for review', description: 'Reviewers are notified' }); }}
         onDismiss={() => { const prev = ideas[buildInv]; setIdeas(m => ({ ...m, [buildInv]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
@@ -294,7 +317,7 @@ function App() {
       {screen === 'build-refine' && mainInv && <Refine persona={persona} navBar={navBar} onOpenPlan={() => { setTab('groups'); go('plan-setup'); }} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
         onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval', approvers: FINAL_APPROVERS() })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
           toast({ title: 'Sent for approval', description: 'Approve isn’t built yet — the approvers are notified' }); }} />}
-      {screen === 'build-library' && <BuildLibrary navBar={navBar} ideas={ideas} setIdeas={setIdeas} onNew={() => setChooser(true)}
+      {screen === 'build-library' && <BuildLibrary navBar={navBar} ideas={ideas} setIdeas={setIdeas} refine={refine} refineOther={refineOther} reviews={{ ...Object.fromEntries(Object.entries(reviewOther).map(([k, v]) => [k, v.rows])), [CLUSTER.ideaInvestmentId]: review.rows }} onNew={() => setChooser(true)}
         onOpenIdea={r => { setBuildInv(r.id); setIdea(i => i || { answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} onOpenRefine={r => { setBuildInv(r.id); setRefinePage(r.id === CLUSTER.ideaInvestmentId ? 'compare' : 'overview'); go('build-refine'); }} />}
       {screen === 'build-new' && <NewInvestment key={newKey} navBar={navBar} onBack={() => go('build-library')}
         onShape={() => { setBuildInv(CLUSTER.ideaInvestmentId); setIdeas(m => ({ ...m, [IDEA_INV.id]: { status: 'shaping', modified: STORY_DAY, created: true } })); setIdea({ answers: IDEA_ANSWERS }); setBuildFrom('build-library'); go('build'); }} />}

@@ -13,7 +13,7 @@
     { label: 'Figma · Approve — approval chain open', url: 'https://www.figma.com/design/BmOuH8YCHltiitqwNW2ARt/?node-id=58-33560' },
   ],
   steps: [
-    { hash: '#build?persona=owner', target: { text: 'Send for review', exact: true }, title: 'Send the idea for review',
+    { hash: '#build?persona=owner&demo=shaping', target: { text: 'Send for review', exact: true }, title: 'Send the idea for review',
       body: 'The shaped pad-mount idea goes to its three reviewers.' },
     { target: '.page', advance: 'next', title: 'The approval chain',
       body: 'Under review 0/3. Add a note on a reviewer’s row to tell them what to look at.' },
@@ -28,7 +28,7 @@
     { hash: '#build-refine?persona=owner', target: '.page-dock .ifs-trc-solution__title--cooper', title: 'Fix by accepting, not authoring',
       body: 'System confidence lists what blocks approval. Pick Cooper’s solution, upload a file or write your answer.' },
     { target: { text: 'Send for approval', exact: true }, title: 'Submit for final approval', body: 'The approval chain opens on the right.' },
-    { target: '[aria-label^="Push"]', title: 'Chase a slow approver',
+    { target: '[aria-label="Push Luca Ferri"]', title: 'Chase a slow approver',
       body: 'Two approvers answer quickly; Luca Ferri hasn’t. Push him a reminder (once per 24 hours).' },
     { target: { text: 'Open in Plan', exact: true }, title: 'Approved at every gate',
       body: 'It has belonged to its portfolio since it was created; approval is what makes it ready for the next planning cycle. Open it in Plan.' },

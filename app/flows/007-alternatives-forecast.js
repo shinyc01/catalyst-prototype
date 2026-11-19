@@ -14,7 +14,7 @@
     { label: 'Figma · Investment details — Dependencies', url: 'https://www.figma.com/design/BmOuH8YCHltiitqwNW2ARt/?node-id=43-303888' },
   ],
   steps: [
-    { hash: '#build-library?persona=owner', target: { text: 'Investments', exact: true }, title: 'Find the investment',
+    { hash: '#build-library?persona=owner&demo=refining', target: { text: 'Investments', exact: true }, title: 'Find the investment',
       body: 'The pad-mount program was approved to proceed and is now an investment in Refine. Open the Investments tab.' },
     { target: '[data-inv="8380"]', title: 'Open the pad-mount program',
       body: 'Pad-Mount Transformer Replacement Program V2 opens in Refine, on its alternatives.' },

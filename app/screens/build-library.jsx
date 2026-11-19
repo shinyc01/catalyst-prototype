@@ -3,10 +3,10 @@
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 
 /* ============================================================ Build Library */
-function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onOpenRefine, onNew }) {
+function BuildLibrary({ navBar, ideas, setIdeas, refine, refineOther, reviews, onOpenIdea, onOpenRefine, onNew }) {
   const [tab, setTab] = useState('ideas');
-  const [kind, setKind] = useState('all');
-  const rows = ideaPadRows(ideas);
+  const [kind, setKind] = useState('all'), [invKind, setInvKind] = useState('all');
+  const rows = ideaPadRows(ideas, reviews);
   const n = { all: rows.length, Project: rows.filter(r => r.type !== 'Program').length, Program: rows.filter(r => r.type === 'Program').length };
   const shown = rows.filter(r => kind === 'all' || (kind === 'Program' ? r.type === 'Program' : r.type !== 'Program'));
   const ideaCols = [
@@ -15,20 +15,23 @@ function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onOpenRefine, onNew
     { key: 'status', title: 'Status', width: '1fr', render: r => <span className="row" style={{ gap: 'var(--space-200)' }}>
       <Indicator type={IDEA_STATUS[r.status].type}>{IDEA_STATUS[r.status].label}</Indicator>{r.reviewers && <IFS.Counter>{`${r.reviewers.done}/${r.reviewers.total}`}</IFS.Counter>}</span> },
     { key: 'horizon', title: 'Horizon', width: '1fr' },
-    { key: 'modified', title: 'Modified', width: '1fr', sortable: true, sortValue: r => r.modified, render: r => ideaDay(r.modified) },
+    { key: 'modified', title: 'Modified', width: '1fr', sortable: true, sortValue: r => `${r.modified} ${String(r.id).padStart(9, '0')}`, render: r => ideaDay(r.modified) },
     { key: 'collab', title: 'Collaboration', width: '1.2fr', render: r => r.collab ? <IFS.CollaborationBadge label={r.collab.label} avatar={{ initials: r.collab.by, type: PEOPLE[r.collab.by].type }}
       request={{ name: PEOPLE[r.collab.by].name, role: PEOPLE[r.collab.by].role, time: '2h ago', text: `“${r.collab.text}”`, meta: r.code }}
       onOpen={() => toast({ title: `${PEOPLE[r.collab.by].name}: ${r.collab.label.toLowerCase()}`, description: 'Collaboration requests aren’t part of this flow' })} /> : null },
   ];
-  const invRows = WHISTLER_INVESTMENTS.map(i => ({ id: i.id, name: i.name, code: i.code, stage: STAGE_TO_CATALYST[i.stage] || 'Plan', owner: i.owner, cost: i.totalSpend, value: i.totalValue }));
+  // Investments tab (Figma 564:90079): the same columns as the Idea Pad; rows are the investments in Refine onward (shared/build-model.js investmentRows)
+  const invAll = investmentRows(ideas, refine, refineOther);
+  const nInv = { all: invAll.length, Project: invAll.filter(r => r.type !== 'Program').length, Program: invAll.filter(r => r.type === 'Program').length };
+  const invRows = invAll.filter(r => invKind === 'all' || (invKind === 'Program' ? r.type === 'Program' : r.type !== 'Program'));
   const invCols = [
-    { key: 'name', title: 'Investment', width: '2fr', primary: true },
-    { key: 'code', title: 'ID', width: 'var(--table-col-short-min)' },
-    { key: 'stage', title: 'Stage', width: 'var(--table-col-short-min)', render: r => <Badge size="s" color="white">{r.stage}</Badge> },
-    { key: 'owner', title: 'Owner', width: '1fr' },
-    { key: 'cost', title: 'Cost', type: 'number', width: 'var(--table-col-number-min)', render: r => fmtMoney(r.cost) },
-    { key: 'value', title: 'Value', type: 'number', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) },
+    { key: 'name', title: 'Investments', width: '2fr', primary: true, render: r => <span className="row" style={{ gap: 'var(--space-200)', minWidth: 0 }}>
+      {r.type === 'Program' && <Icon name="chat-folder" size={16} />}<span className="col" style={{ minWidth: 0 }}><span className="plan-ellipsis">{r.name}</span><span className="t-body-m-regular muted">{r.code}</span></span></span> },
+    { key: 'status', title: 'Status', width: '1fr', render: r => <span className="row" style={{ gap: 'var(--space-200)' }}>
+      <Indicator type={BUILD_INV_STATUS[r.status].type}>{BUILD_INV_STATUS[r.status].label}</Indicator>{r.approvals && <IFS.Counter>{r.approvals}</IFS.Counter>}</span> },
+    ideaCols[2], ideaCols[3], ideaCols[4],
   ];
+
   return (
     <AppShell navBar={navBar} bottom={<BottomSheet prompts={['Brief me', 'What needs my input first?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
       <div className="page">
@@ -40,10 +43,10 @@ function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onOpenRefine, onNew
             search={<IFS.SmartSearch placeholder="Ask anything about idea pad" />}
             onRowClick={r => r.mine || canOpenIdea(r.id) ? onOpenIdea(r) : toast({ title: r.name, description: 'Only the first three ideas and the pad-mount idea open in this prototype' })} />
         ) : (
-          <IFS.Table columns={invCols} rows={invRows} defaultSort={{ key: 'cost', dir: 'desc' }} rowProps={r => ({ 'data-inv': r.id })}
-            tabs={<SegmentedControl size="s" value="all" onChange={() => {}} options={[{ value: 'all', label: `All investments ${invRows.length}` }]} />}
+          <IFS.Table columns={invCols} rows={invRows} defaultSort={{ key: 'modified', dir: 'desc' }} rowProps={r => ({ 'data-inv': r.id })}
+            tabs={<SegmentedControl size="s" value={invKind} onChange={setInvKind} options={[{ value: 'all', label: `All investments ${nInv.all}` }, { value: 'Project', label: `Project investments ${nInv.Project}` }, { value: 'Program', label: `Program investments ${nInv.Program}` }]} />}
             search={<IFS.SmartSearch placeholder="Ask anything about investments" />}
-            onRowClick={r => canOpenInvestment(r.id) ? onOpenRefine(r) : toast({ title: r.name, description: 'Only the first three investments and the pad-mount program open in this prototype' })} />
+            onRowClick={r => canOpenInvestment(r.id, ideas) ? onOpenRefine(r) : toast({ title: r.name, description: 'Only the first three investments and the pad-mount program open in this prototype' })} />
         )}
       </div>
     </AppShell>

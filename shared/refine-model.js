@@ -180,5 +180,5 @@ function rfContext(id) {
     threads: () => [], deps: [], docs, models, measures, questions: [], issues, estimate: [], upload: `${inv.name} site notes.pdf`, hasRisk: measures.length > 0 });
 }
 // The saved Refine draft for a newly opened investment: its recommended alternative; Executing investments are already past Approve
-const rfDraft = id => { const R = rfContext(id); return { recommended: (R.rec || R.alts[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: R.threads(), docs: R.docs,
-  status: R.inv.stage === 'Executing' ? 'executing' : 'refining' }; };
+const rfDraft = id => { const R = rfContext(id), seed = (INV_SEEDS.find(r => r.id === id) || {}).status; return { ...(seed === 'approval' ? { approvers: FINAL_APPROVERS() } : {}), recommended: (R.rec || R.alts[0]).id, toPlan: {}, compare: {}, adjust: {}, refined: {}, threads: R.threads(), docs: R.docs,
+  status: R.inv.stage === 'Executing' ? 'executing' : ((INV_SEEDS.find(r => r.id === id) || {}).status || 'refining') }; };
