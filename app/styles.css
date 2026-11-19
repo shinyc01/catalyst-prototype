@@ -217,3 +217,16 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .rec-sec { gap: var(--space-200); padding-top: var(--space-stack); border-top: var(--border-widths-border-100) solid var(--border-base); }
 .rec-extra { gap: var(--space-100); }
 .build-snack { position: fixed; left: 50%; bottom: var(--space-1000); transform: translateX(-50%); width: var(--proto-snack-w); z-index: var(--proto-z-snack); }
+/* J07: Build › New investment (Input): chat left, area map right (Figma 73:116169) */
+.bi-split { display: flex; height: 100%; min-height: var(--proto-page-min-h); }
+.bi-chat { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: var(--page-gap) var(--page-margin); }
+.bi-chat > * { max-width: var(--region-panel-l); max-height: calc(100% - 2 * var(--space-1000)); }
+.bi-map { flex: 1; min-width: 0; padding: var(--space-300) var(--page-margin) var(--space-300) 0; display: flex; }
+.bi-map > * { flex: 1; }
+.bi-map__view { position: relative; height: 100%; min-height: var(--proto-map-h); border-radius: var(--radius-radius-200); overflow: hidden; }
+.bi-map__tools { position: absolute; left: var(--space-300); top: var(--space-300); z-index: var(--proto-z-map-ui); }
+.bi-map__catch { position: absolute; inset: 0; z-index: var(--proto-z-map-panel); cursor: crosshair; }
+.bi-map__box { position: absolute; border: var(--border-widths-border-200) solid var(--border-accent-cooper); background: var(--background-color-alpha-cooper-base); border-radius: var(--radius-radius-100); }
+/* J07 Shape: Edit with Cooper — card highlight and the Cooper bar (Figma 43:73812) */
+.build-sec--cooper { box-shadow: inset 0 0 0 var(--border-widths-border-200) var(--border-accent-cooper); border-radius: var(--radius-radius-200); }
+.build-askbar { position: fixed; right: var(--page-margin); bottom: var(--space-1000); z-index: var(--proto-z-map-window); width: var(--region-panel); display: flex; flex-direction: column; gap: var(--space-200); }

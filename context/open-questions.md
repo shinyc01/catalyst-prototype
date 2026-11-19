@@ -36,4 +36,8 @@ Answer these with the product designer, then move each answer into the right con
 32. **Which three metrics does each recommendation show, and who decides?** (J05 validation question, dev note 29:357176.) The prototype always shows cost, risk reduced and failure likelihood.
 33. **How do you dismiss a recommendation or say "not now"?** It isn't designed (J05 gap).
 34. **What are "Other interventions" and where do "View in Study" and "View in Build" land?** They aren't designed. The prototype uses the investment's real alternatives, a study on its assets, and the Build idea.
+35. **J07: Send for review or Send for approval?** The Duplicate flow's Shape frame says "Send for approval"; the others say "Send for review". The prototype uses "Send for review".
+36. **J07: how does Cooper's context % grow?** Figma shows 0 / 20 / 55 % / READY only. The prototype's gains per input are `[Assumed]` (logic/build.md).
+37. **J07: should an idea from Explore skip Input?** (J07 validation question.) The prototype's Explore → Build path lands on Shape directly.
+38. **J07: Duplicate Investment** is designed (pick, name, Shape of the copy) but not built: the prototype's Shape page is for one idea. Build it when Shape can show any investment.
 

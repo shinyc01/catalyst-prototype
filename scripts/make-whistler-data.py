@@ -101,16 +101,21 @@ for aid in CLUSTER_ASSET_IDS:
                        'inServiceDate': a['inServiceDate'], 'investmentId': a['investmentIds'][0], 'parent': a['hierarchy'][-1],
                        'lof': lof, 'cof': cof, 'outlook': pick(m, KEEP[kind])})
 
-inv_fields = 'id,code,name,stage,owner,manager,division,portfolio,totalSpend,totalValue,description'
+inv_fields = 'id,code,name,type,stage,owner,manager,division,portfolio,totalSpend,totalValue,description,createdDate'
 investments = run('investments', '--fields', inv_fields)
 alternatives = run('alternatives', '--investment', ','.join(map(str, CLUSTER_INVESTMENTS)))
+RISK_PROFILE = {r['alternativeId']: r for r in json.loads((pathlib.Path(S).resolve().parent.parent / 'data' / 'whistler-demo-data.json').read_text(encoding='utf-8'))['riskProfiles']}
 detail = {d['id']: d for d in run('investment-detail', '--investment', ','.join(map(str, CLUSTER_INVESTMENTS)))}
 for alt in alternatives:
     d = detail[alt['investmentId']]
     full = next(x for x in d['alternatives'] if x['id'] == alt['id'])
     alt['valueByMeasure'] = full.get('valueByMeasure', [])
     alt['milestones'] = [{'name': x['name'], 'forecastDate': x['forecastDate']} for x in full.get('milestones', [])]
-    alt.pop('spendByAccountByYear', None)
+    alt['spendByAccountByYear'] = full.get('spendByAccountByYear', {})          # CAPEX / OPEX per year: Build cost lines
+    rp = RISK_PROFILE.get(alt['id'])                                            # baseline vs residual risk per year: risk reduced
+    if rp:
+        alt['riskBaselineByYear'] = {y: r2(v) for y, v in rp['baselineTotal'].items()}
+        alt['riskResidualByYear'] = {y: r2(sum(m['decemberValueByYear'].get(y, 0) for m in rp['residualByMeasure'].values())) for y in rp['baselineTotal']}
 users = [{'id': re.sub(r'[^a-z]', '', u['displayName'].lower()), 'displayName': u['displayName'], 'groups': u['groups']} for u in run('users')]
 
 # Selected alternative's spend by year for EVERY curated investment (Command needs CPV = discounted spend, and V/C)

@@ -20,17 +20,29 @@ function relevance(alt) {
 }
 
 // Card with the Figma header: H4 title (DS 2.0.1, was uppercase) (+ optional extra) on the left, Cooper icon-button on the right
-const Sec = ({ title, extra, children, style }) => (
-  <ContentCard style={style} top={
+const Sec = ({ title, extra, actions, children, style, cooper }) => (
+  <ContentCard style={style} className={cooper ? 'build-sec--cooper' : undefined} top={
     <div className="row" style={{ width: '100%', justifyContent: 'space-between', padding: 'var(--space-100) var(--space-150) 0' }}>
       <div className="row" style={{ gap: 'var(--space-400)' }}><span className="t-heading-h4-semibold">{title}</span>{extra}</div>
-      <IconButton icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: ${title}` })} />
+      <div className="row" style={{ gap: 'var(--space-100)' }}>{actions}
+      <IconButton icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: ${title}` })} /></div>
     </div>} bottom={<div style={{ width: '100%' }}>{children}</div>} />
 );
 const SubHead = ({ children }) => <span className="t-label-m-medium" style={{ display: 'block', padding: 'var(--space-100) 0 var(--space-200)' }}>{children}</span>;
 
-function Build({ navBar, lenses, idea, onBack }) {
+function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview }) {
   const s = study(lenses, END);
+  // J07: System confidence sidebar (Figma 43:76732): the kit's issue report, gates and open questions from shared/build-model.js
+  const c = IFS.useIssueReport({ issues: useMemo(() => shapeIssues(), []), gates: SHAPE_GATES });
+  const [panel, setPanel] = useState(false);
+  const [dismiss, setDismiss] = useState(null);      // note text while the Dismiss modal is open
+  // J07: edit types (Figma 43:68623): manual edit, or Edit with Cooper
+  const needDefault = `The 12 pad-mount transformers in Alpine Meadows have been in service since 1944–45 and are now at ${ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][0]}× their design life. With the study’s ${s.act.length} lenses applied, ${s.now.over} of ${ASSETS.length} assets in the cluster cross their intervention tolerance by ${END}, the next new crossing in ${s.first ?? '—'}. Left alone, outages affect ~${CLUSTER.customers.toLocaleString()} Alpine Meadows customers.`;
+  const [need, setNeed] = useState(needDefault);
+  const [editNeed, setEditNeed] = useState(null);    // draft text while editing by hand
+  const [askNeed, setAskNeed] = useState(false);     // Edit with Cooper bar open
+  const [askText, setAskText] = useState('');
+  const [cooperSaid, setCooperSaid] = useState(null);
   const ans = idea?.answers || [];
   const recAlt = altForIntent(ans[0]) || IDEA_ALTS.find(a => a.isRecommended);
   const rec = ALTERNATIVES.find(a => a.id === recAlt.id), others = ALTERNATIVES.filter(a => a.id !== rec.id);
@@ -48,13 +60,13 @@ function Build({ navBar, lenses, idea, onBack }) {
   const fmtV = v => metric === 'bcr' ? v.toFixed(2) : fmtValue(v);
 
   const header = <PageHeader title={IDEA_INV.name} id={IDEA_INV.code} onBack={onBack}
-    status={<Indicator type="purple">Shaping</Indicator>}
+    status={<Indicator type={IDEA_STATUS[status].type}>{IDEA_STATUS[status].label}</Indicator>}
     center={<Stepper current={0} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
     actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
-      <Button type="secondary" size="s" onClick={() => toast({ title: 'Dismiss isn’t part of this flow' })}>Dismiss</Button>
-      <Button type="primary" size="s" onClick={() => toast({ title: 'Sent for review', description: 'Reviewers will be notified' })}>Send for review</Button>
+      <Button type="secondary" size="s" onClick={() => setDismiss('')}>Dismiss</Button>
+      <Button type="primary" size="s" disabled={status === 'review'} onClick={() => onSendForReview ? onSendForReview() : toast({ title: 'Sent for review', description: 'Reviewers will be notified' })}>{status === 'review' ? 'Sent for review' : 'Send for review'}</Button>
     </div>} />;
   return (
     <AppShell navBar={navBar} header={header}
@@ -71,8 +83,16 @@ function Build({ navBar, lenses, idea, onBack }) {
 
           <div className="ifs-grid is-halves">
             <div className="page-col">
-              <Sec title="The Need">
-                <p className="t-body-m-regular" style={{ margin: 0, padding: 'var(--space-100) var(--space-150) var(--space-150)' }}>The 12 pad-mount transformers in Alpine Meadows have been in service since 1944–45 and are now at {ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][0]}× their design life. With the study’s {s.act.length} lenses applied, {s.now.over} of {ASSETS.length} assets in the cluster cross their intervention tolerance by {END}, the next new crossing in {s.first ?? '—'}. Left alone, outages affect ~{CLUSTER.customers.toLocaleString()} Alpine Meadows customers.</p>
+              <Sec title="The Need" cooper={askNeed}
+                actions={editNeed !== null ? <Button type="secondary" size="s" iconLeft="cooper-system-icon" onClick={() => { setEditNeed(null); setAskNeed(true); }}>Edit with Cooper</Button>
+                  : <IconButton icon="system-edit-rename" type="tertiary" size="s" label="Edit The Need" onClick={() => setEditNeed(need)} />}>
+                {editNeed !== null ? <div className="col" style={{ gap: 'var(--space-200)', padding: '0 var(--space-150) var(--space-150)' }}>
+                    <IFS.TextArea size="l" value={editNeed} onChange={e => setEditNeed(e.target ? e.target.value : e)} aria-label="The Need" />
+                    <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'flex-end' }}>
+                      <Button type="tertiary" size="s" onClick={() => setEditNeed(null)}>Cancel</Button>
+                      <Button type="primary" size="s" onClick={() => { setNeed(editNeed.trim() || need); setEditNeed(null); toast({ title: 'The Need updated' }); }}>Save</Button>
+                    </div></div>
+                  : <p className="t-body-m-regular" style={{ margin: 0, padding: 'var(--space-100) var(--space-150) var(--space-150)', whiteSpace: 'pre-line' }}>{need}</p>}
               </Sec>
               <Sec title="Aligned Enterprise Goals">
                 <div className="row" style={{ gap: 'var(--space-150)', flexWrap: 'wrap', padding: '0 var(--space-150) var(--space-150)' }}>
@@ -153,10 +173,32 @@ function Build({ navBar, lenses, idea, onBack }) {
             </div>
           </Sec>
         </div>
-        <div className="page-dock" style={{ height: '100%' }}>
-          <Panel title="Cooper" expanded={false} onExpandedChange={() => toast({ title: 'Cooper side panel isn’t part of this flow' })} dot="error" style={{ height: '100%' }} />
+        <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
+          <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
+            className={panel ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
+            <ContentCard className="ifs-trc-card" title={<IFS.ConfidenceGates controller={c} label="Review readiness" />}
+              bottom={<div className={`ifs-trc-card__issues ${c.present.length > 1 ? 'has-kinds' : ''}`}>
+                {c.present.length > 1 && <div className="ifs-trc-card__kinds"><IFS.IssueKindSwitch controller={c} /></div>}
+                <IFS.IssueNavigator controller={c} />
+              </div>} />
+          </Panel>
         </div>
       </div>
+      <Modal open={dismiss !== null} onOpenChange={o => !o && setDismiss(null)} title="Dismiss Idea"
+        secondaryAction={{ label: 'Cancel', onClick: () => setDismiss(null) }}
+        primaryAction={{ label: 'Dismiss idea', onClick: () => { const n = dismiss; setDismiss(null); onDismiss ? onDismiss(n) : toast({ title: 'The idea has been stopped.' }); } }}>
+        <div className="col" style={{ gap: 'var(--space-stack)' }}>
+          <span className="t-body-m-regular sec">Close this idea. No further work or approval is needed.</span>
+          <IFS.TextArea size="l" label="Note" placeholder="Add a note explaining why this idea should not move forward." value={dismiss || ''} onChange={e => setDismiss(e.target ? e.target.value : e)} />
+        </div>
+      </Modal>
+      {askNeed && <div className="build-askbar">
+        {cooperSaid && <AgentWindow text={cooperSaid} onClose={() => { setCooperSaid(null); setAskNeed(false); }} onAsk={() => setCooperSaid(null)} />}
+        {!cooperSaid && <IFS.ChatCollapsedBar type="text" autoFocus value={askText} onChange={v => setAskText(v && v.target ? v.target.value : v)} placeholder="What do you want to change?"
+          onSend={() => { const t = (askText || '').trim() || 'Make it more specific'; setAskText('');
+            setNeed(n => n.includes('Cooper’s recommended response') ? n : `${n}\n\nCooper’s recommended response: ${rec.name}, ${rec.cost} over ${rec.time}, which brings the at-risk units back within tolerance.`);
+            setCooperSaid(`Done — I updated The Need (“${t}”). I added the recommended response and its cost, so reviewers see the ask and the answer together.`); }} />}
+      </div>}
     </AppShell>
   );
 }
