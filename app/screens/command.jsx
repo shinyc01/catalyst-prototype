@@ -1,7 +1,7 @@
 /* Command (Home) — all personas.
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 /* ============================================================ Screen 1 — Command (Home) — Figma: Command handover, see context/screens/command-figma-spec.md */
-const Upper = ({ children }) => <span className="t-heading-h3-uppercase sec">{children}</span>;
+const Upper = ({ children }) => <span className="t-label-m-medium sec">{children}</span>;
 const TIP = {                                                                           // label tooltips (Figma dev notes)
   CPV: 'What the investment costs in today’s money.', 'V/C': 'Value generated per $1K of investment — higher means more value for the cost.',
   'Health index': 'How worn out the asset is, scored 0–10 (10 = like new).', Risk: 'Expected cost of failure, adjusted for how likely the asset is to fail.',
@@ -97,38 +97,38 @@ function Command({ navBar, lenses, persona, onOpen }) {
     : sort === 'date' ? <SegmentedControl size="s" value={chip.date} onChange={v => setChip(c => ({ ...c, date: v }))} options={DATE_PRESETS.map(([value, label]) => ({ value, label }))} />
     : sort === 'source' ? <SegmentedControl size="s" value={chip.source} onChange={v => setChip(c => ({ ...c, source: v }))} options={['Value', 'Results', 'Plan', 'Build', 'Explore'].map(v => ({ value: v, label: v }))} />
     : <SegmentedControl size="s" value={chipCol} onChange={v => setChip(c => ({ ...c, collaborator: v }))} options={collaborators.map(p => ({ value: p, label: short(p).replace('. ', '.') }))} />;
-  const filterMenu = <Menu label="Sort" width={200} items={SORTS.map(s => ({ label: s.label, selected: sort === s.value, onClick: () => setSort(s.value) }))}
+  const filterMenu = <Menu label="Sort" items={SORTS.map(s => ({ label: s.label, selected: sort === s.value, onClick: () => setSort(s.value) }))}
     trigger={<IconButton icon="system-filter-settings" type="tertiary" size="s" label="Sort and filter" />} />;
 
   // ---- calendar
   const evByDay = events.reduce((m, e) => { (m[e.date] = m[e.date] || []).push(EVENT_TYPES[e.type].tone); return m; }, {});
   const dayEvents = day ? events.filter(e => e.date === iso(day)) : [];
-  const stat = (v, l, style) => <div style={{ position: 'absolute', textAlign: 'center', ...style }}><div className="t-body-l-medium">{v}</div><div className="t-body-m-regular muted">{l}</div></div>;
+  const stat = (v, l, style) => <div style={{ position: 'absolute', textAlign: 'center', ...style }}><div className="t-label-l-medium">{v}</div><div className="t-body-m-regular muted">{l}</div></div>;
 
   return (
     <AppShell navBar={navBar} bottom={<BottomSheet prompts={['Why is Alpine Meadows #1?', 'Brief me']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
       <div style={{ display: 'flex', minHeight: '100%' }}>
-        <div className="col" style={{ flex: 1, minWidth: 0, padding: '12px 12px 0', gap: 12 }}>
+        <div className="col" style={{ flex: 1, minWidth: 0, padding: 'var(--space-300) var(--space-300) 0', gap: 'var(--space-300)' }}>
           <PageTop eyebrow title={`Welcome back, ${P.first}.`} description="2.8M simulations completed while you were away. Here are the items that require your input and attention right now."
-            style={{ gap: 12 }} tabs={{ items: tabs, value: tab, onChange: setTab }} search={{ placeholder: 'Ask anything about your work', suggestions: ['Why is Alpine Meadows #1?', 'What changed since Friday?'] }} />
-          <div className="col" style={{ gap: 16 }}>
-            <div className="row" style={{ justifyContent: 'space-between', minHeight: 28, gap: 12 }}>
+            style={{ gap: 'var(--space-300)' }} tabs={{ items: tabs, value: tab, onChange: setTab }} search={{ placeholder: 'Ask anything about your work', suggestions: ['Why is Alpine Meadows #1?', 'What changed since Friday?'] }} />
+          <div className="col" style={{ gap: 'var(--space-400)' }}>
+            <div className="row" style={{ justifyContent: 'space-between', minHeight: 'var(--size-28)', gap: 'var(--space-300)' }}>
               <Upper>{section}</Upper>
-              {tab === 'decisions' && <div className="row" style={{ gap: 12 }}>
+              {tab === 'decisions' && <div className="row" style={{ gap: 'var(--space-300)' }}>
                 {chipRow}
-                {sort === 'date' && chip.date === 'custom' && <div style={{ width: 230 }}><DatePicker size="s" range showApply value={range} onChange={setRange} defaultOpen={!range} placeholder="Select a date range"
+                {sort === 'date' && chip.date === 'custom' && <div style={{ width: 'var(--proto-picker-w)' }}><DatePicker size="s" range showApply value={range} onChange={setRange} defaultOpen={!range} placeholder="Select a date range"
                   today={STORY_DATE} format={d => d.toLocaleDateString('en-GB').replace(/\//g, '.')} /></div>}
                 <span className="cmd-divider" aria-hidden="true" />
                 {filterMenu}
               </div>}
             </div>
 
-            {tab === 'decisions' && <div className="col" style={{ gap: 8 }}>
+            {tab === 'decisions' && <div className="col" style={{ gap: 'var(--space-200)' }}>
               {list.map((d, i) => decisionCard(d, i))}
               {!list.length && <EmptyState cause="no-results" size="section" heading="Nothing to review here" body="Try another filter, or check the archived items." />}
               {archived.length > 0 && <>
                 <NDS label="Archived section header" className="cmd-archived row click" style={{}}>
-                  <div className="row" style={{ gap: 8, flex: 1 }} onClick={() => setArchOpen(o => !o)} role="button" tabIndex={0} aria-expanded={archOpen}>
+                  <div className="row" style={{ gap: 'var(--space-200)', flex: 1 }} onClick={() => setArchOpen(o => !o)} role="button" tabIndex={0} aria-expanded={archOpen}>
                     <Icon name={archOpen ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={16} />
                     <Icon name="chat-archive" size={16} /><Upper>Archived</Upper>
                   </div>
@@ -138,29 +138,29 @@ function Command({ navBar, lenses, persona, onOpen }) {
               </>}
             </div>}
 
-            {tab === 'works' && <div className="col" style={{ gap: 8 }}>
+            {tab === 'works' && <div className="col" style={{ gap: 'var(--space-200)' }}>
               {C.works.map((w, i) => (
                 <RowShell key={w.id} id={w.id}>
                   <HomeRowCard type={w.featured ? 'primary' : 'secondary'} rank={i + 1} title={w.title} badge={w.badge} onOpen={() => onOpen(w)}
-                    description={<span className="row" style={{ gap: 4 }}><Icon name="system-clock-time" size={16} />{w.when}</span>}
+                    description={<span className="row" style={{ gap: 'var(--space-100)' }}><Icon name="system-clock-time" size={16} />{w.when}</span>}
                     media={w.featured ? mapMedia : undefined}
-                    metrics={w.featured ? [{ value: <span className="row" style={{ gap: 8 }}>{w.status === 'Updated' ? <Indicator type="blue">Updated</Indicator> : <span>Draft</span>}<span className="t-body-m-regular">{w.note}</span></span>, label: '' }]
+                    metrics={w.featured ? [{ value: <span className="row" style={{ gap: 'var(--space-200)' }}>{w.status === 'Updated' ? <Indicator type="blue">Updated</Indicator> : <span>Draft</span>}<span className="t-body-m-regular">{w.note}</span></span>, label: '' }]
                       : [{ value: w.status === 'Updated' ? <Indicator type="blue">Updated</Indicator> : 'Draft', label: '' }, { value: <span className="t-body-m-regular cmd-note">{w.note}</span>, label: '' }]} />
                 </RowShell>))}
             </div>}
 
-            {tab === 'conversations' && <div className="col" style={{ gap: 8 }}>
+            {tab === 'conversations' && <div className="col" style={{ gap: 'var(--space-200)' }}>
               {C.convos.map((c, i) => { const p = PEOPLE[c.person], n = notified[c.id]; return (
                 <RowShell key={c.id} id={c.id}>
                   <NDS label="Response card" className="cmd-convo row">
                     <span className="cmd-rank t-body-s-medium">{i + 1}</span>
                     <Avatar initials={p.initials} type={p.type} size="m" />
-                    <div className="col" style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                      <span className="t-body-l-medium cmd-trunc">{c.title}</span>
+                    <div className="col" style={{ flex: 1, minWidth: 0, gap: 'var(--space-50)' }}>
+                      <span className="t-label-l-medium cmd-trunc">{c.title}</span>
                       <span className="t-body-m-regular muted">{p.role}</span>
                       <span className="t-body-m-regular sec"><Trunc text={c.message} /></span>
                     </div>
-                    <div className="col" style={{ width: 230, flex: 'none', gap: 4 }}>
+                    <div className="col" style={{ width: 'var(--proto-picker-w)', flex: 'none', gap: 'var(--space-100)' }}>
                       {c.status === '@you' && <Badge size="s" color="white">@you</Badge>}
                       {c.status === 'Approved' && <Indicator type="green">Approved</Indicator>}
                       {c.status === 'Rejected' && <Indicator type="red">Rejected</Indicator>}
@@ -177,7 +177,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
                 </RowShell>); })}
             </div>}
 
-            {tab === 'following' && <div className="col" style={{ gap: 8 }}>
+            {tab === 'following' && <div className="col" style={{ gap: 'var(--space-200)' }}>
               {C.following.map((f, i) => (
                 <RowShell key={f.id} id={f.id}>
                   <HomeRowCard type="secondary" rank={i + 1} title={f.title} description={<Trunc text={f.full || f.description} />}
@@ -187,26 +187,26 @@ function Command({ navBar, lenses, persona, onOpen }) {
           </div>
         </div>
 
-        <div className="col cmd-right" style={{ flex: 'none', width: 380, padding: 12, boxSizing: 'border-box', gap: 12 }}>
-          <NDS label="Cooper’s work results gauge" className="box" style={{ height: 268, overflow: 'hidden' }}>
-            <Upper>Cooper’s work results</Upper>
-            <div aria-hidden="true" style={{ position: 'absolute', left: '50%', top: 168, width: 160, height: 160, marginLeft: -80, borderRadius: '50%', boxShadow: 'inset 0 0 0 1px var(--border-medium)', background: 'radial-gradient(circle at 50% 30%, var(--background-elevation-1-tertiary), transparent 70%)' }} />
-            {stat('66%', 'Automation', { left: 0, right: 0, top: 56 })}
-            {stat('12', 'Portfolio changes', { left: 16, top: 102 })}
-            {stat('12%', 'Risk reduction', { right: 16, top: 102 })}
-            {stat('24', 'Days saved', { left: 8, top: 186 })}
-            {stat('$120K', 'Budget saved', { right: 8, top: 186 })}
-            <div style={{ position: 'absolute', left: 0, right: 0, top: 200, textAlign: 'center' }}>
+        <div className="col cmd-right" style={{ flex: 'none', width: 'var(--region-panel)', padding: 'var(--space-300)', boxSizing: 'border-box', gap: 'var(--space-300)' }}>
+          <NDS label="Cooper’s work results gauge" className="box" style={{ height: 'var(--proto-gauge-h)', overflow: 'hidden' }}>
+            <span className="t-heading-h4-semibold">Cooper’s Work Results</span>
+            <div aria-hidden="true" style={{ position: 'absolute', left: '50%', top: 'var(--proto-gauge-top)', width: 'var(--proto-gauge-ring)', height: 'var(--proto-gauge-ring)', marginLeft: 'calc(-1 * var(--space-1100))', borderRadius: '50%', boxShadow: 'inset 0 0 0 var(--border-widths-border-100) var(--border-medium)', background: 'radial-gradient(circle at 50% 30%, var(--background-elevation-1-tertiary), transparent 70%)' }} />
+            {stat('66%', 'Automation', { left: 0, right: 0, top: 'var(--size-56)' })}
+            {stat('12', 'Portfolio changes', { left: 'var(--space-400)', top: 'calc(26 * var(--proto-unit))' })}
+            {stat('12%', 'Risk reduction', { right: 'var(--space-400)', top: 'calc(26 * var(--proto-unit))' })}
+            {stat('24', 'Days saved', { left: 'var(--space-200)', top: 'calc(46 * var(--proto-unit))' })}
+            {stat('$120K', 'Budget saved', { right: 'var(--space-200)', top: 'calc(46 * var(--proto-unit))' })}
+            <div style={{ position: 'absolute', left: 0, right: 0, top: 'var(--proto-gauge-label)', textAlign: 'center' }}>
               <div className="t-heading-h1-medium">1 Year</div><div className="t-body-m-regular muted">Time horizon</div>
             </div>
           </NDS>
-          <div className="box col" style={{ gap: 12 }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-body-l-medium">Milestone</span><span className="t-body-m-regular sec">9d left</span></div>
+          <div className="box col" style={{ gap: 'var(--space-300)' }}>
+            <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-l-medium">Milestone</span><span className="t-body-m-regular sec">9d left</span></div>
             <ProgressBar value={8} label="Milestone progress" />
             <div className="t-body-m-regular sec row" style={{ justifyContent: 'space-between' }}><span>Drafts</span><span>Re-submit</span><span>SG2 window</span><span>Gate</span></div>
             <Calendar defaultMonth={STORY_DATE} today={STORY_DATE} events={evByDay} value={day} onChange={setDay} />
             <Button type="tertiary" size="m" iconLeft="system-plus" onClick={() => setAddOpen(true)}>Add event</Button>
-            <NDS label="Calendar legend" className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
+            <NDS label="Calendar legend" className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>
               {Object.values(EVENT_TYPES).map(t => <InfoHintItem key={t.label} label={t.label} color={TONE_COLOR[t.tone]} />)}
             </NDS>
           </div>
@@ -217,13 +217,13 @@ function Command({ navBar, lenses, persona, onOpen }) {
         setEvents(ev => [...ev, e]); setAddOpen(false);
         toast({ title: 'Event created', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e))) }, duration: 5000 }); }} />
       <Drawer open={!!day} onOpenChange={o => !o && setDay(null)} title={day ? day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''} collapsible={false} overlay="none">{/* DS 2.0 bug: scrim above drawer */}
-        <div className="col" style={{ gap: 8, padding: '0 var(--paddings-padding-400) var(--paddings-padding-400)' }}>
+        <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
           {!dayEvents.length && <EmptyState cause="empty-container" size="section" heading="No events" body="Add a private event for this day." />}
           {dayEvents.map((e, k) => (
             <ContentCard key={k} size="s" title={e.name || EVENT_TYPES[e.type].label} description={`${EVENT_TYPES[e.type].label} · ${e.time} · ${e.lasts}`}
-              bottom={<div className="col" style={{ gap: 8, width: '100%' }}>
-                <span className="row t-body-s-regular sec" style={{ gap: 6 }}>Created by <Avatar initials={PEOPLE[e.by].initials} type={PEOPLE[e.by].type} size="xs" /> {short(e.by)}</span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              bottom={<div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
+                <span className="row t-body-s-regular sec" style={{ gap: 'var(--space-150)' }}>Created by <Avatar initials={PEOPLE[e.by].initials} type={PEOPLE[e.by].type} size="xs" /> {short(e.by)}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
                   <Button type="secondary" size="s" iconLeft="system-trash-delete" disabled={e.type !== 'private'} onClick={() => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e)))}>Remove</Button>
                   <Button type="tertiary" size="s" iconLeft="system-edit-rename" disabled={e.type !== 'private'} onClick={() => toast({ title: 'Edit event isn’t part of this flow' })}>Edit</Button>
                 </div>
@@ -239,19 +239,19 @@ function AddEventModal({ by, open, onClose, onAdd }) {
   useEffect(() => { if (open) { setName(''); setDate(null); setTime(''); setLasts('1 day'); } }, [open]);
   const ok = name.trim() && date && time;
   return (
-    <Modal open={open} onOpenChange={o => !o && onClose()} title="New private event" width={420}
+    <Modal open={open} onOpenChange={o => !o && onClose()} title="New private event" width="var(--overlay-width-m)"
       secondaryAction={{ label: 'Cancel', onClick: onClose }}
       primaryAction={{ label: 'Add', disabled: !ok, onClick: () => onAdd({ date: iso(date), type: 'private', time, lasts, by, name }) }}>
-      <div className="col" style={{ gap: 12 }}>
+      <div className="col" style={{ gap: 'var(--space-300)' }}>
         <TextField size="m" placeholder="Event name" value={name} onChange={setName} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div className="col" style={{ gap: 6 }}><span className="t-body-m-medium">Date</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
+          <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium">Date</span>
             <DatePicker size="m" placeholder="Select a date" value={date} onChange={setDate} today={STORY_DATE} format={d => d.toLocaleDateString('en-GB').replace(/\//g, '.')} /></div>
-          <div className="col" style={{ gap: 6 }}><span className="t-body-m-medium">Time</span>
+          <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium">Time</span>
             <TextField size="m" type="time" iconLeft="system-clock-time" placeholder="Select a time" value={time} onChange={setTime} /></div>
         </div>
-        <span className="t-body-m-medium">Lasts</span>
-        <div className="row" style={{ gap: 6 }}>{['1 day', '2 days', '3 days', 'Custom'].map(l => <Chip key={l} selected={lasts === l} onChange={() => setLasts(l)}>{l}</Chip>)}</div>
+        <span className="t-label-m-medium">Lasts</span>
+        <div className="row" style={{ gap: 'var(--space-150)' }}>{['1 day', '2 days', '3 days', 'Custom'].map(l => <Chip key={l} selected={lasts === l} onChange={() => setLasts(l)}>{l}</Chip>)}</div>
         <span className="t-body-s-regular muted">Only you see this event. The team timeline is set by your admin and shown to everyone.</span>
       </div>
     </Modal>

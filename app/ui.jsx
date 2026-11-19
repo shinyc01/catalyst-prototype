@@ -73,3 +73,5 @@ function replay(kind, answers, lenses) {
 
 /* ============================================================ non-DS flag */
 const NDS = ({ label, children, style, className = '' }) => <div className={`nds ${className}`} data-label={label} style={style}>{children}</div>;
+// A DS token's value in px, for the few places JS has to do geometry (tour card, map padding). Reads the live token.
+const tokenPx = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;

@@ -20,7 +20,7 @@ One working mock of **Catalyst** (IFS Copperleaf), built up mini flow by mini fl
 - **No plan approval.** Build directly, then hand over for review. Ask only about real conflicts or product decisions.
 - **The Figma frame is the spec.** Match each frame's layout, controls, labels and card order. Logic only changes the *values* shown; it never adds, renames or moves UI. If logic needs UI that isn't in the frame, flag it as non-DS. Screenshot the frame before building and compare side by side after.
 - **Use Catalyst Design System 2.0 only.** Use the pinned copy in `vendor/ds2/` (look components up with `scripts/entry.sh`; update deliberately with `scripts/update-ds.sh`). Anything not in the kit is wrapped in `NDS`, which shows a "Not in DS" flag.
-- **Use tokens only.** No hex or rgba values in app code; `scripts/check.mjs` enforces this.
+- **Use tokens only, for everything.** Colours, spacing, sizes, text styles and layers all come from DS 2.0.2 tokens; sizes the kit lacks are `--proto-*` tokens in one block at the top of `app/styles.css`. No hex, rgba, raw px or font numbers in app code; `scripts/check.mjs` enforces this.
 - **There is one data layer and one logic source.** All data lives in `shared/`:
   - real Whistler demo records, which are generated;
   - invented names;
@@ -39,7 +39,7 @@ One working mock of **Catalyst** (IFS Copperleaf), built up mini flow by mini fl
 ```
 index.html                the app (served as-is by GitHub Pages; no build step)
 app/
-  styles.css              layout CSS, tokens only
+  styles.css              layout CSS, tokens only (starts with the --proto-* tokens: sizes DS 2.0 has no token for)
   ui.jsx                  kit imports (IFS), NDS flag, shared flow data (Cooper scripts, idea alternatives)
   map.jsx                 MapLibre 3D map, legend, map tools
   store.jsx               usePersisted: demo state that survives reloads ("Reset demo" clears it)
@@ -59,7 +59,7 @@ shared/                   the mock data layer (plain JS, loaded in this order)
   search-model.js         Global Search index (8 types) and rules: ranking, best match, prefixes, typo fix, filters from the query
   recommend-model.js      Cooper recommendations (J05): one per real cluster investment, its alternatives as interventions ([Assumed])
   plan-model.js           Plan rules: inconsistencies, outliers, readiness, scenario setup, the optimisation run ([Assumed])
-vendor/ds2/               pinned Catalyst Design System 2.0 (js, css, api.md, rules, icons, tokens, VERSION.txt)
+vendor/ds2/               pinned Catalyst Design System 2.0.2 (js, css, api.md, rules, spacing / layout / typography / content guides, icons, tokens, VERSION.txt)
 scripts/
   sync.sh                 safe git: setup · status · start · save · update · finish · home
   check.mjs               data / flow / token checks (also run on GitHub for every pull request)

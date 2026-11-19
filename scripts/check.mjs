@@ -3,7 +3,7 @@
 //   node scripts/check.mjs
 // 1) the mock data layer loads and is consistent (links resolve, numbers are sane, invented names applied)
 // 2) the flow files are valid and listed in app/flows/index.js
-// 3) app code uses design tokens only (no hex / rgba colours)
+// 3) app code uses design tokens only: no hex / rgba colours, no raw px, font numbers or z-index numbers, no retired DS tokens or type styles
 import fs from 'node:fs'; import path from 'node:path'; import vm from 'node:vm'; import crypto from 'node:crypto'; import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [], warn = [];
@@ -86,6 +86,34 @@ walk(path.join(ROOT, 'app')).filter(f => /\.(jsx|css|js)$/.test(f)).forEach(f =>
     if (/tokens-ok/.test(line)) return;                                          // explicit, reviewed exception
     if (/#[0-9a-fA-F]{3,8}\b(?![\w-])/.test(code.replace(/'#[a-z][\w-]*'|"#[a-z][\w-]*"|`#[^`]*`/gi, '')) || /\brgba?\(\s*\d/.test(code))
       err(`${path.relative(ROOT, f)}:${i + 1}: hard-coded colour — use a token (var(--…))`);
+  });
+});
+
+// ---------- 3b. foundations only (DS 2.0.2: spacing, layout, typography) ----------
+// Every padding, gap, size, offset, text style and layer comes from a token: DS 2.0.2 (--space-*, --size-*, --region-*, --text-*, --z-index-*)
+// or a prototype token in the :root block of app/styles.css (built on the DS unit). Map/chart geometry drawn in WebGL or SVG is exempt.
+const RETIRED_TOKEN = /--(paddings-padding|gaps-gap|margins-layout-margin|gutters-gutter|size-ruler-master|spacing-(card|table|panel|modal|popover|form))\b/;
+const RETIRED_CLASS = /\bt-(label-m-upper|label-s-[a-z]+|label-l-upper|label-l-semibold|label-m-semibold|heading-h3-uppercase|heading-h4-upper|heading-h4-medium|body-m-medium|body-l-medium|caption-[a-z-]+|code-regular|code-medium)\b/;
+const STYLE_NUM = /\b(gap|rowGap|columnGap|padding\w*|margin\w*|top|left|right|bottom|inset|width|height|minWidth|maxWidth|minHeight|maxHeight|flexBasis|borderRadius|fontSize|lineHeight|letterSpacing|zIndex)\s*:\s*-?[1-9]\d*(\.\d+)?\s*[,}]/;
+walk(path.join(ROOT, 'app')).filter(f => /\.(jsx|css)$/.test(f)).forEach(f => {
+  const css = f.endsWith('.css'), rel = path.relative(ROOT, f);
+  fs.readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+    if (/tokens-ok/.test(line)) return;
+    const code = line.replace(/\/\*.*?\*\/|\/\/.*$/g, '');
+    const at = `${rel}:${i + 1}`;
+    if (RETIRED_TOKEN.test(code)) err(`${at}: retired DS token ${code.match(RETIRED_TOKEN)[0]} — use --space-* / --space-inset / --space-stack / --page-margin`);
+    if (RETIRED_CLASS.test(code)) err(`${at}: retired type style ${code.match(RETIRED_CLASS)[0]} — see vendor/ds2/typography.md`);
+    if (/text-transform\s*:\s*uppercase|textTransform\s*:\s*'uppercase'/.test(code)) err(`${at}: uppercase text — DS 2.0.1 has no uppercase style`);
+    if (css) {
+      if (/(^|[^\w-])\d+(\.\d+)?px\b/.test(code)) err(`${at}: raw px — use a token`);
+      if (/(font-size|font-weight|line-height|letter-spacing)\s*:\s*\d/.test(code)) err(`${at}: raw font value — use a --text-* style`);
+      if (/z-index\s*:\s*-?\d/.test(code)) err(`${at}: raw z-index — use --z-index-* or a --proto-z-* token`);
+    } else {
+      for (const m of code.matchAll(/style=\{\{(.*?)\}\}/g)) {
+        if (STYLE_NUM.test(m[1] + '}')) err(`${at}: raw number in an inline style — use a token ('var(--space-…)')`);
+        if (/'[^']*\b\d+(\.\d+)?px\b[^']*'/.test(m[1])) err(`${at}: raw px in an inline style — use a token`);
+      }
+    }
   });
 });
 

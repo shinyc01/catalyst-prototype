@@ -12,11 +12,11 @@ const fmtUnit = (v, unit) => v == null ? '—' : unit === '$' ? fmtMoney(v) : fm
 const PLAN_TITLE = PLAN_PORTFOLIO.name;
 const ownerName = k => (PEOPLE[k] || {}).name || k;
 
-// Card with the Figma header: UPPERCASE title on the left, Cooper icon-button on the right
+// Card with the Figma header: H4 title (DS 2.0.1, was uppercase) on the left, Cooper icon-button on the right
 const PSec = ({ title, extra, children, style }) => (
   <ContentCard style={style} top={
-    <div className="row" style={{ width: '100%', justifyContent: 'space-between', padding: '4px 6px 0' }}>
-      <div className="row" style={{ gap: 16 }}><span className="t-heading-h3-uppercase sec">{title}</span>{extra}</div>
+    <div className="row" style={{ width: '100%', justifyContent: 'space-between', padding: 'var(--space-100) var(--space-150) 0' }}>
+      <div className="row" style={{ gap: 'var(--space-400)' }}><span className="t-heading-h4-semibold">{title}</span>{extra}</div>
       <IB icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: ${title.toLowerCase()}` })} />
     </div>} bottom={<div style={{ width: '100%' }}>{children}</div>} />
 );
@@ -93,7 +93,7 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
   const header = <PageHeader title={PLAN_TITLE} onBack={onHome} onTitleMenu={() => toast({ title: 'Switch plans isn’t part of this flow' })}
     status={<Indicator type="blue">Planning</Indicator>}
     center={<Stepper current={0} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
-    actions={<div className="row" style={{ gap: 8 }}>
+    actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IB icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
       <Tooltip content={run ? 'Optimization is running' : waiting ? `Waiting for ${waiting} owner fix${waiting > 1 ? 'es' : ''}` : ready ? 'Optimize the scenarios' : 'Resolve System confidence first'} type="bottom">
@@ -106,7 +106,7 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={tab === 'readiness' ? ['Explain why these are outliers', 'Summarize data readiness'] : ['Compare to peer', 'Compare to best practice']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
       <div style={{ display: 'flex', minHeight: '100%' }}>
-        <div className="col" style={{ flex: 1, minWidth: 0, padding: 12, gap: 20 }}>
+        <div className="col" style={{ flex: 1, minWidth: 0, padding: 'var(--space-300)', gap: 'var(--space-500)' }}>
           <span className="t-heading-h1">Setup</span>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <Tabs value={tab} onChange={setTab} aria-label="Setup" items={[{ value: 'readiness', label: 'Data readiness' }, { value: 'groups', label: 'Planning groups' },
@@ -117,7 +117,7 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
           {tab === 'groups' && <Groups />}
           {tab === 'scenarios' && <Scenarios setup={setup} setSetup={setSetup} />}
         </div>
-        <div style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', height: 'calc(100vh - 128px)' }}>
+        <div style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', height: 'calc(100vh - var(--proto-sticky-offset))' }}>
           <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
             className={panel ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
             <ContentCard className="ifs-trc-card" title={<ConfidenceGates controller={c} label="Optimization readiness" />}
@@ -165,20 +165,20 @@ function Readiness({ rows, setRows, filter, setFilter }) {
   };
   const cols = [
     { key: 'name', title: 'Investments', width: '1.6fr', render: r => (
-      <div className="row" style={{ gap: 8, minWidth: 0, width: '100%' }}>
+      <div className="row" style={{ gap: 'var(--space-200)', minWidth: 0, width: '100%' }}>
         <div className="col" style={{ minWidth: 0, flex: 1 }}>
-          <span className="t-body-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span>
+          <span className="t-label-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span>
         </div>
         {planRowOpen(r, rows) && <Icon name={r.issue.type === 'noBasis' || r.issue.type === 'negValue' ? 'status-error-filled' : 'status-warning-filled'} size={16} className={r.issue.type === 'noBasis' || r.issue.type === 'negValue' ? 'plan-ic-err' : 'plan-ic-warn'} />}
       </div>) },
     { key: 'issue', title: 'Inconsistency', width: '1.1fr', render: r => r.issue ? <span className="plan-clip" title={r.issue.label}><Badge size="s" color="white">{r.issue.label}</Badge></span> : (r.outlier ? <Badge size="s" color="false">Outlier</Badge> : null) },
     { key: 'solution', title: 'Solution', width: '1.1fr', render: solution },
-    { key: 'capex', title: 'Cost', width: 90, render: r => rows[r.id] === 'fixed' ? fmtMoney(r.estimate) : fmtMoney(r.capex) },
-    { key: 'value', title: 'Value', width: 80, render: r => fmtValue(r.value) },
-    { key: 'start', title: 'Schedule', width: 100, render: r => fmtDate(r.startDate) },
+    { key: 'capex', title: 'Cost', width: 'var(--table-col-number-min)', render: r => rows[r.id] === 'fixed' ? fmtMoney(r.estimate) : fmtMoney(r.capex) },
+    { key: 'value', title: 'Value', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) },
+    { key: 'start', title: 'Schedule', width: 'var(--table-col-date)', render: r => fmtDate(r.startDate) },
   ];
   return (
-    <div className="col" style={{ gap: 20 }}>
+    <div className="col" style={{ gap: 'var(--space-500)' }}>
       <StatCardsRow cards={[
         { title: 'With inconsistency', value: String(open.length), description: `/ ${live.length}`, descriptionPosition: 'inline' },
         { title: 'Outliers', value: String(outliers.length), description: `/ ${PLAN_ROWS.length}`, descriptionPosition: 'inline' },
@@ -189,8 +189,8 @@ function Readiness({ rows, setRows, filter, setFilter }) {
         series={[{ key: 'in', label: 'Within the expected range', color: 'steel-blue' }, { key: 'out', label: 'Outlier', color: 'alert' }]}
         xReference={PLAN_MEDIAN_COST / 1e6} yReference={PLAN_MEDIAN_VALUE / 1e3} referenceLabel={`Median cost ${fmtMoney(PLAN_MEDIAN_COST)} · median value ${fmtValue(PLAN_MEDIAN_VALUE)}`} />
       <PSec title="Investments">
-        <div className="col" style={{ gap: 12, padding: '8px 6px 6px' }}>
-          <div className="row" style={{ justifyContent: 'space-between', gap: 12 }}>
+        <div className="col" style={{ gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
+          <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--space-300)' }}>
             <SegmentedControl value={filter} onChange={v => { setFilter(v); setMore(false); }} options={[
               { value: 'all', label: 'All', counter: PLAN_ROWS.length }, { value: 'inconsistent', label: 'With inconsistency', counter: withIssue.length },
               { value: 'outliers', label: 'Outliers', counter: outliers.length }]} />
@@ -211,18 +211,18 @@ function Groups() {
   const data = PLAN_GROUPS.map(g => ({ label: g.label, value: g.count }));
   const rows = PLAN_INVESTMENTS.filter(i => i.planningGroup === sel).slice(0, 12);
   return (
-    <div className="col" style={{ gap: 20 }}>
+    <div className="col" style={{ gap: 'var(--space-500)' }}>
       <BarChart title="Investments count by planning group" data={data} valueLabel="Investments" labelWidth={170} height={220} />
-      <PSec title="Investment groups">
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 12, padding: '8px 6px 6px' }}>
-          <div className="col" style={{ gap: 4 }}>
+      <PSec title="Investment Groups">
+        <div style={{ display: 'grid', gridTemplateColumns: 'var(--proto-plan-side-w) 1fr', gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
+          <div className="col" style={{ gap: 'var(--space-100)' }}>
             {PLAN_GROUPS.map(g => <ContentCard key={g.id} size="s" iconLeft="arrow-caret-right-filled" selected={sel === g.id} onClick={() => setSel(g.id)}
               title={g.label} description={g.adjustable ? 'The optimizer may change these' : 'Kept as the scenario holds them'} control={<Counter>{g.count}</Counter>} />)}
           </div>
           <Table rowHeight={48} rows={rows} columns={[
-            { key: 'name', title: 'Investment', width: '1.6fr', render: r => <div className="col" style={{ minWidth: 0 }}><span className="t-body-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span></div> },
-            { key: 'stage', title: 'Stage', width: 150 }, { key: 'capex', title: 'Cost', width: 90, render: r => fmtMoney(r.capex) },
-            { key: 'value', title: 'Value', width: 80, render: r => fmtValue(r.value) }, { key: 'start', title: 'Schedule', width: 100, render: r => fmtDate(r.startDate) }]} />
+            { key: 'name', title: 'Investment', width: '1.6fr', render: r => <div className="col" style={{ minWidth: 0 }}><span className="t-label-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span></div> },
+            { key: 'stage', title: 'Stage', width: 'calc(var(--table-col-short-min) + var(--space-700))' }, { key: 'capex', title: 'Cost', width: 'var(--table-col-number-min)', render: r => fmtMoney(r.capex) },
+            { key: 'value', title: 'Value', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) }, { key: 'start', title: 'Schedule', width: 'var(--table-col-date)', render: r => fmtDate(r.startDate) }]} />
         </div>
       </PSec>
     </div>
@@ -233,7 +233,7 @@ function Groups() {
 function Scenarios({ setup, setSetup }) {
   const [open, setOpen] = useState(SETUP_SCENARIOS[0].id);
   return (
-    <div className="col" style={{ gap: 8 }}>
+    <div className="col" style={{ gap: 'var(--space-200)' }}>
       {SETUP_SCENARIOS.map(s => <ScenarioCard key={s.id} s={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} setup={setup} setSetup={setSetup} />)}
     </div>
   );
@@ -251,13 +251,13 @@ function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
   const cons = scenConstraints(setup, s), res = scenRestrictions(setup, s);
   const capex = cons.find(r => r.measureId === 37), pm = cons.find(r => r.measureId === 181), rel = cons.find(r => r.measureId === 67);
   const budget = capex ? SETUP_YEARS.reduce((t, y) => t + (capex.years[y].max || 0), 0) : null;
-  const Metric = ({ label, value }) => <div className="col plan-metric"><span className="t-body-s-regular sec">{label}</span><span className="t-body-m-medium">{value}</span></div>;
+  const Metric = ({ label, value }) => <div className="col plan-metric"><span className="t-body-s-regular sec">{label}</span><span className="t-label-m-medium">{value}</span></div>;
   return (
     <ContentCard className="plan-scen" top={
-      <div className="row" style={{ width: '100%', gap: 16, padding: '4px 6px' }}>
+      <div className="row" style={{ width: '100%', gap: 'var(--space-400)', padding: 'var(--space-100) var(--space-150)' }}>
         <IB icon={open ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} type="ghost" size="s" label={open ? `Collapse ${s.name}` : `Expand ${s.name}`} onClick={onToggle} />
-        <div className="col" style={{ flex: 1, minWidth: 0, gap: 4 }}>
-          <span className="t-heading-h3-uppercase sec">{s.name}</span>
+        <div className="col" style={{ flex: 1, minWidth: 0, gap: 'var(--space-100)' }}>
+          <span className="t-heading-h4-semibold">{s.name}</span>
           <span className="t-body-m-regular">{s.desc}</span>
         </div>
         <Metric label="Budget" value={budget == null ? '—' : `${fmtMoney(budget)} CAPEX`} />
@@ -265,7 +265,7 @@ function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
         <Metric label="Enterprise goal" value={rel ? `Reliability risk ≤ ${fmtCompact(rel.years[2028].max)}` : '—'} />
         <IB icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: explain ${s.short}` })} />
       </div>}
-      bottom={open && <div className="col" style={{ gap: 12, width: '100%', padding: '8px 6px 6px' }}>
+      bottom={open && <div className="col" style={{ gap: 'var(--space-300)', width: '100%', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
         <Restrictions s={s} res={res} setSetup={setSetup} />
         <Constraints s={s} rows={cons} setSetup={setSetup} />
         <InvestmentGroups s={s} res={res} setSetup={setSetup} />
@@ -276,13 +276,13 @@ function Restrictions({ s, res, setSetup }) {
   const set = patch => setSetup(st => ({ ...st, restrictions: { ...st.restrictions, [s.id]: { ...res, ...patch } } }));
   const adjustable = PLAN_GROUPS.filter(g => (res.groups || PLAN_GROUPS.filter(x => x.adjustable).map(x => x.id)).includes(g.id));
   const Row = ({ title, desc, k }) => (
-    <div className="row" style={{ gap: 16, justifyContent: 'space-between', padding: '8px 0' }}>
-      <div className="col" style={{ gap: 2 }}><span className="t-body-m-medium">{title}</span><span className="t-body-s-regular sec">{desc}</span></div>
+    <div className="row" style={{ gap: 'var(--space-400)', justifyContent: 'space-between', padding: 'var(--space-200) 0' }}>
+      <div className="col" style={{ gap: 'var(--space-50)' }}><span className="t-label-m-medium">{title}</span><span className="t-body-s-regular sec">{desc}</span></div>
       <Switch size="s" checked={res[k]} onChange={v => set({ [k]: v })} aria-label={title} />
     </div>);
   return (
     <PSec title="Restrictions">
-      <div className="col" style={{ gap: 8, padding: '8px 6px 6px' }}>
+      <div className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
         <StatCardsRow cards={[
           { size: 's', title: 'Investments adjustable', value: fmtNum(adjustable.reduce((t, g) => t + g.count, 0)) },
           { size: 's', title: 'Planning groups enabled', value: `${adjustable.length}`, description: `/ ${PLAN_GROUPS.length}`, descriptionPosition: 'inline' },
@@ -302,17 +302,17 @@ function InvestmentGroups({ s, res, setSetup }) {
   const toggle = id => setSetup(st => ({ ...st, restrictions: { ...st.restrictions, [s.id]: { ...res, groups: on.includes(id) ? on.filter(x => x !== id) : [...on, id] } } }));
   const rows = PLAN_INVESTMENTS.filter(i => i.planningGroup === sel).slice(0, 8);
   return (
-    <PSec title="Investment groups">
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 12, padding: '8px 6px 6px' }}>
-        <div className="col" style={{ gap: 4 }}>
+    <PSec title="Investment Groups">
+      <div style={{ display: 'grid', gridTemplateColumns: 'var(--proto-plan-side-w) 1fr', gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
+        <div className="col" style={{ gap: 'var(--space-100)' }}>
           {PLAN_GROUPS.map(g => <ContentCard key={g.id} size="s" selected={sel === g.id} onClick={() => setSel(g.id)} title={g.label}
             control={<Checkbox checked={on.includes(g.id)} onChange={() => toggle(g.id)} aria-label={`Let the optimizer change ${g.label}`} />} iconRight={undefined}
             description={`${g.count} investments`} />)}
         </div>
         <Table rowHeight={48} rows={rows} columns={[
-          { key: 'name', title: 'Investments', width: '1.6fr', render: r => <div className="col" style={{ minWidth: 0 }}><span className="t-body-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span></div> },
-          { key: 'stage', title: 'Status', width: 150 }, { key: 'capex', title: 'Cost', width: 90, render: r => fmtMoney(r.capex) },
-          { key: 'value', title: 'Value', width: 80, render: r => fmtValue(r.value) }, { key: 'start', title: 'Schedule', width: 100, render: r => fmtDate(r.startDate) }]} />
+          { key: 'name', title: 'Investments', width: '1.6fr', render: r => <div className="col" style={{ minWidth: 0 }}><span className="t-label-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span></div> },
+          { key: 'stage', title: 'Status', width: 'calc(var(--table-col-short-min) + var(--space-700))' }, { key: 'capex', title: 'Cost', width: 'var(--table-col-number-min)', render: r => fmtMoney(r.capex) },
+          { key: 'value', title: 'Value', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) }, { key: 'start', title: 'Schedule', width: 'var(--table-col-date)', render: r => fmtDate(r.startDate) }]} />
       </div>
     </PSec>
   );
@@ -346,7 +346,7 @@ function Constraints({ s, rows, setSetup }) {
       const commit = () => { const t = String(edit.text ?? '').trim(), n = t === '' ? null : parseFloat(t.replace(/[^\d.-]/g, ''));
         save(rows.map(x => x.id === r.id ? { ...x, years: { ...x.years, [y]: { ...x.years[y], [k]: isNaN(n) ? null : n } } } : x)); setEdit(null); };
       return (
-        <div style={{ width: 104 }} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEdit(null); }}>
+        <div style={{ width: 'var(--proto-cell-edit-w)' }} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEdit(null); }}>
           <TextField size="m" autoFocus value={edit.text ?? (v == null ? '' : String(v))} onChange={t => setEdit(ed => ({ ...ed, text: t }))} aria-label={`${r.measure} ${y} ${k}`} />
         </div>);
     }
@@ -354,19 +354,19 @@ function Constraints({ s, rows, setSetup }) {
   };
   return (
     <PSec title="Constraints">
-      <div className="col" style={{ gap: 12, padding: '8px 6px 6px' }}>
+      <div className="col" style={{ gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <SegmentedControl size="s" value={cat} onChange={setCat} options={[{ value: 'cost', label: 'Cost', counter: count('cost') },
             { value: 'resource', label: 'Resource hours', counter: count('resource') }, { value: 'strategic', label: 'Strategic', counter: count('strategic') }]} />
         </div>
         <div style={{ overflowX: 'auto' }}>
           <Table rowHeight={48} rows={shown} columns={[
-            { key: 'measure', title: 'Constraint', width: 210, render: r => <span className="t-body-m-medium">{r.measure}</span> },
-            { key: 'type', title: 'Type', width: 90, render: r => <Badge size="s" color="white">{r.type}</Badge> },
-            { key: 'unit', title: 'Unit', width: 90 },
-            ...SETUP_YEARS.flatMap(y => [{ key: `${y}min`, title: `${y} min`, width: 104, render: r => cell(r, y, 'min') },
-              { key: `${y}max`, title: `${y} max`, width: 104, render: r => cell(r, y, 'max') }]),
-            { key: 'del', title: '', width: 44, render: r => <IB icon="system-trash-delete" type="ghost" size="s" label={`Delete ${r.measure}`}
+            { key: 'measure', title: 'Constraint', width: 'var(--table-col-primary-min)', render: r => <span className="t-label-m-medium">{r.measure}</span> },
+            { key: 'type', title: 'Type', width: 'var(--table-col-number-min)', render: r => <Badge size="s" color="white">{r.type}</Badge> },
+            { key: 'unit', title: 'Unit', width: 'var(--table-col-number-min)' },
+            ...SETUP_YEARS.flatMap(y => [{ key: `${y}min`, title: `${y} min`, width: 'calc(var(--table-col-number-min) + var(--space-200))', render: r => cell(r, y, 'min') },
+              { key: `${y}max`, title: `${y} max`, width: 'calc(var(--table-col-number-min) + var(--space-200))', render: r => cell(r, y, 'max') }]),
+            { key: 'del', title: '', width: 'var(--table-col-action)', render: r => <IB icon="system-trash-delete" type="ghost" size="s" label={`Delete ${r.measure}`}
               onClick={() => { save(rows.filter(x => x.id !== r.id)); toast({ title: `${r.measure} removed from ${s.short}`, secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => save(rows) } }); }} /> }]} />
         </div>
         {!shown.length && <span className="t-body-m-regular sec">No {cat} constraints in this scenario.</span>}
@@ -379,7 +379,7 @@ function Constraints({ s, rows, setSetup }) {
 
 /* ============================================================ the run: NavBar badge + progress snackbar */
 function OptimizingBadge({ onClick }) {
-  return <button className="plan-badge" onClick={onClick} aria-label="Optimizing — show progress"><Badge color="black" size="m"><span className="row" style={{ gap: 6 }}><span className="plan-spin"><ProgressRing value={70} size={16} label="Optimizing" /></span>Optimizing...</span></Badge></button>;
+  return <button className="plan-badge" onClick={onClick} aria-label="Optimizing — show progress"><Badge color="black" size="m"><span className="row" style={{ gap: 'var(--space-150)' }}><span className="plan-spin"><ProgressRing value={70} size={16} label="Optimizing" /></span>Optimizing...</span></Badge></button>;
 }
 function RunProgress({ run, onClose }) {
   const [, tick] = useState(0);
@@ -393,13 +393,13 @@ function RunProgress({ run, onClose }) {
     <div className="plan-run">
       <Snackbar title={`Optimizing ${run.scenarios.length} scenarios`} onClose={onClose}
         secondaryAction={{ label: expanded ? 'Hide progress' : 'Show progress', onClick: () => setExpanded(!expanded) }}>
-        <div className="col" style={{ gap: 8 }}>
+        <div className="col" style={{ gap: 'var(--space-200)' }}>
           <span className="t-body-m-regular sec">{mm(el)} / ~{left}s remaining</span>
-          <div className="row" style={{ gap: 8 }}><div style={{ flex: 1 }}><ProgressBar value={Math.round(p * 100)} label="Optimization progress" /></div><span className="t-heading-h3">{Math.round(p * 100)}%</span></div>
+          <div className="row" style={{ gap: 'var(--space-200)' }}><div style={{ flex: 1 }}><ProgressBar value={Math.round(p * 100)} label="Optimization progress" /></div><span className="t-heading-h3">{Math.round(p * 100)}%</span></div>
         </div>
       </Snackbar>
       {expanded && <ContentCard className="plan-run-steps" bottom={<Timeline items={RUN_STEPS.map((s, i) => ({ key: s.id, title: s.title, icon: i < stepIdx || stepIdx < 0 ? 'status-success-filled' : i === stepIdx ? 'system-loader' : 'system-clock-time',
-            time: i === stepIdx ? mm(el) : undefined, children: i === stepIdx && s.subs ? <div className="col" style={{ gap: 2 }}>{s.subs(ctx).map(t => <span key={t} className="row t-label-m-regular sec" style={{ gap: 4 }}><Icon name="arrow-corner-down-right" size={12} />{t}</span>)}</div> : null }))} />} />}
+            time: i === stepIdx ? mm(el) : undefined, children: i === stepIdx && s.subs ? <div className="col" style={{ gap: 'var(--space-50)' }}>{s.subs(ctx).map(t => <span key={t} className="row t-label-m-regular sec" style={{ gap: 'var(--space-100)' }}><Icon name="arrow-corner-down-right" size={12} />{t}</span>)}</div> : null }))} />} />}
     </div>
   );
 }
@@ -441,19 +441,19 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
   const risk = base.outcomes.find(x => x.measureId === 21), riskO = chosen.outcomes.find(x => x.measureId === 21);
   const riskData = yrs.map(y => { const k = PLAN_YEARS.indexOf(y); return { label: `${y}`, req: risk.byYear[k], opt: done ? riskO.byYear[k] : undefined, cap: risk.max[k] ?? undefined }; });
   const scen = done ? chosen : base;
-  const header = <PageHeader title={PLAN_TITLE} status={<Indicator type="blue">Planning</Indicator>} actions={<div className="row" style={{ gap: 8 }}>
-    <span className="t-body-m-regular sec">Owner</span><Avatar size="s" initials={PLAN_OWNER} name={ownerName(PLAN_OWNER)} /><span className="t-body-m-medium">{ownerName(PLAN_OWNER)}</span></div>} />;
+  const header = <PageHeader title={PLAN_TITLE} status={<Indicator type="blue">Planning</Indicator>} actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
+    <span className="t-body-m-regular sec">Owner</span><Avatar size="s" initials={PLAN_OWNER} name={ownerName(PLAN_OWNER)} /><span className="t-label-m-medium">{ownerName(PLAN_OWNER)}</span></div>} />;
   return (
     <AppShell navBar={navBar} header={header}
       sideNav={<SideNavTree title="Plan" defaultValue="dp" defaultExpanded={['ar', 'dp']} tree={[{ id: 'ar', label: COMPANY.name, children: [{ id: 'dp', label: PLAN_PORTFOLIO.name, children: PLAN_PORTFOLIO.children.map(c => ({ id: c, label: c })) }] }]}
         sections={[{ label: 'Ad hoc plans', items: [{ id: 'mine', label: 'My investments' }] }]} onSelect={id => id !== 'dp' && toast({ title: 'Only the Demo Portfolio is part of this flow' })} />}
       bottom={<BottomSheet prompts={['What needs my attention?', 'Are we on track against strategy?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
       {run && !done && showRun && <RunProgress run={run} onClose={() => setShowRun(false)} />}
-      <div className="col" style={{ padding: 12, gap: 20 }}>
+      <div className="col" style={{ padding: 'var(--space-300)', gap: 'var(--space-500)' }}>
         <span className="t-body-m-regular sec">The Demo Portfolio capital plan: {PLAN_INVESTMENTS.length} investments across the {PLAN_PORTFOLIO.children.join(' and ')} regions, optimized against the portfolio’s CAPEX, OPEX, resource and risk constraints.</span>
-        <PSec title="Planning cycles">
-          <div className="row" style={{ gap: 8, padding: '8px 6px 6px' }}>
-            {PLAN_CYCLES.map(cy => <ContentCard key={cy.id} size="s" style={{ width: 220 }} selected={cy.id === '2028'} title={cy.label}
+        <PSec title="Planning Cycles">
+          <div className="row" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
+            {PLAN_CYCLES.map(cy => <ContentCard key={cy.id} size="s" style={{ width: 'var(--proto-cycle-card-w)' }} selected={cy.id === '2028'} title={cy.label}
               description={`${cy.id === '2028' ? ph.tile : '100%'} · ${cy.range}`} control={<Indicator size="xs" type={cy.id === '2028' ? 'orange' : 'gray'}>{cy.status}</Indicator>} />)}
           </div>
         </PSec>
@@ -467,8 +467,8 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
           { title: 'CAPEX', value: fmtMoney(scen.capexTotal) },
           { title: 'Total investments', value: fmtNum(PLAN_INVESTMENTS.length) },
           { title: 'Horizon', value: `${PLAN_YEARS[0]}–${PLAN_YEARS[PLAN_YEARS.length - 1]}` }]} />
-        <PSec title="Cycle progress">
-          <div className="col" style={{ gap: 4, padding: '8px 6px 6px' }}>
+        <PSec title="Cycle Progress">
+          <div className="col" style={{ gap: 'var(--space-100)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
             <ReadinessStatus type={['time'].includes(phase) ? 'in-progress' : phase === 'setup' ? 'active' : 'done'} right={<Button type="ghost" size="s" onClick={phase === 'time' ? onStart : onSetup}>View details</Button>}>Setup</ReadinessStatus>
             {(phase === 'time' || phase === 'setup') && <div className="col plan-subrows">
               <ReadinessStatus type="done" right={`${SETUP_SCENARIOS.length} scenarios`}>Scenarios built</ReadinessStatus>
@@ -484,8 +484,8 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
             <ReadinessStatus type={phase === 'approval' ? 'active' : 'in-progress'} right={phase === 'approval' ? 'In approval' : phase === 'final' ? 'Ready to send' : 'Queued'}>Approve</ReadinessStatus>
           </div>
         </PSec>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div className="col" style={{ gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-300)' }}>
+          <div className="col" style={{ gap: 'var(--space-200)' }}>
             <SegmentedControl size="s" value={measure} onChange={setMeasure} options={[{ value: 37, label: 'CAPEX' }, { value: 167, label: 'OPEX' }, { value: 223, label: 'Total Investment Cost' }]} />
             <ColumnChart title={`Yearly forecast vs budget · ${done ? (finalS ? 'final plan' : 'Optimized') : 'requested'}`} data={forecast} valueLabel={o.measure} referenceLabel="Budget (max)" format={fmtMoney} />
           </div>
@@ -502,7 +502,7 @@ function Notifications({ open, notes, onClose, onOpen }) {
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'Just now' : m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`; };
   return (
     <Drawer open={open} onOpenChange={o => !o && onClose()} title="Notifications" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim sits above the drawer */}
-      <div className="col" style={{ gap: 8, padding: '0 var(--paddings-padding-400) var(--paddings-padding-400)' }}>
+      <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
         {!notes.length && <span className="t-body-m-regular sec">Nothing new. Notifications about your plans and investments appear here.</span>}
         {notes.map(n => <NotificationCard key={n.id} type="specific" read={n.read} title={n.title} details={n.details} meta={n.meta} time={ago(n.time)}
           actionRequired={false} avatar={n.cooper ? undefined : n.avatar} actions={n.link ? [{ label: 'View results', onClick: () => onOpen(n) }] : undefined} />)}
@@ -524,7 +524,7 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
   const sent = stage === 'approval';
   const header = <PageHeader title={PLAN_TITLE} onBack={onBack} status={<Indicator type="blue">Planning</Indicator>}
     center={<Stepper current={sent ? 2 : 1} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
-    actions={<div className="row" style={{ gap: 8 }}>
+    actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IB icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
       <Button type="primary" size="s" disabled={!final || !done || sent} onClick={onSendApproval} aria-label="Send for approval">{sent ? 'Sent for approval' : 'Send for approval'}</Button>
@@ -534,19 +534,19 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
     if (!ready(c)) return <ContentCard className="plan-card" loading title={c.short} />;
     return (
       <ContentCard className={`plan-card${isFinal ? ' is-final' : ''}`} cooper={pick} selected={isFinal}
-        top={<div className="col" style={{ gap: 8, width: '100%' }}>
-          <span className="t-body-l-medium">{c.short}</span>
-          <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
+        top={<div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
+          <span className="t-label-l-medium">{c.short}</span>
+          <div className="row" style={{ gap: 'var(--space-200)', alignItems: 'baseline' }}>
             <span className="t-heading-h1">{fmtMoney(c.capex)}</span>
             {c.baseline ? <span className="t-label-m-regular muted">baseline</span>
-              : <span className={`t-body-m-medium ${c.capex >= COMPARE_BASE.capex ? 'plan-up' : 'plan-down'}`}>{pct(c.capex, COMPARE_BASE.capex)} <span className="t-label-m-regular muted">vs baseline</span></span>}
+              : <span className={`t-label-m-medium ${c.capex >= COMPARE_BASE.capex ? 'plan-up' : 'plan-down'}`}>{pct(c.capex, COMPARE_BASE.capex)} <span className="t-label-m-regular muted">vs baseline</span></span>}
           </div>
-          <div style={{ borderTop: '1px solid var(--border-base)' }} />
+          <div style={{ borderTop: 'var(--border-widths-border-100) solid var(--border-base)' }} />
           <div><Badge size="s" color="black">{c.baseline ? `${PLAN_INVESTMENTS.length} investments` : `${c.onSchedule} of ${PLAN_INVESTMENTS.length} on schedule`}</Badge></div>
           <span className="t-body-m-regular sec">{c.baseline ? `Value ${fmtCompact(c.value)} · as requested` : `Value ${fmtCompact(c.value)} (${pct(c.value, COMPARE_BASE.value)}) · ${c.deferred} deferred, ${c.altChanged} alternatives changed`}{pick ? ' · Cooper’s pick' : ''}</span>
           <StatCard size="s" title="Retained risk (2032)" value={c.risk2032 == null ? '—' : fmtCompact(c.risk2032)} description={c.baseline ? 'aggregate risk' : `${pct(c.risk2032, COMPARE_BASE.risk2032)} vs baseline`} descriptionPosition="inline" />
         </div>}
-        bottom={<div className="row" style={{ gap: 8, width: '100%' }}>
+        bottom={<div className="row" style={{ gap: 'var(--space-200)', width: '100%' }}>
           {!c.baseline && <IB icon="arrow-refresh" type="tertiary" size="s" label={`Re-optimize ${c.short}`} onClick={() => toast({ title: 'Re-optimize isn’t part of this flow' })} />}
           <div style={{ flex: 1 }}>
             {isFinal ? <Button type="secondary" size="s" iconLeft="system-check" disabled style={{ width: '100%' }}>Final plan</Button>
@@ -564,10 +564,10 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
       bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={['Explain gaps in confidence', 'Why this scenario?']} onPrompt={pr => toast({ title: `Cooper: ${pr}` })} />}>
       {run && !done && <RunProgress run={run} onClose={() => {}} />}
-      <div className="col" style={{ padding: 12, gap: 20 }}>
+      <div className="col" style={{ padding: 'var(--space-300)', gap: 'var(--space-500)' }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <span className="t-heading-h1">Scenario comparison</span>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row" style={{ gap: 'var(--space-200)' }}>
             <Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => toast({ title: 'New scenario isn’t part of this flow' })}>New scenario</Button>
             <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => { const c = COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK);
               toast({ title: `Cooper favours ${c.short}`, description: `Most value per dollar: ${fmtCompact(c.value)} value for ${fmtMoney(c.capex)} CAPEX, ${c.deferred} investments deferred.` }); }}>Cooper’s evaluation</Button>
@@ -575,20 +575,20 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
         </div>
         <div className="plan-cards">{COMPARE_SCENARIOS.map(c => <Card key={c.id} c={c} />)}</div>
         <div><Tabs value={tab} onChange={setTab} aria-label="Compare" items={[{ value: 'overview', label: 'Overview' }, { value: 'measures', label: 'Value measures and constraints' }, { value: 'investments', label: 'Investments' }]} /></div>
-        {tab === 'overview' && <div className="col" style={{ gap: 12 }}>
-          <PSec title="Value comparison">
-            <div style={{ padding: '8px 6px 6px' }}><StatCardsRow cards={shown.map(c => ({ size: 's', title: c.short, value: fmtCompact(c.value),
+        {tab === 'overview' && <div className="col" style={{ gap: 'var(--space-300)' }}>
+          <PSec title="Value Comparison">
+            <div style={{ padding: 'var(--space-200) var(--space-150) var(--space-150)' }}><StatCardsRow cards={shown.map(c => ({ size: 's', title: c.short, value: fmtCompact(c.value),
               ...(c.baseline ? {} : { trend: pct(c.value, COMPARE_BASE.value), trendDirection: c.value >= COMPARE_BASE.value ? 'up' : 'down' }) }))} /></div>
           </PSec>
           <GroupedColumnChart title="Forecast comparison by year · CAPEX" data={capexByYear} series={series} format={fmtMoney} />
           <LineChart title="Aggregate risk by year" data={riskByYear} series={series.map((s, i) => ({ ...s, dashed: i === 0 }))} format={v => fmtCompact(v)} />
         </div>}
-        {tab === 'measures' && <PSec title="Value measures and constraints">
-          <div style={{ padding: '8px 6px 6px', overflowX: 'auto' }}>
+        {tab === 'measures' && <PSec title="Value Measures and Constraints">
+          <div style={{ padding: 'var(--space-200) var(--space-150) var(--space-150)', overflowX: 'auto' }}>
             <Table rowHeight={48} rows={planConstraintsOf(PLAN_BASELINE_ID).map(r => ({ ...r }))} columns={[
-              { key: 'measure', title: 'Measure', width: 210, render: r => <span className="t-body-m-medium">{r.measure}</span> },
-              { key: 'cap', title: '2028–32 cap', width: 120, render: r => { const m = SETUP_YEARS.reduce((t, y) => t + (r.years[y].max || 0), 0); return m ? fmtUnit(m, r.unit) : '—'; } },
-              ...shown.map(c => ({ key: String(c.id), title: c.short, width: 120, render: r => {
+              { key: 'measure', title: 'Measure', width: 'var(--table-col-primary-min)', render: r => <span className="t-label-m-medium">{r.measure}</span> },
+              { key: 'cap', title: '2028–32 cap', width: 'var(--table-col-short-min)', render: r => { const m = SETUP_YEARS.reduce((t, y) => t + (r.years[y].max || 0), 0); return m ? fmtUnit(m, r.unit) : '—'; } },
+              ...shown.map(c => ({ key: String(c.id), title: c.short, width: 'var(--table-col-short-min)', render: r => {
                 const o = PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(x => x.measureId === r.measureId);
                 const tot = SETUP_YEARS.reduce((t, y) => t + (o.byYear[PLAN_YEARS.indexOf(y)] || 0), 0), cap = SETUP_YEARS.reduce((t, y) => t + (r.years[y].max || 0), 0);
                 return <span className={cap && tot > cap ? 'plan-down' : ''}>{fmtUnit(tot, r.unit)}</span>; } }))]} />

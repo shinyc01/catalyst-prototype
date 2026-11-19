@@ -13,9 +13,9 @@ function DSec({ title, children, open: o = true }) {
   const [open, setOpen] = useState(o);
   return (
     <div className="col ad-sec">
-      <button className="ad-sec__head t-label-m-upper muted" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button className="ad-sec__head t-label-m-medium muted" onClick={() => setOpen(!open)} aria-expanded={open}>
         <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={12} />{title}</button>
-      {open && <div className="col" style={{ gap: 8 }}>{children}</div>}
+      {open && <div className="col" style={{ gap: 'var(--space-200)' }}>{children}</div>}
     </div>
   );
 }
@@ -28,9 +28,9 @@ const SECTIONS = { bank: ['General', 'Maintenance', 'Cooling', 'Bushings', 'Oil 
 function Lifecycle({ a, act }) {
   const data = YEARS.map(y => ({ label: String(y), cond: Math.round((1 - assess(a, y, act).pof) * 100), base: Math.round((1 - assess(a, y, []).pof) * 100) }));
   return <>
-    <Field label="Status" value={<span className="row" style={{ gap: 6 }}><Indicator size="xs" type="green">Active</Indicator>{a.inServiceDate}</span>} />
+    <Field label="Status" value={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator size="xs" type="green">Active</Indicator>{a.inServiceDate}</span>} />
     <Field label="In service" value={a.install} />
-    <div style={{ height: 180, flex: 'none', overflow: 'hidden' }}>
+    <div style={{ height: 'var(--proto-chart-m)', flex: 'none', overflow: 'hidden' }}>
       <LineChart data={data} series={[{ key: 'cond', label: 'Condition with lenses' }, { key: 'base', label: 'Condition only', dashed: true }]} format={v => `${v}%`} zeroBased />
     </div>
   </>;
@@ -51,13 +51,13 @@ function AssetDetails({ id, lenses, year, onClose, onAsk, warnings = [], group, 
     : SECTIONS[a.type].map(x => <button key={x} className={`ad-item${sec === x ? ' is-on' : ''}`} onClick={() => setSec(x)}>{x}</button>);
   return (
     <Panel title={a.label} showEvidence={false} onClose={onClose} style={{ height: '100%', width: '100%' }}>
-      <div className="col" style={{ gap: 12, height: '100%', minHeight: 0 }}>
-        <span className="t-body-s-regular muted" style={{ marginTop: -8 }}>{a.code}</span>
+      <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
+        <span className="t-body-s-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{a.code}</span>
         <SegmentedControl size="s" fullWidth value={tab} onChange={setTab} options={[{ value: 'details', label: 'Details' }, { value: 'docs', label: 'Documentation' }, { value: 'history', label: 'History' }]} />
         {tab !== 'details' ? <EmptyState cause="empty-container" size="section" heading={tab === 'docs' ? 'Documentation' : 'History'} body="Not part of this flow." /> :
         <NDS label="Two-column asset details (hierarchy list + sections)" className="ad-cols">
           {left && <div className="col ad-left">
-            <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-m-upper muted">Asset hierarchy</span>
+            <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-m-medium muted">Asset hierarchy</span>
               <IconButton icon="arrow-bar-right" type="ghost" size="s" label="Hide the list" onClick={() => setLeft(false)} /></div>
             {leftList}
           </div>}
@@ -65,7 +65,7 @@ function AssetDetails({ id, lenses, year, onClose, onAsk, warnings = [], group, 
             {!left && <div><Button type="ghost" size="s" iconLeft="arrow-bar-left" onClick={() => setLeft(true)}>Asset hierarchy</Button></div>}
             {warnings.map(w => <Indicator key={w} type="orange">{w}</Indicator>)}
             <DSec title="Risk & condition">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
                 <StatCard size="s" title="Risk score" value={String(Math.round(r.risk))} badge={riskBadge(r.risk, tol)} />
                 <StatCard size="s" title="Condition" value={pctOf(1 - r.basePof)} />
                 <StatCard size="s" title="Age" value={`${NOW - a.install} y.o`} />
@@ -98,19 +98,19 @@ function GroupDetails({ group, lenses, year, onClose, onAsset }) {
   const anyOver = rows.some(x => x.over);
   return (
     <Panel title={group.label} onEvidence={() => toast({ title: 'Evidence chain' })} onClose={onClose} style={{ height: '100%', width: '100%' }}>
-      <div className="col" style={{ gap: 12, height: '100%', minHeight: 0 }}>
-        <span className="t-body-s-regular muted" style={{ marginTop: -8 }}>{rows.length}/{rows.length} assets selected · {TYPE_LABEL[first.type]}</span>
+      <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
+        <span className="t-body-s-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{rows.length}/{rows.length} assets selected · {TYPE_LABEL[first.type]}</span>
         <SegmentedControl size="s" fullWidth value="details" onChange={() => toast({ title: 'Not part of this flow' })} options={[{ value: 'details', label: 'Details' }, { value: 'docs', label: 'Documentation' }, { value: 'history', label: 'History' }]} />
         <NDS label="Two-column asset details (hierarchy list + sections)" className="ad-cols">
           <div className="col ad-left">
-            <span className="t-label-m-upper muted">Asset hierarchy</span>
+            <span className="t-label-m-medium muted">Asset hierarchy</span>
             <button className="ad-item is-on"><Icon name="chat-folder" size={14} /><span className="plan-ellipsis">{group.label} group</span></button>
             {rows.map(x => <button key={x.a.id} className="ad-item" onClick={() => onAsset(x.a.id)}><span className="plan-ellipsis">{shortLabel(x.a)}</span>
               {riskDot(x.a) && <span className={`ad-dot ad-dot--${riskDot(x.a)}`} />}</button>)}
           </div>
           <div className="col scroll ad-right">
             <DSec title="Risk & condition">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
                 <StatCard size="s" title="Risk score" value={String(Math.round(total))} badge={anyOver ? { color: 'red', children: 'Critical' } : { color: 'green', children: 'Healthy' }} />
                 <StatCard size="s" title="At-risk assets" value={`${rows.filter(x => x.over).length}/${rows.length}`} />
                 <StatCard size="s" title="Condition" value={pctOf(cond)} badge={cond < 0.5 ? { color: 'orange', children: 'Poor' } : { color: 'green', children: 'Fair' }} />
@@ -142,9 +142,9 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
     const isAsset = !n.children, on = n.id === value || (n.id === group && !value), exp = open.has(n.id);
     const dot = isAsset ? riskDot(assetById(n.id)) : (!exp && groupDot(n));
     return <>
-      <div className={`tree-row${on ? ' is-on' : ''}`} style={{ paddingLeft: 8 + depth * 18 }}>
+      <div className={`tree-row${on ? ' is-on' : ''}`} style={{ paddingLeft: `calc(var(--space-200) + ${depth} * var(--proto-tree-indent))` }}>
         {!isAsset ? <button className="tree-caret" aria-label={exp ? `Collapse ${n.label}` : `Expand ${n.label}`} onClick={() => toggle(n.id)}>
-          <Icon name={exp ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={12} /></button> : <span style={{ width: 16 }} />}
+          <Icon name={exp ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={12} /></button> : <span style={{ width: 'var(--size-16)' }} />}
         <button className="tree-name" onClick={() => { onSelect(n.id); if (!isAsset && !exp) toggle(n.id); }}>
           {!isAsset && <Icon name="chat-folder" size={16} />}<span className="plan-ellipsis">{n.label}</span></button>
         {dot && <span className={`ad-dot ad-dot--${dot}`} />}
@@ -156,7 +156,7 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
   return (
     <div className="assets-panel">
       <div className="row assets-panel__head">
-        <span className="t-heading-h3-uppercase sec">Assets</span><Counter>{ASSETS.length}</Counter>
+        <span className="t-heading-h4-semibold">Assets</span><Counter>{ASSETS.length}</Counter>
         <span style={{ flex: 1 }} />
         <SegmentedControl size="s" value={view} onChange={setView} options={[{ value: 'tree', iconLeft: 'asset-structure', label: '' }, { value: 'list', iconLeft: 'layout-list', label: '' }]} aria-label="Tree or list" />
         <IconButton icon="arrow-diagonal-collapse" type="ghost" size="s" label="Collapse the tree" onClick={() => setOpen(new Set(['co']))} />
@@ -164,12 +164,12 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
       </div>
       <NDS label="Asset hierarchy rows" className="col scroll assets-panel__body">
         {view === 'tree' ? ASSET_TREE.map(n => <Node key={n.id} n={n} depth={0} />) : <>
-          <span className="t-body-s-regular muted" style={{ padding: '0 8px' }}>{listRows.length} assets</span>
-          <div style={{ padding: '0 8px' }}><SegmentedControl size="s" value={risk} onChange={setRisk} options={[{ value: 'all', label: 'All risk' },
+          <span className="t-body-s-regular muted" style={{ padding: '0 var(--space-200)' }}>{listRows.length} assets</span>
+          <div style={{ padding: '0 var(--space-200)' }}><SegmentedControl size="s" value={risk} onChange={setRisk} options={[{ value: 'all', label: 'All risk' },
             { value: 'high', label: 'High', counter: ASSETS.filter(a => riskDot(a) === 'red').length }, { value: 'moderate', label: 'Moderate', counter: ASSETS.filter(a => riskDot(a) === 'orange').length },
             { value: 'low', label: 'Low', counter: ASSETS.filter(a => !riskDot(a)).length }]} /></div>
           {ASSET_GROUPS.map(g => { const rs = listRows.filter(a => g.assets.includes(a.id)); return rs.length ? <div key={g.id} className="col">
-            <span className="t-label-m-upper muted" style={{ padding: '8px 8px 2px' }}>{g.label} · {rs.length}</span>
+            <span className="t-label-m-medium muted" style={{ padding: 'var(--space-200) var(--space-200) var(--space-50)' }}>{g.label} · {rs.length}</span>
             {rs.map(a => <div key={a.id} className={`tree-row${a.id === value ? ' is-on' : ''}`}><button className="tree-name" onClick={() => onSelect(a.id)}>
               <span className="col" style={{ minWidth: 0 }}><span className="plan-ellipsis">{a.label}</span><span className="t-body-s-regular muted">{a.code}</span></span></button>
               {riskDot(a) && <span className={`ad-dot ad-dot--${riskDot(a)}`} />}</div>)}
@@ -205,7 +205,7 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
   return (
     <div className="assets-panel">
       <div className="row assets-panel__head">
-        <span className="t-heading-h3-uppercase sec">Studies</span><Counter>{studies.length}</Counter><span style={{ flex: 1 }} />
+        <span className="t-heading-h4-semibold">Studies</span><Counter>{studies.length}</Counter><span style={{ flex: 1 }} />
         <IconButton icon="system-close" type="ghost" size="s" label="Close studies" onClick={onClose} />
       </div>
       <NDS label="Study library rows (hover actions, inline rename)" className="col scroll assets-panel__body">
@@ -225,10 +225,10 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
               </span>
             </div>)}
       </NDS>
-      <Modal open={!!del} onOpenChange={o => !o && setDel(null)} title={del ? `Remove “${del.name}” study?` : ''} width={403}>
-        <div className="col" style={{ gap: 16 }}>
+      <Modal open={!!del} onOpenChange={o => !o && setDel(null)} title={del ? `Remove “${del.name}” study?` : ''} width="var(--overlay-width-m)">
+        <div className="col" style={{ gap: 'var(--space-400)' }}>
           <span className="t-body-m-regular sec">This will remove the saved study from your library. You’ll be able to undo this for a few seconds after.</span>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row" style={{ gap: 'var(--space-200)' }}>
             <div style={{ flex: 1 }}><Button type="secondary" size="m" style={{ width: '100%' }} onClick={() => setDel(null)}>Cancel</Button></div>
             <div style={{ flex: 1 }}><Button type="primary" size="m" style={{ width: '100%' }} onClick={() => remove(del)}>Remove</Button></div>
           </div>
@@ -244,9 +244,9 @@ const { RecommendationGroup, RecommendationItem, RecommendationImpact, CooperChi
 function Collapse({ title, count, open, onToggle, children }) {
   return (
     <div className="col rec-sec">
-      <button className="ad-sec__head t-label-m-upper muted" onClick={onToggle} aria-expanded={open}>
+      <button className="ad-sec__head t-label-m-medium muted" onClick={onToggle} aria-expanded={open}>
         <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={12} />{title}{count != null && <Counter>{count}</Counter>}</button>
-      {open && <div className="col" style={{ gap: 8 }}>{children}</div>}
+      {open && <div className="col" style={{ gap: 'var(--space-200)' }}>{children}</div>}
     </div>
   );
 }
@@ -263,13 +263,13 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
   if (mode === 'signal' && r) return <>
     {evid && evidence}
     <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => setMode('draft') }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
-      <div className="col" style={{ gap: 12 }}>
-        <div className="row" style={{ gap: 8, justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+      <div className="col" style={{ gap: 'var(--space-300)' }}>
+        <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
         <span className="t-body-m-regular sec">{r.signal.text}</span>
         <Collapse title="Risk drivers" open={sec === 'drivers'} onToggle={() => setSec(sec === 'drivers' ? null : 'drivers')}>
           <ContentCard size="s" title={r.signal.driver.title} description={r.signal.driver.text} bottom={<div style={{ width: '100%' }}>
             <RecommendationImpact rows={r.signal.driver.rows} />
-            <div style={{ height: 150, overflow: 'hidden' }}><LineChart data={r.signal.chart} series={[{ key: 'pof', label: 'Failure likelihood' }, { key: 'base', label: 'Condition only', dashed: true }]} format={v => `${v}%`} zeroBased /></div>
+            <div style={{ height: 'var(--proto-chart-s)', overflow: 'hidden' }}><LineChart data={r.signal.chart} series={[{ key: 'pof', label: 'Failure likelihood' }, { key: 'base', label: 'Condition only', dashed: true }]} format={v => `${v}%`} zeroBased /></div>
           </div>} />
         </Collapse>
         <Collapse title="Affected areas" open={sec === 'areas'} onToggle={() => setSec(sec === 'areas' ? null : 'areas')}>
@@ -286,9 +286,9 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
     return <>
       {evid && evidence}
       <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => onCreate(r) }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
-        <div className="col" style={{ gap: 12 }}>
+        <div className="col" style={{ gap: 'var(--space-300)' }}>
           <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => setMode('signal')}>Back</Button></div>
-          <div className="row" style={{ gap: 8, justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+          <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
           <Collapse title="Recommended intervention" open onToggle={() => {}}>
             <ContentCard size="s" title={rec.name} description={`Cooper’s pick for ${r.inv.name}: the recommended alternative in the investment.`}
               control={<Badge size="s" color="white">{`${r.assets.length} assets`}</Badge>} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={rows(rec)} /></div>} />
@@ -302,16 +302,16 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
   return (
     <AgentWindow onClose={onClose} onAsk={() => toast({ title: 'Cooper chat isn’t part of this flow' })}
       text={`I’ve surfaced ${n} recommendation${n === 1 ? '' : 's'} that need your attention — grouped by risk, value and impact.`}>
-      <div className="col" style={{ gap: 12 }}>
+      <div className="col" style={{ gap: 'var(--space-300)' }}>
         {groups.map(g => (
           <RecommendationGroup key={g.title} title={g.title} count={g.items.length}>
             {g.items.map(x => (
               <RecommendationItem key={x.id} title={x.title} impact={x.impact} expanded={exp === x.id}
-                description={<span className="col" style={{ gap: 8 }}><span>{x.description}</span>
+                description={<span className="col" style={{ gap: 'var(--space-200)' }}><span>{x.description}</span>
                   <NDS label="Includes + If no action is taken" className="col rec-extra">
-                    <span className="t-label-m-upper muted">Includes</span>
-                    {x.includes.map(i => <span key={i.label} className="row t-body-m-regular" style={{ gap: 6 }}>• {i.label}{i.root && <Badge size="s" color="black">Root</Badge>}</span>)}
-                    <span className="t-label-m-upper muted">If no action is taken</span>
+                    <span className="t-label-m-medium muted">Includes</span>
+                    {x.includes.map(i => <span key={i.label} className="row t-body-m-regular" style={{ gap: 'var(--space-150)' }}>• {i.label}{i.root && <Badge size="s" color="black">Root</Badge>}</span>)}
+                    <span className="t-label-m-medium muted">If no action is taken</span>
                     {x.ifNoAction.map(i => <span key={i} className="t-body-m-regular sec">• {i}</span>)}
                   </NDS></span>}
                 onExpandedChange={o => { setExp(o ? x.id : null); onFocus(o ? x.assets : null); }} action={{ label: 'Take me there', onClick: () => onFly(x) }} />
@@ -357,7 +357,7 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
     r.assets.forEach((id, i) => i === 0 && api.current?.flyTo(id)); setTimeout(() => setRecMode('signal'), 1600); };
   const recR = recId && RECOMMENDATIONS.find(x => x.id === recId);
   const header = <ExploreHeader search={{ placeholder: 'Search for…', ...(fromSearch ? { value: `${assetById(asset).label} details`, onClear: () => setSearchCtx(null) } : {}) }}
-    actions={am ? <div className="row" style={{ gap: 8 }}>
+    actions={am ? <div className="row" style={{ gap: 'var(--space-200)' }}>
       {recs && recMode !== 'list' ? null : <CooperChip selected={recs} onClick={() => { setRecs(!recs); setRecMode('list'); setRecFocus(null); }}>{`${recsOpenIds.length} risk${recsOpenIds.length === 1 ? '' : 's'} surfaced`}</CooperChip>}
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
@@ -370,11 +370,11 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
   const stepResult = d => { const n = searchCtx.ids[(ri + d + searchCtx.ids.length) % searchCtx.ids.length]; setAsset(n); setGroup(groupOfAsset(n).id); api.current?.flyTo(n); };
   return (
     <AppShell navBar={navBar} header={header}>
-      <div style={{ display: 'flex', height: '100%', minHeight: 700 }}>
-      <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100%', minHeight: 'var(--proto-page-min-h)' }}>
+      <div className="ifs-slots" style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}>
         <NDS label="3D map (MapLibre + OpenFreeMap)" className="fill">
           <MapView lenses={lenses} year={END} selected={asset} focus={recs ? recFocus : null} onSelect={id => { if (am && id) pick(id); else { setAsset(id); if (id) setDetails(false); } }} apiRef={api}
-            pad={{ tl: [am && treeOpen ? 460 : 80, 120], br: [right ? 580 : 220, 60] }} />
+            pad={{ tl: [am && treeOpen ? 460 : 80, 120], br: [right ? 640 : 240, 60] }} />{/* map camera padding: MapLibre takes px (exception, context/decisions.md) */}
         </NDS>
         <MapTools api={api} assetsOpen={am && treeOpen && !libOpen} onAssets={am ? () => { setLibOpen(false); setTreeOpen(o => !o); } : undefined}
           libraryOpen={libOpen} onLibrary={am ? () => { setLibOpen(o => !o); } : undefined} onStudy={() => onStudy(am && g ? g : null)} />
@@ -385,23 +385,23 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
           onCreate={r => { onSendToBuild(r); setRecs(false); setRecMode('list'); setRecFocus(null); }} /></div>}
         {am && treeOpen && !libOpen && !recs && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
         {am ? <>
-          {fromSearch && <FloatingBar style={{ top: 12, zIndex: 500 }} open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
-              actions={<div className="row" style={{ gap: 8 }}>
+          {fromSearch && <FloatingBar style={{ top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }} open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
+              actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
                 <Button type="tertiary" size="s" iconLeft="layout-list" onClick={() => setTreeOpen(true)}>All risk</Button>
                 <IconButton icon="arrow-left" type="secondary" size="s" label="Previous result" onClick={() => stepResult(-1)} />
                 <IconButton icon="arrow-right" type="secondary" size="s" label="Next result" onClick={() => stepResult(1)} />
                 <Button type="primary" size="s" onClick={() => onStudy(groupOfAsset(asset))}>Study area</Button></div>}
               onClose={() => { setSearchCtx(null); setAsset(null); }} />}
-          {!fromSearch && g && !groupOpen && !asset && <FloatingBar style={{ top: 12, zIndex: 500 }} open={barOpen} category={g.label} categoryIcon="map-location" item={`Selected ${g.assets.length}`}
+          {!fromSearch && g && !groupOpen && !asset && <FloatingBar style={{ top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }} open={barOpen} category={g.label} categoryIcon="map-location" item={`Selected ${g.assets.length}`}
               badge={<Badge color="red" size="s" indicator="error">{overOf(g.assets)}</Badge>}
               secondaryAction={{ label: 'View details', onClick: () => { setAsset(null); setGroupOpen(true); } }} primaryAction={{ label: 'Study area', onClick: () => onStudy(g) }}
               onClose={() => { setGroup(null); setGroupOpen(false); }} />}
-        </> : <FloatingBar style={{ top: 100, zIndex: 500 }} open={barOpen} category="Cooper found" categoryIcon="cooper-system-icon" item={`${CLUSTER.name} · ${ASSETS.length} assets`}
+        </> : <FloatingBar style={{ top: 'var(--proto-under-header)', zIndex: 'var(--proto-z-map-ui)' }} open={barOpen} category="Cooper found" categoryIcon="cooper-system-icon" item={`${CLUSTER.name} · ${ASSETS.length} assets`}
           badge={<Badge color="red" size="s">{s.now.over} over tolerance by {END}</Badge>}
           secondaryAction={{ label: 'View details', onClick: () => setDetails(true) }} primaryAction={{ label: 'Study area', onClick: () => onStudy(null) }}
           onClose={() => { setBarOpen(false); toast({ title: 'Selection cleared', primaryAction: { label: 'Undo', onClick: () => setBarOpen(true) } }); }} />}
         {details && (
-          <div style={{ position: 'absolute', right: 12, top: 64, bottom: 12, zIndex: 600, display: 'flex' }}>
+          <div className="ifs-slot-right" style={{ width: 'auto' }}>
             <AgentWindow style={{ maxHeight: '100%' }} text={`${CLUSTER.name} — ${CLUSTER.station}, its 12 pad-mount transformers, the Pine Ridge lines and Nesters substation, serving ~${CLUSTER.customers.toLocaleString()} customers. With today’s lenses, ${s.now.over} of ${ASSETS.length} assets are over their intervention tolerance by ${END}. Start with the pad-mount program, which is ready to shape.`}
               onAsk={() => toast({ title: 'Cooper chat isn’t part of this step' })} onClose={() => setDetails(false)}
               tertiaryAction={{ label: 'Close', onClick: () => setDetails(false) }} secondaryAction={{ label: 'Study area', onClick: () => onStudy(null) }}>
@@ -413,14 +413,14 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
           <div className="ad-wrap"><GroupDetails group={g} lenses={lenses} year={END} onClose={() => setGroupOpen(false)} onAsset={id => { setAsset(id); api.current?.flyTo(id); }} /></div>
         )}
         {asset && !details && (
-          <div className={am ? 'ad-wrap' : ''} style={am ? {} : { position: 'absolute', right: 12, top: 64, bottom: 12, width: 380, zIndex: 600, display: 'flex' }}>
+          <div className={am ? 'ad-wrap' : 'ifs-slot-right'} style={am ? {} : undefined}>
             <AssetDetails id={asset} lenses={lenses} year={END} warnings={am ? warn(assetById(asset)) : []} group={am && groupOpen ? g : null}
               onAsset={id => id ? setAsset(id) : setAsset(null)} onClose={() => { setAsset(null); setSearchCtx && setSearchCtx(null); }} onAsk={() => toast({ title: 'Cooper chat isn’t part of this step' })} />
           </div>
         )}
         {!right && <>
-          <MapLegend grid={false} style={{ position: 'absolute', right: 12, bottom: 64, zIndex: 500 }} />
-          <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 500 }}><FtaButton onClick={() => toast({ title: 'Cooper' })} /></div>
+          <MapLegend grid={false} style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-1000)', zIndex: 'var(--proto-z-map-ui)' }} />
+          <div style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}><FtaButton onClick={() => toast({ title: 'Cooper' })} /></div>
         </>}
       </div>
       {am && <div className="explore-trace" style={{ height: '100%' }}>
@@ -431,9 +431,9 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
   );
 }
 const AssetList_unused = ({ rows, onAsset, limit = 6 }) => (
-  <NDS label="Clickable asset list" className="col" style={{ gap: 2 }}>
+  <NDS label="Clickable asset list" className="col" style={{ gap: 'var(--space-50)' }}>
     {rows.slice(0, limit).map(r => (
-      <div key={r.a.id} className="click row" style={{ padding: '4px 6px', justifyContent: 'space-between' }} onClick={() => onAsset(r.a.id)}>
+      <div key={r.a.id} className="click row" style={{ padding: 'var(--space-100) var(--space-150)', justifyContent: 'space-between' }} onClick={() => onAsset(r.a.id)}>
         <InfoHintItem label={r.a.name} color={r.band.color} />
         <span className="t-body-m-regular sec">{Math.round(r.risk)} / {r.tol}</span>
       </div>
@@ -444,17 +444,17 @@ function ClusterDetails({ s }) {
   const alt = IDEA_ALTS.find(a => a.isRecommended) || IDEA_ALTS[0];
   const overNowRows = s.now.rows.filter(r => overNow.includes(r.a.id));
   return (
-    <div className="col" style={{ gap: 12 }}>
-      <span className="t-label-m-upper muted">Recommended intervention</span>
+    <div className="col" style={{ gap: 'var(--space-300)' }}>
+      <span className="t-label-m-medium muted">Recommended intervention</span>
       <ContentCard size="s" title={`${IDEA_INV.name} · ${alt.name}`} description={ALT_DESC[alt.name]} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
         <StatCard size="s" title="Cost" value={fmtMoney(alt.spendTotal)} />
         <StatCard size="s" title="Value" value={fmtValue(alt.valueTotal)} description="value score" />
         <StatCard size="s" title="Timeline" value={spanYears(alt)} />
         <StatCard size="s" title="At-risk assets" value={`${s.now.over}/${ASSETS.length}`} description={`by ${END}`} />
       </div>
-      <span className="t-label-m-upper muted">If no action is taken</span>
-      <div className="col t-body-m-regular sec" style={{ gap: 4 }}>
+      <span className="t-label-m-medium muted">If no action is taken</span>
+      <div className="col t-body-m-regular sec" style={{ gap: 'var(--space-100)' }}>
         <span>{overNowRows.map(r => r.a.label).join(' and ')} are already past tolerance</span>
         <span>Outage risk for ~{CLUSTER.customers.toLocaleString()} Alpine Meadows customers keeps rising</span>
         <span>Pine Ridge corridor wildfire exposure grows every year</span>
