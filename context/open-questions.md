@@ -67,5 +67,5 @@ Answer these with the product designer, then move each answer into the right con
 63. **J18: Scenario Details** (editable alternative and start date, "Re-optimize?") is not built.
 64. **Cooper's suggested alternatives:** when a record has fewer than three, the prototype adds Phased delivery and Defer and monitor by a fixed rule `[Assumed]` (see logic/build.md). Is that what Cooper would suggest, or should suggestions depend on the investment type?
 65. **Opened records other than the pad-mount program** have no comments, dependencies or questionnaire, and their cost stages are generic `[Added]`. Should any of them get scripted content for demos?
-66. **Approved investments in Build:** once approved and sent to Plan, do they stay in the Investments tab (the prototype keeps them, status Approved) or leave Build? Figma's Investments tab shows only Refining and Under review.
+66. ~~**Approved investments in Build:**~~ **Answered 2026-11-19 (Shiny):** they stay in the Investments tab with status Approved after they go to Plan.
 67. **Executing investments** (3 real records) are not listed in Build `[Assumed]`: they are past Plan. Confirm they belong to Results (relates to 57).
