@@ -36,4 +36,15 @@ Answer these with the product designer, then move each answer into the right con
 32. **Which three metrics does each recommendation show, and who decides?** (J05 validation question, dev note 29:357176.) The prototype always shows cost, risk reduced and failure likelihood.
 33. **How do you dismiss a recommendation or say "not now"?** It isn't designed (J05 gap).
 34. **What are "Other interventions" and where do "View in Study" and "View in Build" land?** They aren't designed. The prototype uses the investment's real alternatives, a study on its assets, and the Build idea.
+35. **J07: Send for review or Send for approval?** The Duplicate flow's Shape frame says "Send for approval"; the others say "Send for review". The prototype uses "Send for review".
+36. **J07: how does Cooper's context % grow?** Figma shows 0 / 20 / 55 % / READY only. The prototype's gains per input are `[Assumed]` (logic/build.md).
+37. **J07: should an idea from Explore skip Input?** (J07 validation question.) The prototype's Explore → Build path lands on Shape directly.
+38. **J07: Duplicate Investment** is designed (pick, name, Shape of the copy) but not built: the prototype's Shape page is for one idea. Build it when Shape can show any investment.
+39. **J08: is "Option 2" (Send to plan separate from Compare) the chosen pattern?** (J08 validation question.) The prototype builds Option 2.
+40. **J08: Add alternative** has no frame. The New button and the + show a "not designed yet" message.
+41. **J08: ROI, payback, NPV and IRR** have no source in the demo data, so they show "—". Should the prototype compute them, and how?
+42. **J08: cost stages.** The data has yearly spend only; stage names, shares and dates are `[Added]`. Which stages does a real Catalyst cost plan use?
+43. **J09: Investment value "$" vs score.** Figma shows value in dollars ($23k, $2.05M per year); the demo data's value is a framework score. The prototype shows the score.
+44. **J09: should the three-state triage (Cooper-answered / needs-you / you answered) be the standard for every questionnaire?** (J09 validation question.)
+45. **J09: Widgets drawer** (add, hide, resize, reorder) isn't built; Widgets and the prompt chip generate the one scripted widget.
 

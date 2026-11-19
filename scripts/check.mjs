@@ -117,6 +117,19 @@ walk(path.join(ROOT, 'app')).filter(f => /\.(jsx|css)$/.test(f)).forEach(f => {
   });
 });
 
+// ---------- 3c. one global scope: shared/*.js and app/*.jsx run as plain scripts, so a top-level name may be declared only once ----------
+{
+  const seen = new Map();
+  APP.js.concat(APP.babel).filter(f => /^(shared|app)\//.test(f) && !/flows\//.test(f)).forEach(f => {
+    fs.readFileSync(path.join(ROOT, f), 'utf8').split('\n').forEach((line, i) => {
+      const m = line.match(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/) || line.match(/^const \{([^}]*)\}\s*=/);
+      if (!m) return;
+      const names = m[0].startsWith('const {') ? m[1].split(',').map(x => x.split(':').pop().trim()).filter(Boolean) : [m[1]];
+      names.forEach(n => { if (seen.has(n)) err(`${f}:${i + 1}: "${n}" is already declared in ${seen.get(n)} (all app files share one scope)`); else seen.set(n, `${f}:${i + 1}`); });
+    });
+  });
+}
+
 // ---------- report ----------
 if (warn.length) console.log('Warnings:\n  ' + warn.join('\n  '));
 if (errors.length) { console.log(`✗ ${errors.length} problem(s):\n  ` + errors.join('\n  ')); process.exit(1); }

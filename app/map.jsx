@@ -111,7 +111,9 @@ function MapView({ lenses, year, selected, onSelect, interactive = true, grid = 
     }
     const pulse = setInterval(() => { if (!st.current.ready) return; st.current.ph = !st.current.ph; map.setPaintProperty('dots-halo', 'circle-opacity', st.current.ph ? 0.05 : 0.55); }, 700);
     if (apiRef) apiRef.current = { zoomIn: () => map.zoomIn({ duration: 250 }), zoomOut: () => map.zoomOut({ duration: 250 }), fit: () => map.fitBounds(bounds, { padding: padding(), ...VIEW, duration: 400 }),
-      flyTo: id => { const a = assetById(id); const b = (a.line || [a.at, a.at]).reduce((x, p) => x.extend(ll(p)), new maplibregl.LngLatBounds(ll(a.line ? a.line[0] : a.at), ll(a.line ? a.line[0] : a.at))); map.fitBounds(b, { padding: padding(), maxZoom: 15.5, ...VIEW, duration: 500 }); } };
+      flyTo: id => { const a = assetById(id); const b = (a.line || [a.at, a.at]).reduce((x, p) => x.extend(ll(p)), new maplibregl.LngLatBounds(ll(a.line ? a.line[0] : a.at), ll(a.line ? a.line[0] : a.at))); map.fitBounds(b, { padding: padding(), maxZoom: 15.5, ...VIEW, duration: 500 }); },
+      // where an asset is on screen (px from the map's top-left): used by box selection in Build › Input
+      screenPos: id => { const a = assetById(id); const p = map.project(ll(a.line ? a.line[Math.floor(a.line.length / 2)] : a.at)); return { x: p.x, y: p.y }; } };
     const ro = new ResizeObserver(() => map.resize()); ro.observe(el.current);
     return () => { clearInterval(pulse); ro.disconnect(); map.remove(); };
   }, []);
