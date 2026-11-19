@@ -271,3 +271,6 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .rf-needs { all: unset; cursor: pointer; display: inline-flex; border-radius: var(--radius-radius-100); }
 .rf-needs:hover { background: var(--background-elevation-1-secondary); }
 .rf-note { padding-left: var(--space-300); border-left: var(--border-widths-border-200) solid var(--border-medium); }
+/* J21 Plan › Approve: gate accordions (Figma 84:108440) */
+.pa-gate { all: unset; display: flex; align-items: center; gap: var(--space-200); min-height: var(--size-32); padding: 0 var(--space-300); border-radius: var(--radius-radius-100); background: var(--background-elevation-2-secondary); cursor: pointer; }
+.pa-gate:disabled { cursor: default; opacity: var(--proto-dim); }

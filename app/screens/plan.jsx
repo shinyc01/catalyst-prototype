@@ -407,7 +407,7 @@ function RunProgress({ run, onClose }) {
 /* ============================================================ Plan home */
 // Where the 2028 Plan cycle is: time to plan → planning (Setup) → optimizing → optimized → final plan chosen (Ready v1) → in approval
 function planPhase({ stage, run, done, final }) {
-  if (stage === 'approval') return 'approval';
+  if (['approval', 'approved', 'scheduled', 'published'].includes(stage)) return stage;
   if (final) return 'final';
   if (done) return 'optimized';
   if (run) return 'optimizing';
@@ -419,14 +419,17 @@ const PHASE = {                                                     // [Figma] P
   optimizing: { tile: 'Optimizing', button: 'Compare results' },
   optimized: { tile: 'Optimized', button: 'Compare results' },
   final: { tile: 'Ready v1', button: 'Send for approval' },
-  approval: { tile: 'In approval', button: 'In approval' },
+  approval: { tile: 'In approval', button: 'View approval' },          // J21: Approve workspace
+  approved: { tile: 'Ready v1', button: 'Publish' },
+  scheduled: { tile: 'Ready v1', button: 'Re-schedule' },
+  published: { tile: 'Published', button: 'View approval' },
 };
 function planConfidenceCounts(saved) {
   const issues = planIssues({}, {}), done = id => { const st = saved[id] || {}; return !!(st.applied || st.answer || st.file || st.viewed); };
   const q = issues.filter(i => i.kind === 'question'), w = issues.filter(i => i.kind === 'warning');
   return { q: [q.filter(i => done(i.id)).length, q.length], w: [w.filter(i => done(i.id)).length, w.length] };
 }
-function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, onCompare, onApproval, showRun, setShowRun }) {
+function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, onCompare, onApproval, onApprove, showRun, setShowRun }) {
   const phase = planPhase({ stage, run, done, final }), ph = PHASE[phase];
   const cc = planConfidenceCounts(saved);
   const frac = ([a, b]) => `${a}/${b} (${Math.round(a / b * 100)}%)`;
@@ -459,8 +462,8 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
         </PSec>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <span className="t-heading-h2">{PLAN_CYCLE} cycle</span>
-          <Button type="primary" size="s" disabled={phase === 'approval'} aria-label={ph.button}
-            onClick={phase === 'time' ? onStart : phase === 'setup' ? onSetup : phase === 'final' ? onApproval : onCompare}>{ph.button}</Button>
+          <Button type="primary" size="s" aria-label={ph.button}
+            onClick={phase === 'time' ? onStart : phase === 'setup' ? onSetup : phase === 'final' ? onApproval : ['approval', 'approved', 'scheduled', 'published'].includes(phase) ? onApprove : onCompare}>{ph.button}</Button>
         </div>
         <StatCardsRow cards={[
           { title: done ? `Total value (${finalS ? 'final plan' : 'Optimized'})` : 'Total value (requested)', value: fmtCompact(scen.totalValue) },
@@ -481,7 +484,7 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
               <ReadinessStatus type={done ? 'done' : 'in-progress'} right={`${done ? 100 : Math.round(runProgress(run) * 100)}%`}>Scenarios optimized</ReadinessStatus>
               <ReadinessStatus type={final ? 'done' : 'in-progress'} right={finalS ? finalS.name : 'Not started'}>Final scenario selected</ReadinessStatus>
             </div>}
-            <ReadinessStatus type={phase === 'approval' ? 'active' : 'in-progress'} right={phase === 'approval' ? 'In approval' : phase === 'final' ? 'Ready to send' : 'Queued'}>Approve</ReadinessStatus>
+            <ReadinessStatus type={['approved', 'scheduled', 'published'].includes(phase) ? 'done' : phase === 'approval' ? 'active' : 'in-progress'} right={{ approval: 'In approval', approved: 'All gates passed', scheduled: 'Scheduled', published: 'Published', final: 'Ready to send' }[phase] || 'Queued'}>Approve</ReadinessStatus>
           </div>
         </PSec>
         <div className="ifs-grid is-halves">

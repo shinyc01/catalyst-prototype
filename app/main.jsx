@@ -17,7 +17,8 @@ function initialFromHash(h) {
   if (name === 'study-idea-done') { s.lenses = withEv(INITIAL_LENSES); s.chat = replay('idea', IDEA_ANSWERS, s.lenses); }
   if (name === 'plan') s.screen = 'plan';
   if (name === 'plan-compare') s.screen = 'plan-compare';
-  if (name.startsWith('plan-') && name !== 'plan-compare') { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
+  if (name === 'plan-approve') s.screen = 'plan-approve';
+  if (name.startsWith('plan-') && name !== 'plan-compare' && name !== 'plan-approve') { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
   if (name === 'build') { s.lenses = withEv(INITIAL_LENSES); s.screen = 'build'; s.idea = { answers: IDEA_ANSWERS }; }
   if (name === 'build-library') s.screen = 'build-library';
   if (name === 'build-new') s.screen = 'build-new';
@@ -48,7 +49,8 @@ function App() {
   const [planSetup, setPlanSetup] = usePersisted('plan.setup', {});
   const [run, setRun] = usePersisted('plan.run', null);                    // { startedAt, scenarios, done }
   const [sentAt, setSentAt] = usePersisted('plan.sentAt', {});
-  const [planStage, setPlanStage] = usePersisted('plan.stage', 'time');   // time → setup → (run) → approval
+  const [planStage, setPlanStage] = usePersisted('plan.stage', 'time');
+  const [planGates, setPlanGates] = usePersisted('plan.gates', paInitialGates());   // J21 approval gates   // time → setup → (run) → approval
   const [finalPlan, setFinalPlan] = usePersisted('plan.final', null);     // scenario id chosen on Compare
   useEffect(() => { if (screen === 'plan-setup' && planStage === 'time') setPlanStage('setup'); }, [screen]);
   const [notes, setNotes] = usePersisted('notifications', []);
@@ -188,8 +190,9 @@ function App() {
   const sendForApproval = () => {
     setPlanStage('approval');
     notify({ title: `${PLAN_CYCLE} sent for approval`, details: `${PLAN_SCENARIOS.find(x => x.id === finalPlan)?.name} · ${PLAN_PORTFOLIO.name}. Approvers are notified.`, meta: `${PLAN_CYCLE} · Plan`, link: 'plan' });
-    toast({ title: 'Sent for approval', description: 'Approve is the next flow — the approvers are notified' });
-    go('plan');
+    setPlanGates(paInitialGates());
+    toast({ title: 'Sent for approval', description: 'The Executive gate opens first' });
+    go('plan-approve');
   };
   const go = s => { setScreen(s); setDetails(false); setAsset(null); if (s !== 'study') setChat(null); };
   const onStage = v => {
@@ -246,9 +249,14 @@ function App() {
           constraints: SETUP_SCENARIOS.reduce((t, s) => t + scenConstraints(planSetup, s).length, 0) }); setShowRun(true); go('plan'); }} />}
       {screen === 'plan' && <PlanHome navBar={navBar} run={running ? run : null} done={!!(run && run.done)} showRun={showRun} setShowRun={setShowRun}
         stage={planStage} final={finalPlan} saved={planSaved}
-        onStart={() => { setPlanStage('setup'); setTab('readiness'); go('plan-setup'); }}
+        onStart={() => { setPlanStage('setup'); setTab('readiness'); go('plan-setup'); }} onApprove={() => go('plan-approve')}
         onSetup={() => { setTab('readiness'); go('plan-setup'); }} onCompare={() => go('plan-compare')}
         onApproval={() => sendForApproval()} />}
+      {screen === 'plan-approve' && <PlanApprove navBar={navBar} final={finalPlan} gates={planGates} setGates={setPlanGates} stage={planStage} onBack={() => go('plan-compare')}
+        onPublish={(st, when) => { setPlanStage(st);
+          if (st === 'approved') { notify({ title: `${PLAN_CYCLE} approved at every gate`, details: 'Publish it, or schedule it for the cycle start.', meta: `${PLAN_CYCLE} · Plan`, link: 'plan' }); toast({ title: 'All gates approved', description: 'Publish is ready' }); }
+          if (st === 'scheduled') toast({ title: 'Publication scheduled', description: `${PLAN_CYCLE} publishes on ${when}` });
+          if (st === 'published') { notify({ title: `${PLAN_CYCLE} published`, details: 'It is the budget baseline.', meta: `${PLAN_CYCLE} · Plan`, link: 'plan' }); toast({ title: `${PLAN_CYCLE} published` }); } }} />}
       {screen === 'plan-compare' && <PlanCompare navBar={navBar} run={running ? run : null} done={!!(run && run.done)} final={finalPlan} stage={planStage}
         onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
         onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
