@@ -244,7 +244,7 @@ function App() {
         onDismiss={() => { const prev = ideas[IDEA_INV.id]; setIdeas(m => ({ ...m, [IDEA_INV.id]: { ...(prev || {}), status: 'dismissed', modified: STORY_DAY } })); go('build-library');
           toast({ title: 'The idea has been stopped.', duration: 5000, primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setIdeas(m => ({ ...m, [IDEA_INV.id]: prev || { status: 'shaping', modified: STORY_DAY } })) } }); }} />}
       {screen === 'value' && <Value navBar={navBar} page={valuePage} setPage={setValuePage} draft={valueDraft} setDraft={setValueDraft} recsDone={valueRecs} setRecsDone={setValueRecs} persona={persona} />}
-      {screen === 'build-refine' && <Refine navBar={navBar} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
+      {screen === 'build-refine' && <Refine persona={persona} navBar={navBar} page={refinePage} setPage={setRefinePage} refine={refine} setRefine={setRefine} onBack={() => go('build-library')}
         onSendForApproval={() => { setRefine(r => ({ ...r, status: 'approval' })); notify({ title: `${RF_INV.name} sent for approval`, details: 'Approvers are notified. Approve is the next stage.', meta: `${RF_INV.code} · Build`, link: 'build-refine' });
           toast({ title: 'Sent for approval', description: 'Approve isn’t built yet — the approvers are notified' }); }} />}
       {screen === 'build-library' && <BuildLibrary navBar={navBar} ideas={ideas} setIdeas={setIdeas} onNew={() => setChooser(true)}

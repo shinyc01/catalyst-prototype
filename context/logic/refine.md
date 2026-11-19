@@ -39,3 +39,8 @@ Code: `shared/refine-model.js`, `app/screens/refine.jsx`. One investment is refi
 - Cards: investment details (real), affected area (map), yearly forecast (real spend), investment value by measure (real).
 - **Generate widget with Cooper** (prompt chip or Widgets): adds "Annualized outcome risk by risk type" (real residual risk by measure) and the snackbar "Widget shared with your team".
 - Attachments: the 16 `[Added]` documents in Cooper's context; Upload adds one.
+
+## J10 (estimator)
+- Comment #56 (Hollis Grant → Noah Lindgren, action required): Cooper filled 3 of the 5 cost lines of Median Replacement from the unit cost model; Procurement & long-lead units and Commissioning & closeout need a person `[Added]`.
+- On that alternative's Cost & Schedule those two stages show **Needs estimate**; the estimator confirms each (→ "Estimator reviewed"), after optionally adjusting it by %. He then resolves #56.
+- New persona: Noah Lindgren, Estimator / Cost Modeller `[Added]` (Command shows the Investment Owner's content for him). The finance step in the approval chain (journey step 6, inferred) and the parametric estimation module (step 7, not designed) are not built.

@@ -9,6 +9,7 @@ const PERSONAS = {
   owner:     { key: 'owner',     role: 'Investment Owner', id: 'hgrant',     name: 'Hollis Grant',   first: 'Hollis',  initials: 'HG', title: 'Investment Owner, Electrical Distribution', why: 'owns 17 Whistler investments, incl. the Pad-Mount program' },
   asset:     { key: 'asset',     role: 'Asset Manager',    id: 'mdelgado',   name: 'Mara Delgado', first: 'Mara', initials: 'MD', title: 'Asset Manager, Alpine Meadows & Nesters',  why: 'manager on 27 Whistler investments, incl. Alpine Meadows Station, Pine Ridge and Nester' },
   portfolio: { key: 'portfolio', role: 'Portfolio Owner',  id: 'ofitch', name: 'Owen Fitch',  first: 'Owen',    initials: 'OF', title: 'Portfolio Owner, Electrical',              why: 'Whistler administrator; owns the Electrical portfolio [Added role]' },
+  estimator: { key: 'estimator', role: 'Estimator / Cost Modeller', id: 'nlindgren', name: 'Noah Lindgren', first: 'Noah', initials: 'NL', title: 'Estimator / Cost Modeller, Capital Finance', why: '[Added] J10: the estimator is served through collaboration requests (Command v2 §3); no Figma persona' },
   consultant: { key: 'consultant', role: 'CX Consultant', id: 'icalder', name: 'Ines Calder', first: 'Ines', initials: 'IC', title: 'CX Consultant, value frameworks', why: '[Added] J12–J14: no Figma persona owns Value; the journeys name a CX Consultant' },
 };
 // The Explore → Build flow is the Investment Owner's journey

@@ -53,4 +53,6 @@ Answer these with the product designer, then move each answer into the right con
 49. **J13: which Library state is "Scheduled"?** Figma has "Ready to publish" in the library and "Scheduled" on the approval page. The prototype shows Scheduled with the date.
 50. **J14: does editing a model in an Active framework make the framework "Revisions Required", or only the model?** Not designed; the prototype makes a model draft only.
 51. **Not built in Value:** Duplicate Framework, Built-by-Cooper walkthrough cursor, Create Value Framework / Value Model choosers, the formula builder and questionnaire editor, comments and collaboration on the map, version history, Strategic Alignment tab, Compare in Capital Flow.
+52. **J10: is the Estimator a Catalyst persona?** No Figma file names one; the prototype adds Noah Lindgren as Estimator / Cost Modeller and routes work to him through comments.
+53. **J10: how does Cooper mark a cost line it couldn't estimate?** Not designed; the prototype shows a "Needs estimate" status on the stage row.
 

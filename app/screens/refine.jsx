@@ -20,14 +20,16 @@ const RfTitle = ({ title, text, right }) => (
   </div>
 );
 
-function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval }) {
+function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval, persona = 'owner' }) {
+  const me = PERSONAS[persona] || PERSONAS.owner;
   const recId = refine.recommended, alts = RF_ALTS, rec = rfAlt(recId);
   const toPlan = id => refine.toPlan[id] !== false, compared = id => refine.compare[id] !== false;
   const c = IFS.useIssueReport({ issues: useMemo(() => refineIssues(), []), gates: RF_GATES });
   const [side, setSide] = useState('confidence');        // right panel: confidence | comments | null
   const [thread, setThread] = useState(null);           // open comment thread id
   const [cooper, setCooper] = useState(null);           // Cooper window: { kind: 'recs' | 'detail' | 'text', ... }
-  const threads = refine.threads;
+  // J10: the estimator sees the request addressed to him first
+  const threads = persona === 'estimator' ? [...refine.threads].sort((a, b) => (b.forEstimator ? 1 : 0) - (a.forEstimator ? 1 : 0)) : refine.threads;
   const openCount = threads.filter(t => !t.resolved).length;
   const altPage = page.startsWith('alt-') ? { id: +page.split('-')[1], tab: page.split('-')[2] } : null;
   const wide = altPage && altPage.tab === 'cost';
@@ -73,7 +75,7 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
         </div>
         {side && <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
           {side === 'comments' ? <RfCommentsPanel threads={threads} selectedId={thread} onOpen={t => setThread(t.id || t)} onResolve={t => resolveThread(t.id || t)}
-              onClose={() => setSide('confidence')} currentUser={{ name: PERSONAS.owner.name }} style={{ height: '100%' }} />
+              onClose={() => setSide('confidence')} currentUser={{ name: me.name }} style={{ height: '100%' }} />
             : <Panel title="System confidence" expanded={!wide && refine.panel !== false} onExpandedChange={v => setRefine(r => ({ ...r, panel: v }))} dot={c.dot || undefined}
                 onEvidence={() => toast({ title: 'Evidence chain' })} className="ifs-trc-panel" style={{ height: '100%' }}>
                 <ContentCard className="ifs-trc-card" title={<RfGates controller={c} label="Approval readiness" />}
@@ -85,7 +87,7 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
         </div>}
       </div>
       {thread && (() => { const t = threads.find(x => x.id === thread); return t && <div className="rf-callout">
-        <RfCommentCallout thread={t} currentUser={{ name: PERSONAS.owner.name, avatar: { initials: PERSONAS.owner.initials } }}
+        <RfCommentCallout thread={t} currentUser={{ name: me.name, avatar: { initials: me.initials } }}
           onCommentsChange={cm => setRefine(r => ({ ...r, threads: r.threads.map(x => x.id === t.id ? { ...x, comments: cm } : x) }))}
           onResolve={() => resolveThread(t.id)} onUnresolve={() => setRefine(r => ({ ...r, threads: r.threads.map(x => x.id === t.id ? { ...x, resolved: false } : x) }))}
           onClose={() => setThread(null)} cooperSuggestion={t.type === 'action' && !t.resolved ? { label: 'Shape with Cooper', onClick: () => shapeWithCooper(t) } : undefined} />
@@ -189,7 +191,8 @@ function RfAltDetails({ alt, recId, toPlan }) {
   </>;
 }
 
-/* ---------------------------------------------------------------- Alternative › Cost & Schedule (J08 step 5) */
+const rfThreadAlt = id => (RF_THREADS().find(t => t.id === id) || {}).altId;
+/* ---------------------------------------------------------------- Alternative › Cost & Schedule (J08 step 5, J10) */
 function RfCost({ alt, refine, setRefine }) {
   const [view, setView] = useState('table');
   const [sel, setSel] = useState(null);                 // { stage, year }
@@ -222,7 +225,11 @@ function RfCost({ alt, refine, setRefine }) {
         <NDS label="Cost & schedule grid (spreadsheet: not in DS)" className="rf-sheet" style={{ '--rf-years': years.length }}>
           {['Stage', 'Total cost', 'Days', 'Type', 'Start date', 'End date', ...years].map(h => <span key={h} className="rf-sheet__h t-label-m-medium">{h}</span>)}
           {plan.map(s => <React.Fragment key={s.id}>
-            <span className="t-label-m-medium">{s.name}</span><span className="t-numeric">{fmtMoney(s.total)}</span><span className="t-numeric">{s.days}</span><span>{s.type}</span>
+            <span className="row" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium">{s.name}</span>
+              {RF_ESTIMATE_STAGES.includes(s.id) && alt.id === rfThreadAlt('t56') && (refine.estimated || {})[s.id] ? <Badge size="s" color="white">Estimator reviewed</Badge>
+                : RF_ESTIMATE_STAGES.includes(s.id) && alt.id === rfThreadAlt('t56') ? <button className="rf-needs" onClick={() => { setRefine(r => ({ ...r, estimated: { ...(r.estimated || {}), [s.id]: true } })); toast({ title: `${s.name} estimate confirmed`, description: 'The line now carries the estimator’s basis' }); }}>
+                  <Indicator type="orange">Needs estimate</Indicator></button> : null}</span>
+            <span className="t-numeric">{fmtMoney(s.total)}</span><span className="t-numeric">{s.days}</span><span>{s.type}</span>
             <span>{shortDate(s.start)}</span><span>{shortDate(s.end)}</span>
             {years.map(y => <button key={y} className={`rf-cell t-numeric${sel && sel.stage === s.id && sel.year === y ? ' is-on' : ''}`} onClick={() => setSel({ stage: s.id, year: y })}>{s.byYear[y] ? fmtMoney(s.byYear[y]) : '—'}</button>)}
           </React.Fragment>)}
