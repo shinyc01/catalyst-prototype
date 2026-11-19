@@ -17,7 +17,9 @@
 | **Threshold year** | The first year in the horizon when an asset crosses its tolerance. | `[Assumed]` meaning, `[Figma]` label |
 | **At-risk assets** | Assets over their tolerance in the selected year (n of N). | `[Assumed]` meaning, `[Figma]` label |
 | **Study** | A saved analysis of an area or asset set with chosen lenses (e.g. "Alpine Meadows Study"). | `[Figma]` |
-| **Idea** | An investment proposal at its early "Shaping" stage in Build. It becomes an *investment* after review. | `[Figma]` |
+| **Idea** | A rough draft of an investment that Cooper proposes. The owner edits it in Shape, then sends it for review; stakeholders decide whether it is worth pursuing. Ideas live in the **Idea Pad**. | `[Confirmed]` |
+| **Investment** | What an idea becomes once every reviewer approves it: it moves to **Refine** (cost, schedule, value in detail) and to the **Investments** tab. The owner sends it for approval; once approved it goes to Plan for the next planning cycle. | `[Confirmed]` |
+| **Review / Approval** | *Review* is the idea gate (is it worth pursuing?); *approval* is the investment gate (is it ready for the planning cycle?). Both use the stakeholders set in settings, e.g. the owner's manager. | `[Confirmed]` |
 | **Alternative** | One way to address the need (e.g. Targeted Hardening, Full Replacement, Reactive Repair). One is recommended. | `[Figma]` |
 | **BCR** | Benefit–cost ratio of an alternative (value ÷ cost). | `[Figma]` |
 | **Non-DS** | Prototype parts not built from the IFS design system kit; flagged in the UI. | Convention |

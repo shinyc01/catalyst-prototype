@@ -41,7 +41,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
   const rows = (review && review.rows) || REVIEWERS();
   const reviewer = main && persona === 'estimator' && status === 'review';
   const myRow = rows.find(r => r.id === 'NL') || {};
-  const ownerChain = main && !reviewer && (['review', 'deferred', 'rejected', 'refining'].includes(status) || (status === 'shaping' && review && review.revisions && !review.reopened));
+  const ownerChain = !reviewer && (['review', 'deferred', 'rejected', 'refining'].includes(status) || (status === 'shaping' && review && review.revisions && !review.reopened));
   const [decide, setDecide] = useState(null);       // 'proceed' | 'request' | 'park' | 'stop' while its dialog is open
   const [decideNote, setDecideNote] = useState('');
   const s = study(lenses, END);

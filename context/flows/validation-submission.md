@@ -44,5 +44,5 @@ Tour: `app/flows/013-validation-submission.js` · Personas: Investment Owner (Ho
     Stepper label inconsistency: ‘Decide’ vs ‘Approve’.
     How multi-year program bundles enter a single planning cycle is undefined (User Flow Plan board note).
     Validation questions
-    Is hand-off to Plan automatic on final approval (Cooper ‘Sends investment off to Plan’) or an explicit owner action?  → Answered 2026-11-19 (Shiny): automatic. Created = in a portfolio; approved = ready for the planning cycle, listed in Plan under New to Scenario.
+    Is hand-off to Plan automatic on final approval (Cooper ‘Sends investment off to Plan’) or an explicit owner action?  → Answered 2026-11-19 (Shiny): automatic. Lifecycle: idea (Idea Pad, Shape) → review → investment (Investments tab, Refine) → approval → Plan. Created = in a portfolio; approved = ready for the planning cycle, listed in Plan under New to Scenario.
     Does ‘submitted (to Plan)’ assign a planning group (Under Consideration / Required) per Study_Elimination §5.1?

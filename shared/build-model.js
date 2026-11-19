@@ -24,10 +24,13 @@ const IDEA_SEEDS = WHISTLER_INVESTMENTS.filter(i => i.stage === 'Initial' && i.i
 const NEW_IDEA = { id: CLUSTER.ideaInvestmentId, code: invById(CLUSTER.ideaInvestmentId).code, name: invById(CLUSTER.ideaInvestmentId).name,
   type: invById(CLUSTER.ideaInvestmentId).type || 'Program', horizon: ideaHorizon(CLUSTER.ideaInvestmentId) };
 // ideas = { [id]: { status, modified, created } } kept per browser; seeds + created ideas, minus dismissed ones
-function ideaPadRows(ideas) {
-  const rows = IDEA_SEEDS.map(r => ({ ...r, ...(ideas[r.id] || {}) }));
-  if (ideas[NEW_IDEA.id]) rows.unshift({ ...NEW_IDEA, collab: null, reviewers: null, ...ideas[NEW_IDEA.id], mine: true });
-  return rows.filter(r => r.status !== 'dismissed');
+function ideaPadRows(ideas, reviews = {}) {
+  // reviews = { [id]: approval-chain rows } of the reviews run here: an idea under review shows how many reviewers have approved
+  const done = rows => ({ done: rows.filter(r => r.id !== 'HG' && r.status === 'success').length, total: rows.filter(r => r.id !== 'HG').length });
+  const rows = IDEA_SEEDS.map(r => ({ ...r, ...(ideas[r.id] || {}) })).map(r => r.status === 'review' && reviews[r.id] ? { ...r, reviewers: done(reviews[r.id]) } : r);
+  if (ideas[NEW_IDEA.id]) rows.unshift({ ...NEW_IDEA, collab: null, ...ideas[NEW_IDEA.id], reviewers: ideas[NEW_IDEA.id].status === 'review' && reviews[NEW_IDEA.id] ? done(reviews[NEW_IDEA.id]) : null, mine: true });
+  // an idea that passed review is an investment now: it leaves the Idea Pad for the Investments tab (lifecycle below)
+  return rows.filter(r => !['dismissed', ...IDEA_PROMOTED].includes(r.status));
 }
 
 // ---- Input step: Cooper's context. [Assumed] rules: each kind of input adds context; 100% = READY (a threshold, not a limit)
@@ -156,12 +159,39 @@ const ALT_DESC_MORE = {
 };
 const altDesc = name => (typeof ALT_DESC !== 'undefined' && ALT_DESC[name]) || ALT_DESC_MORE[name] || '—';
 
-// ---- Which Build records open (Shiny, 2026-11-19): the first three ideas on the Idea Pad (newest first, its default sort) and the first three
-// investments (highest cost first, its default sort), plus the pad-mount program. The rest still show "not part of this flow".
-const BUILD_OPEN_IDEAS = [...IDEA_SEEDS].sort((a, b) => String(b.modified).localeCompare(String(a.modified))).slice(0, 3).map(r => r.id);
-const BUILD_OPEN_INVESTMENTS = [...WHISTLER_INVESTMENTS].sort((a, b) => b.totalSpend - a.totalSpend).slice(0, 3).map(i => i.id);
+// ---- The investment lifecycle [Confirmed] (Shiny, 2026-11-19), and where each record shows in Build:
+//   IDEA (Idea Pad) — Cooper drafts it; the owner edits it in Shape (New / Shaping), sends it for review (Under review n/m): stakeholders decide
+//     whether it is worth pursuing (Proceed, or Request info / Park / Stop → Shaping / Deferred / Rejected).
+//   INVESTMENT (Investments tab) — once every reviewer approves, the idea becomes an investment in Refine (Refining): cost, schedule, value in detail.
+//     The owner sends it for approval (Under review n/m, the final approval); once approved it goes to Plan (Approved) for the next planning cycle.
+// Real records: stage Initial = an idea; Long / Short Term Planning = an investment. Their Build statuses are [Added] (see INV_SEEDS);
+// Executing investments are past Plan (Results) and are not listed in Build [Assumed].
+const IDEA_PROMOTED = ['refining', 'approval', 'approved'];       // an idea row with one of these statuses has become an investment
+const INV_STAGES = ['Long Term Planning', 'Short Term Planning'];
+// [Added] statuses in a fixed order (Figma Investments tab: Refining, Under review 0/4): Short Term Planning = approved and in Plan;
+// Long Term Planning = refining, every fourth one under final approval
+const INV_SEEDS = WHISTLER_INVESTMENTS.filter(i => INV_STAGES.includes(i.stage))
+  .sort((a, b) => String(b.createdDate).localeCompare(String(a.createdDate)) || b.id - a.id)
+  .map((i, k) => ({ id: i.id, code: i.code, name: i.name, type: i.type || 'Project', horizon: ideaHorizon(i.id), modified: i.createdDate,
+    status: i.stage === 'Short Term Planning' ? 'approved' : k % 4 === 1 ? 'approval' : 'refining',
+    collab: { 0: { by: 'LF', label: 'Provide asset condition', text: 'Can you confirm the last inspection dates before I cost this?' }, 3: { by: 'NL', label: 'View reply', text: 'Added the 2025 spend actuals you asked for.' } }[k] || null }));
+const BUILD_INV_STATUS = { refining: { type: 'purple', label: 'Refining' }, approval: { type: 'orange', label: 'Under review' }, approved: { type: 'green', label: 'Approved' } };
+// Investments tab rows: the real investments (their Refine draft, once opened, decides the status) + every idea that passed review here
+function investmentRows(ideas, refineMain, refineOther = {}) {
+  const st = (id, seed) => { const r = id === CLUSTER.ideaInvestmentId ? refineMain : refineOther[id]; return (r && r.status) || seed; };
+  const count = (id, status) => { const r = id === CLUSTER.ideaInvestmentId ? refineMain : refineOther[id]; return status === 'approval' ? (r && r.approvers ? reviewCount(r.approvers) : `0/${FINAL_APPROVERS().length - 1}`) : null; };
+  const promoted = Object.entries(ideas || {}).filter(([, v]) => IDEA_PROMOTED.includes(v.status)).map(([id]) => +id).map(id => {
+    const i = invById(id), seed = IDEA_SEEDS.find(r => r.id === id) || {};
+    return { id, code: i.code, name: i.name, type: i.type || seed.type || 'Project', horizon: ideaHorizon(id), modified: ideas[id].modified || i.createdDate, collab: null, status: 'refining', mine: id === CLUSTER.ideaInvestmentId };
+  });
+  return [...promoted, ...INV_SEEDS].map(r => { const status = st(r.id, r.status); return { ...r, status, approvals: count(r.id, status) }; });
+}
+// ---- Which Build records open (Shiny, 2026-11-19): the first three ideas on the Idea Pad and the first three investments, in each tab's
+// default order (newest first), plus the pad-mount program and any idea that passed review here. The rest say they don't open.
+const BUILD_OPEN_IDEAS = [...IDEA_SEEDS].sort((a, b) => String(b.modified).localeCompare(String(a.modified)) || b.id - a.id).slice(0, 3).map(r => r.id);   // same day: higher id first (the table's tie-break)
+const BUILD_OPEN_INVESTMENTS = INV_SEEDS.slice(0, 3).map(r => r.id);
 const canOpenIdea = id => id === CLUSTER.ideaInvestmentId || BUILD_OPEN_IDEAS.includes(id);
-const canOpenInvestment = id => id === CLUSTER.ideaInvestmentId || BUILD_OPEN_INVESTMENTS.includes(id);
+const canOpenInvestment = (id, ideas = {}) => id === CLUSTER.ideaInvestmentId || BUILD_OPEN_INVESTMENTS.includes(id) || IDEA_PROMOTED.includes((ideas[id] || {}).status);
 // Shape's System confidence for any other idea [Assumed]: the cost range of its alternatives, and a goal without a measure
 function shapeIssuesFor(invId) {
   if (invId === CLUSTER.ideaInvestmentId) return shapeIssues();
