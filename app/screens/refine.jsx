@@ -20,11 +20,12 @@ const RfTitle = ({ title, text, right }) => (
   </div>
 );
 
-function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval, onOpenPlan, persona = 'owner' }) {
+function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval, onOpenPlan, persona = 'owner', invId }) {
   const me = PERSONAS[persona] || PERSONAS.owner;
-  const recId = refine.recommended, alts = RF_ALTS, rec = rfAlt(recId);
+  const R = rfContext(invId);                            // this investment's record, alternatives and content (shared/refine-model.js)
+  const recId = refine.recommended, alts = R.alts, rec = R.alt(recId) || alts[0];
   const toPlan = id => refine.toPlan[id] !== false, compared = id => refine.compare[id] !== false;
-  const c = IFS.useIssueReport({ issues: useMemo(() => refineIssues(), []), gates: RF_GATES });
+  const c = IFS.useIssueReport({ issues: useMemo(() => R.issues(), [invId]), gates: RF_GATES });
   // J11 final approval: after Send for approval the right panel shows the approval chain. [Assumed] two approvers answer within seconds;
   // Luca Ferri stays awaiting until the owner pushes a reminder
   useEffect(() => {
@@ -55,15 +56,15 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
   const resolveThread = (id, reply) => setRefine(r => ({ ...r, threads: r.threads.map(t => t.id === id ? { ...t, resolved: true, unread: false,
     comments: reply ? [...t.comments, { id: `r${Date.now()}`, name: 'Cooper', avatar: { type: 'cooper' }, time: 'Just now', text: reply }] : t.comments } : t) }));
   const shapeWithCooper = t => { setThread(null); setCooper({ kind: 'recs', thread: t }); };
-  const header = <PageHeader title={RF_INV.name} id={RF_INV.code} onBack={onBack}
-    status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={refine.status === 'approval' ? 'orange' : refine.status === 'approved' ? 'green' : 'purple'}>{refine.status === 'approval' ? 'Under review' : refine.status === 'approved' ? 'Approved' : 'Refining'}</Indicator>{refine.status === 'approval' && refine.approvers && <IFS.Counter>{reviewCount(refine.approvers)}</IFS.Counter>}</span>}
-    center={<Stepper current={['approval', 'approved'].includes(refine.status) ? 3 : 2} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
+  const header = <PageHeader title={R.inv.name} id={R.inv.code} onBack={onBack}
+    status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={refine.status === 'approval' ? 'orange' : refine.status === 'approved' ? 'green' : refine.status === 'executing' ? 'blue' : 'purple'}>{refine.status === 'approval' ? 'Under review' : refine.status === 'approved' ? 'Approved' : refine.status === 'executing' ? 'Executing' : 'Refining'}</Indicator>{refine.status === 'approval' && refine.approvers && <IFS.Counter>{reviewCount(refine.approvers)}</IFS.Counter>}</span>}
+    center={<Stepper current={refine.status === 'executing' ? 4 : ['approval', 'approved'].includes(refine.status) ? 3 : 2} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
     actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <span className="rf-comment-btn"><IconButton icon="system-comment" type={side === 'comments' ? 'secondary' : 'tertiary'} size="s" label="Comments" onClick={() => setSide(s => s === 'comments' ? 'confidence' : 'comments')} />
         {openCount > 0 && <span className="ifs-navbar__dot" aria-hidden="true" />}</span>
       <Button type="secondary" size="s" onClick={() => toast({ title: 'Dismiss is on Shape', description: 'An investment in Refine is withdrawn from Approve' })}>Dismiss</Button>
-      <Button type="primary" size="s" disabled={['approval', 'approved'].includes(refine.status)} onClick={onSendForApproval}>{refine.status === 'approved' ? 'Approved' : refine.status === 'approval' ? 'Sent for approval' : 'Send for approval'}</Button>
+      <Button type="primary" size="s" disabled={['approval', 'approved', 'executing'].includes(refine.status)} onClick={onSendForApproval}>{refine.status === 'approved' ? 'Approved' : refine.status === 'approval' ? 'Sent for approval' : 'Send for approval'}</Button>
     </div>} />;
   const prompts = page === 'compare' || altPage?.tab === 'details' ? ['Explain gaps in confidence', 'Why this alternative?'] : wide ? ['Increase budget by 15%', 'Create new phase']
     : page === 'value' || altPage?.tab === 'value' ? ['Explain these value models', 'Explain the baseline value'] : ['Generate Annualized outcome risk by risk type chart', 'Compare to best practice'];
@@ -71,20 +72,21 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
     <AppShell navBar={navBar} header={header}
       sideNav={<RfSideNav title="Investment" items={nav} value={page} onSelect={id => !/^alt-\d+$/.test(id) && setPage(id)} defaultCollapsed={wide} />}
       bottom={<BottomSheet type="value" documents={{ label: `${refine.docs.length} Documents`, onClick: () => setRefine(r => ({ ...r, docsOpen: !r.docsOpen })) }}
-        onUpload={() => { setRefine(r => ({ ...r, docs: [...r.docs, { id: `d${r.docs.length}`, name: 'Alpine Meadows outage calendar 2028.xlsx', date: 'Nov 17, 2026' }] })); toast({ title: 'Document added', description: 'Cooper’s context now has one more source' }); }}
+        onUpload={() => { setRefine(r => ({ ...r, docs: [...r.docs, { id: `d${r.docs.length}`, name: R.upload, date: 'Nov 17, 2026' }] })); toast({ title: 'Document added', description: 'Cooper’s context now has one more source' }); }}
         prompts={prompts} onPrompt={p => { if (/^Generate Annualized/.test(p)) { setRefine(x => ({ ...x, widgets: [...new Set([...(x.widgets || []), 'risk-type'])], shared: true })); setPage('overview'); toast({ title: 'Cooper generated a widget', description: 'Annualized outcome risk by risk type' }); }
           else toast({ title: `Cooper: ${p}` }); }} />}>
       <div className="page-row">
         <div className="page">
-          {refine.status === 'approved' && <IFS.Alert type="success" title="Approved at every gate" action="Open in Plan" onAction={onOpenPlan}>{`It stays in the ${RF_INV.portfolio} portfolio and is now ready for the next planning cycle: Plan lists it under New to Scenario.`}</IFS.Alert>}
-          {page === 'compare' && <RfCompare refine={refine} setRefine={setRefine} toPlan={toPlan} compared={compared} onOpen={id => setPage(`alt-${id}-details`)}
-            onEvaluate={() => setCooper({ kind: 'text', text: `I compared the ${alts.length} alternatives on cost, risk reduced and value. ${rec.name} reduces ${rfPct(rec.reduced)} of the scored risk for ${fmtMoney(rec.cost)} (BCR ${rec.bcr ?? '—'}). ${[...alts].sort((a, b) => b.reduced - a.reduced)[0].name} reduces the most risk but costs ${fmtMoney([...alts].sort((a, b) => b.reduced - a.reduced)[0].cost)}. I’d keep ${rec.name} as recommended.` })} />}
-          {altPage && altPage.tab === 'details' && <RfAltDetails alt={rfAlt(altPage.id)} recId={recId} toPlan={toPlan(altPage.id)} />}
-          {altPage && altPage.tab === 'cost' && <RfCost alt={rfAlt(altPage.id)} refine={refine} setRefine={setRefine} />}
-          {altPage && altPage.tab === 'value' && <RfValue refine={refine} setRefine={setRefine} alt={rfAlt(altPage.id)} />}
-          {page === 'details' && <RfInvDetails onCooper={t => setCooper({ kind: 'text', text: t })} />}
-          {page === 'value' && <RfValue refine={refine} setRefine={setRefine} />}
-          {page === 'overview' && <RfOverview refine={refine} setRefine={setRefine} />}
+          {refine.status === 'approved' && <IFS.Alert type="success" title="Approved at every gate" action="Open in Plan" onAction={onOpenPlan}>{`It stays in the ${R.inv.portfolio} portfolio and is now ready for the next planning cycle: Plan lists it under New to Scenario.`}</IFS.Alert>}
+          {page === 'compare' && <RfCompare R={R} refine={refine} setRefine={setRefine} toPlan={toPlan} compared={compared} onOpen={id => setPage(`alt-${id}-details`)}
+            onEvaluate={() => setCooper({ kind: 'text', text: R.hasRisk ? `I compared the ${alts.length} alternatives on cost, risk reduced and value. ${rec.name} reduces ${rfPct(rec.reduced)} of the scored risk for ${fmtMoney(rec.cost)} (BCR ${rec.bcr ?? '—'}). ${[...alts].sort((a, b) => b.reduced - a.reduced)[0].name} reduces the most risk but costs ${fmtMoney([...alts].sort((a, b) => b.reduced - a.reduced)[0].cost)}. I’d keep ${rec.name} as recommended.`
+              : `I compared the ${alts.length} alternatives on cost and value. ${rec.name} creates ${fmtValue(rec.value)} of value for ${fmtMoney(rec.cost)} (BCR ${rec.bcr ?? '—'}). ${[...alts].sort((a, b) => (b.bcr || 0) - (a.bcr || 0))[0].name} has the best return per dollar. This investment has no risk profile in the demo data, so risk isn’t compared.` })} />}
+          {altPage && altPage.tab === 'details' && <RfAltDetails R={R} alt={R.alt(altPage.id)} recId={recId} toPlan={toPlan(altPage.id)} />}
+          {altPage && altPage.tab === 'cost' && <RfCost R={R} alt={R.alt(altPage.id)} refine={refine} setRefine={setRefine} />}
+          {altPage && altPage.tab === 'value' && <RfValue R={R} refine={refine} setRefine={setRefine} alt={R.alt(altPage.id)} />}
+          {page === 'details' && <RfInvDetails R={R} onCooper={t => setCooper({ kind: 'text', text: t })} />}
+          {page === 'value' && <RfValue R={R} refine={refine} setRefine={setRefine} />}
+          {page === 'overview' && <RfOverview R={R} refine={refine} setRefine={setRefine} />}
         </div>
         {side && <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
           {side !== 'comments' && refine.approvers && ['approval', 'approved'].includes(refine.status) ? <IFS.ApprovalChainPanel mode="sidebar" title="Approval chain" style={{ height: '100%', width: 'var(--region-panel-l)' }}>
@@ -111,14 +113,14 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
       </div>; })()}
       {cooper && <div className="rf-cooper">
         {cooper.kind === 'text' && <AgentWindow text={cooper.text} onClose={() => setCooper(null)} onAsk={() => toast({ title: 'Cooper chat isn’t part of this step' })} />}
-        {cooper.kind === 'recs' && (() => { const alt = rfAlt(cooper.thread.altId), r = rfShapeRecs(alt); return (
+        {cooper.kind === 'recs' && (() => { const alt = R.alt(cooper.thread.altId), r = rfShapeRecs(alt); return (
           <AgentWindow text={`After analyzing comment #${cooper.thread.number}, I’ve generated a set of recommended actions to address this issue.`} onClose={() => setCooper(null)} onAsk={() => {}}>
             <RfRecGroup title="Recommended" count={1}><RfRecItem title={r.recommended.title} description={r.recommended.description} impact={r.recommended.impact} defaultExpanded
               action={{ label: 'See details', onClick: () => setCooper({ ...cooper, kind: 'detail' }) }} /></RfRecGroup>
             <RfRecGroup title="Other" count={r.other.length}>{r.other.map(o => <RfRecItem key={o.id} title={o.title} description={o.description}
               action={{ label: 'See details', onClick: () => toast({ title: o.title, description: 'Only the recommended action is scripted' }) }} />)}</RfRecGroup>
           </AgentWindow>); })()}
-        {cooper.kind === 'detail' && (() => { const alt = rfAlt(cooper.thread.altId), r = rfShapeRecs(alt).recommended; return (
+        {cooper.kind === 'detail' && (() => { const alt = R.alt(cooper.thread.altId), r = rfShapeRecs(alt).recommended; return (
           <AgentWindow onClose={() => setCooper(null)} onAsk={() => {}}>
             <RfRecDetail title={r.title} description={r.description} impact={r.impact} onBack={() => setCooper({ ...cooper, kind: 'recs' })} onDecline={() => setCooper(null)}
               onApply={() => { resolveThread(cooper.thread.id, `${alt.name} has been refined. Procurement starts a quarter earlier, so the replacement stage fits the outage windows. Cost and scope are unchanged.`);
@@ -133,13 +135,13 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
 }
 
 /* ---------------------------------------------------------------- Alternative comparison (J08 steps 2, 4, 8) */
-function RfCompare({ refine, setRefine, toPlan, compared, onOpen, onEvaluate }) {
-  const shown = RF_ALTS.filter(a => compared(a.id) && toPlan(a.id)), excluded = RF_ALTS.filter(a => !toPlan(a.id));
-  const setRec = id => { setRefine(r => ({ ...r, recommended: id })); toast({ title: `${rfAlt(id).name} is now recommended` }); };
+function RfCompare({ R, refine, setRefine, toPlan, compared, onOpen, onEvaluate }) {
+  const shown = R.alts.filter(a => compared(a.id) && toPlan(a.id)), excluded = R.alts.filter(a => !toPlan(a.id));
+  const setRec = id => { setRefine(r => ({ ...r, recommended: id })); toast({ title: `${R.alt(id).name} is now recommended` }); };
   const rows = [
     { group: 'Financial', items: [['CAPEX', a => fmtMoney(a.capex)], ['ROI', () => '—'], ['Payback period', () => '—'], ['NPV', () => '—'], ['IRR', () => '—'], ['OPEX impact', a => fmtMoney(a.opex)]] },
-    { group: 'Reliability', items: [['Risk level', a => <Indicator type={RISK_LEVEL[a.riskLevel].type}>{RISK_LEVEL[a.riskLevel].label}</Indicator>], ['Failure reduction', a => rfPct(a.reduced)],
-      ['Residual risk 2035', a => Math.round(a.residual2035).toLocaleString()], ['Units replaced', a => `${a.scope} of ${rfPadmounts.length}`], ['Customers protected', a => `~${a.customers.toLocaleString()}`]] },
+    { group: 'Reliability', items: [['Risk level', a => a.riskLevel ? <Indicator type={RISK_LEVEL[a.riskLevel].type}>{RISK_LEVEL[a.riskLevel].label}</Indicator> : '—'], ['Failure reduction', a => a.reduced == null ? '—' : rfPct(a.reduced)],
+      ['Residual risk 2035', a => a.residual2035 == null ? '—' : Math.round(a.residual2035).toLocaleString()], ['Units replaced', a => a.scope ? `${a.scope} of ${R.assets.length}` : '—'], ['Customers protected', a => a.customers ? `~${a.customers.toLocaleString()}` : '—']] },
     { group: 'Value', items: [['Value', a => fmtValue(a.value)], ['Benefit-cost ratio', a => a.bcr ?? '—']] },
   ];
   const [open, setOpen] = useState({ Financial: true, Reliability: true, Value: true });
@@ -148,7 +150,7 @@ function RfCompare({ refine, setRefine, toPlan, compared, onOpen, onEvaluate }) 
       <RfPopover align="end" title="Alternatives" trigger={<Button type="tertiary" size="s" iconRight="arrow-caret-down-filled">{`${shown.length} selected`}</Button>} showClose={false}>
         <NDS label="Send to plan / Compare columns" className="rf-pick">
           <span className="t-label-m-medium muted">Send to plan</span><span /><span className="t-label-m-medium muted">Compare</span>
-          {RF_ALTS.map(a => <React.Fragment key={a.id}>
+          {R.alts.map(a => <React.Fragment key={a.id}>
             <RfCheckbox checked={toPlan(a.id)} aria-label={`Send ${a.name} to plan`} onChange={v => { setRefine(r => ({ ...r, toPlan: { ...r.toPlan, [a.id]: v } })); if (!v) toast({ title: `${a.name} removed from going to Plan`, description: 'It stays in the investment record' }); }} />
             <span className="t-body-m-regular">{a.name}</span>
             <Switch size="s" checked={compared(a.id)} aria-label={`Compare ${a.name}`} onChange={() => setRefine(r => ({ ...r, compare: { ...r.compare, [a.id]: !compared(a.id) } }))} />
@@ -164,8 +166,9 @@ function RfCompare({ refine, setRefine, toPlan, compared, onOpen, onEvaluate }) 
       return <div key={a.id} className="ifs-span-4"><ContentCard className={isRec ? 'rf-card--rec' : undefined} title={a.name} onClick={() => onOpen(a.id)}
         bottom={<div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>
           <div className="row" style={{ gap: 'var(--space-200)', alignItems: 'baseline' }}><span className="t-heading-h2-medium t-numeric">{fmtMoney(a.cost)}</span><span className="t-body-m-regular sec">{a.years}{refine.refined[a.id] ? ' · refined' : ''}</span></div>
-          <div className="row" style={{ gap: 'var(--space-200)', flexWrap: 'wrap' }}><Badge size="s" color="white">{`${a.scope} of ${rfPadmounts.length} pad-mounts`}</Badge><span className="t-body-m-regular sec">{`~${a.customers.toLocaleString()} customers protected`}</span></div>
-          <div className="box col" style={{ gap: 'var(--space-50)' }}><span className="t-body-m-regular sec">Risk reduced</span><span className="t-heading-h3-medium t-numeric">{rfPct(a.reduced)}</span><span className="t-body-m-regular muted">of scored risk, 2026–2035</span></div>
+          <div className="row" style={{ gap: 'var(--space-200)', flexWrap: 'wrap' }}>{a.added ? <Badge size="s" color="white">Suggested by Cooper</Badge> : a.scope ? <Badge size="s" color="white">{`${a.scope} of ${R.assets.length} ${R.unit}`}</Badge> : <Badge size="s" color="white">{a.type || 'Alternative'}</Badge>}
+            {a.customers ? <span className="t-body-m-regular sec">{`~${a.customers.toLocaleString()} customers protected`}</span> : <span className="t-body-m-regular sec">{`BCR ${a.bcr ?? '—'}`}</span>}</div>
+          <div className="box col" style={{ gap: 'var(--space-50)' }}><span className="t-body-m-regular sec">Risk reduced</span><span className="t-heading-h3-medium t-numeric">{a.reduced == null ? '—' : rfPct(a.reduced)}</span><span className="t-body-m-regular muted">{a.reduced == null ? 'no risk profile in the demo data' : 'of scored risk, 2026–2035'}</span></div>
           {isRec ? <Button type="secondary" size="m" iconLeft="system-check" disabled>Recommended</Button>
             : <Button type="tertiary" size="m" onClick={e => { e.stopPropagation(); setRec(a.id); }}>Set as recommended</Button>}
         </div>} /></div>; })}</div>
@@ -181,21 +184,21 @@ function RfCompare({ refine, setRefine, toPlan, compared, onOpen, onEvaluate }) 
 }
 
 /* ---------------------------------------------------------------- Alternative › Details (J08 step 5) */
-function RfAltDetails({ alt, recId, toPlan }) {
-  const rank = 1 + RF_ALTS.filter(a => a.reduced > alt.reduced).length;
+function RfAltDetails({ R, alt, recId, toPlan }) {
+  const rank = 1 + R.alts.filter(a => R.hasRisk ? a.reduced > alt.reduced : (a.bcr || 0) > (alt.bcr || 0)).length;
   const [allowRec, setAllowRec] = useState(true), [allowShift, setAllowShift] = useState(true);
-  const scopeRows = rfPadmounts.slice(0, alt.scope).map(a => { const r = assess(a, NOW, activeOf(INITIAL_LENSES)); const tol = TOLERANCE[a.type];
+  const scopeRows = R.assets.slice(0, alt.scope).map(a => { const r = assess(a, NOW, activeOf(INITIAL_LENSES)); const tol = TOLERANCE[a.type];
     return { id: a.id, asset: a.label, segment: a.parent, status: r.risk >= tol ? 'Critical' : r.risk >= tol * 0.75 ? 'Moderate' : 'Healthy', score: Math.round(r.risk) }; });
   const field = (l, v) => <><span className="t-body-m-regular sec">{l}</span><span className="t-body-m-regular">{v}</span></>;
   return <>
     <RfTitle title="Alternative details" text="Alternative details, scope, cost, risk reduction, and expected value" />
     {!toPlan && <IFS.Alert type="info" title="Excluded alternative">Excluded from Plan and Compare, but still available in the investment record.</IFS.Alert>}
-    <RfStats cards={[{ size: 's', title: 'Rank', value: `#${rank}`, caption: alt.id === recId ? 'Recommended' : 'by risk reduced' },
-      { size: 's', title: 'Risk reduced', value: rfPct(alt.reduced), caption: 'of scored risk' }, { size: 's', title: 'Customers protected', value: `~${alt.customers.toLocaleString()}` },
-      { size: 's', title: 'Scope', value: `${alt.scope} of ${rfPadmounts.length}`, caption: 'pad-mounts' }]} />
+    <RfStats cards={[{ size: 's', title: 'Rank', value: `#${rank}`, caption: alt.id === recId ? 'Recommended' : R.hasRisk ? 'by risk reduced' : 'by benefit-cost ratio' },
+      { size: 's', title: 'Risk reduced', value: alt.reduced == null ? '—' : rfPct(alt.reduced), caption: alt.reduced == null ? 'no risk profile' : 'of scored risk' }, { size: 's', title: 'Customers protected', value: alt.customers ? `~${alt.customers.toLocaleString()}` : '—' },
+      { size: 's', title: 'Scope', value: alt.scope ? `${alt.scope} of ${R.assets.length}` : '—', caption: R.unit }]} />
     <RfCard title="Identity & Classification" actions={<Button type="secondary" size="s" iconLeft="cooper-system-icon" onClick={() => toast({ title: 'Edit with Cooper', description: 'Works as on Shape: tell Cooper what to change' })}>Edit with Cooper</Button>}>
-      <div className="ad-field rf-fields">{field('Name', alt.name)}{field('Description', ALT_DESC[alt.name] || '—')}{field('Code', `ALT-${alt.id}`)}{field('Type', alt.type || '—')}
-        {field('Creator', 'Cooper')}{field('Created date', fmtDate(RF_INV.createdDate))}</div>
+      <div className="ad-field rf-fields">{field('Name', alt.name)}{field('Description', altDesc(alt.name))}{field('Code', `ALT-${alt.id}`)}{field('Type', alt.type || '—')}
+        {field('Creator', alt.added ? 'Cooper (suggested)' : 'Cooper')}{field('Created date', fmtDate(R.inv.createdDate))}</div>
     </RfCard>
     <RfCard title="Dates"><div className="ad-field rf-fields">{field('Start of alternative', fmtDate(alt.first))}{field('End of alternative', fmtDate(alt.last))}{field('Pause date', '—')}{field('Resume date', '—')}</div></RfCard>
     <RfCard title="Restrictions"><div className="col" style={{ gap: 'var(--space-stack)' }}>
@@ -204,18 +207,18 @@ function RfAltDetails({ alt, recId, toPlan }) {
     </div></RfCard>
     <RfCard title="Scope"><RfTable rowHeight={52} columns={[{ key: 'asset', title: 'Asset', width: '1.4fr', primary: true }, { key: 'segment', title: 'Segment', width: '1fr' },
       { key: 'status', title: 'Status', width: '1fr', render: r => <Indicator type={r.status === 'Critical' ? 'red' : r.status === 'Moderate' ? 'orange' : 'green'}>{r.status}</Indicator> },
-      { key: 'score', title: 'Risk score', type: 'number', width: 'var(--table-col-number-min)' }]} rows={scopeRows} defaultSort={{ key: 'score', dir: 'desc' }} /></RfCard>
+      { key: 'score', title: 'Risk score', type: 'number', width: 'var(--table-col-number-min)' }]} rows={scopeRows} defaultSort={{ key: 'score', dir: 'desc' }} />
+      {!scopeRows.length && <EmptyState cause="empty-container" size="section" heading="No assets in scope" body="The demo data links no assets to this investment." />}</RfCard>
   </>;
 }
 
-const rfThreadAlt = id => (RF_THREADS().find(t => t.id === id) || {}).altId;
 /* ---------------------------------------------------------------- Alternative › Cost & Schedule (J08 step 5, J10) */
-function RfCost({ alt, refine, setRefine }) {
+function RfCost({ R, alt, refine, setRefine }) {
   const [view, setView] = useState('table');
   const [sel, setSel] = useState(null);                 // { stage, year }
   const [adj, setAdj] = useState(null);                 // Adjust by % dialog value
-  const plan = costPlan(alt, refine.adjust[alt.id] || {});
-  const years = Object.keys(alt.spendByYear).sort(), total = plan.reduce((t, s) => t + s.total, 0);
+  const plan = costPlan(alt, refine.adjust[alt.id] || {}, R.stages);
+  const years = Object.keys(alt.costByYear || alt.spendByYear).sort().filter(y => plan.some(st => st.byYear[y])), total = plan.reduce((t, s) => t + s.total, 0);
   const yearTot = y => plan.reduce((t, s) => t + s.byYear[y], 0);
   let run = 0;
   const cum = years.map(y => (run += yearTot(y)));
@@ -235,7 +238,7 @@ function RfCost({ alt, refine, setRefine }) {
       {view === 'table' ? <>
         <NDS label="Formula bar" className="rf-formula row">
           <span className="t-code-m-regular muted">ƒx</span>
-          <span className="t-code-m-regular" style={{ flex: 1 }}>{st ? `${st.name} ${sel.year} = Σ spend ${sel.year} ${fmtMoney(alt.spendByYear[sel.year])} × ${Math.round(st.share * 100)}% stage share${(refine.adjust[alt.id] || {})[st.id] ? ` × ${100 + refine.adjust[alt.id][st.id]}%` : ''} = ${fmtMoney(st.byYear[sel.year])}` : ''}</span>
+          <span className="t-code-m-regular" style={{ flex: 1 }}>{st ? `${st.name} ${sel.year} = Σ spend ${sel.year} ${fmtMoney((alt.costByYear || alt.spendByYear)[sel.year])} × ${Math.round(st.share * 100)}% stage share${(refine.adjust[alt.id] || {})[st.id] ? ` × ${100 + refine.adjust[alt.id][st.id]}%` : ''} = ${fmtMoney(st.byYear[sel.year])}` : ''}</span>
           {st && <><Button type="tertiary" size="s" onClick={() => setAdj('10')}>Adjust by %</Button>
             <Button type="tertiary" size="s" onClick={() => toast({ title: 'Shift dates isn’t part of this flow', description: 'Ask Cooper to shift stages' })}>Shift dates</Button></>}
         </NDS>
@@ -243,8 +246,8 @@ function RfCost({ alt, refine, setRefine }) {
           {['Stage', 'Total cost', 'Days', 'Type', 'Start date', 'End date', ...years].map(h => <span key={h} className="rf-sheet__h t-label-m-medium">{h}</span>)}
           {plan.map(s => <React.Fragment key={s.id}>
             <span className="row" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium">{s.name}</span>
-              {RF_ESTIMATE_STAGES.includes(s.id) && alt.id === rfThreadAlt('t56') && (refine.estimated || {})[s.id] ? <Badge size="s" color="white">Estimator reviewed</Badge>
-                : RF_ESTIMATE_STAGES.includes(s.id) && alt.id === rfThreadAlt('t56') ? <button className="rf-needs" onClick={() => { setRefine(r => ({ ...r, estimated: { ...(r.estimated || {}), [s.id]: true } })); toast({ title: `${s.name} estimate confirmed`, description: 'The line now carries the estimator’s basis' }); }}>
+              {R.estimate.includes(s.id) && alt.id === (R.threads().find(t => t.id === 't56') || {}).altId && (refine.estimated || {})[s.id] ? <Badge size="s" color="white">Estimator reviewed</Badge>
+                : R.estimate.includes(s.id) && alt.id === (R.threads().find(t => t.id === 't56') || {}).altId ? <button className="rf-needs" onClick={() => { setRefine(r => ({ ...r, estimated: { ...(r.estimated || {}), [s.id]: true } })); toast({ title: `${s.name} estimate confirmed`, description: 'The line now carries the estimator’s basis' }); }}>
                   <Indicator type="orange">Needs estimate</Indicator></button> : null}</span>
             <span className="t-numeric">{fmtMoney(s.total)}</span><span className="t-numeric">{s.days}</span><span>{s.type}</span>
             <span>{shortDate(s.start)}</span><span>{shortDate(s.end)}</span>
@@ -266,7 +269,7 @@ function RfCost({ alt, refine, setRefine }) {
 }
 
 /* ---------------------------------------------------------------- Investment details › Dependencies (J08 step 6) */
-function RfInvDetails({ onCooper }) {
+function RfInvDetails({ R, onCooper }) {
   const [tab, setTab] = useState('general');
   return <>
     <RfTitle title="Investment details" text="Core investment details, context, and current status" />
@@ -278,29 +281,31 @@ function RfInvDetails({ onCooper }) {
           { key: 'type', title: 'Dependency type', width: '1.2fr', render: r => <Badge size="s" color="white">{r.type}</Badge> },
           { key: 'progress', title: 'Progress', width: '1fr', render: r => <span className="row" style={{ gap: 'var(--space-200)', width: '100%' }}><ProgressBar value={r.progress} label={`${r.name} progress`} /><span className="t-numeric">{r.progress}%</span></span> },
           { key: 'cost', title: 'Cost', type: 'number', width: 'var(--table-col-number-min)', render: r => fmtMoney(r.cost) },
-          { key: 'value', title: 'Value', type: 'number', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) }]} rows={RF_DEPENDENCIES} /></RfCard>
+          { key: 'value', title: 'Value', type: 'number', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) }]} rows={R.deps} />
+        {!R.deps.length && <EmptyState cause="empty-container" size="section" heading="No dependencies" body="Cooper found no linked investments for this one in the demo data." />}</RfCard>
       <RfCard title="Assets Impacted"><RfTable rowHeight={52} columns={[{ key: 'label', title: 'Asset', primary: true }, { key: 'parent', title: 'Segment' }, { key: 'customers', title: 'Customers', type: 'number' }]}
-        rows={rfPadmounts.map(a => ({ id: a.id, label: a.label, parent: a.parent, customers: a.customers }))} /></RfCard>
+        rows={R.assets.map(a => ({ id: a.id, label: a.label, parent: a.parent, customers: a.customers }))} />
+        {!R.assets.length && <EmptyState cause="empty-container" size="section" heading="No assets linked" body="The demo data links no assets to this investment." />}</RfCard>
     </> : <EmptyState cause="empty-container" size="section" heading={tab === 'cost' ? 'Cost & Schedule is per alternative' : 'No relationships yet'}
         body={tab === 'cost' ? 'Open an alternative in the side navigation to see its cost and schedule.' : 'Relationships to programs and portfolios will show here.'} />}
   </>;
 }
 
 /* ---------------------------------------------------------------- J09 · Value: models, a model's measures, questionnaire (Figma 48:146320) */
-function RfValue({ refine, setRefine, alt: scoped }) {
-  const alt = scoped || rfAlt(refine.recommended), raw = RF_ALT_RAW.find(a => a.id === alt.id);
-  const models = (refine.models || RF_MODELS.map(m => m.id)).map(id => RF_MODELS.find(m => m.id === id) || (refine.added || []).find(m => m.id === id)).filter(Boolean);
+function RfValue({ R, refine, setRefine, alt: scoped }) {
+  const alt = scoped || R.alt(refine.recommended), raw = R.raw.find(a => a.id === alt.id);
+  const models = (refine.models || R.models.map(m => m.id)).map(id => R.models.find(m => m.id === id) || (refine.added || []).find(m => m.id === id)).filter(Boolean);
   const answers = refine.answers || {};
-  const qs = RF_QUESTIONS.map(q => answers[q.id] ? { ...q, answer: answers[q.id], by: 'you-done' } : q);
+  const qs = R.questions.map(q => answers[q.id] ? { ...q, answer: answers[q.id], by: 'you-done' } : q);
   const needs = m => qs.filter(q => q.model === m.name && !q.answer).length;
   const [open, setOpen] = useState(null), [tab, setTab] = useState('measures'), [lib, setLib] = useState(false), [answering, setAnswering] = useState(null);
-  const avg = models.length ? models.reduce((t, m) => t + (m.measure ? measureReduced(raw, m.measure) : 0), 0) / models.filter(m => m.measure).length : 0;
+  const scored = models.filter(m => m.measure), avg = scored.length ? scored.reduce((t, m) => t + measureReduced(raw, m.measure), 0) / scored.length : null;
   const fy = y => `FY${String(y).slice(2)}`, yrs = Object.keys(alt.spendByYear).sort();
   if (open) {
     const m = models.find(x => x.id === open), base = measureBaseline(raw, m.measure);
     const rows = [{ id: 'base', rank: '', name: 'Baseline', note: 'Shared reference', byYear: base },
-      ...[...RF_ALTS].sort((a, b) => measureReduced(RF_ALT_RAW.find(x => x.id === b.id), m.measure) - measureReduced(RF_ALT_RAW.find(x => x.id === a.id), m.measure)).map((a, k) => {
-        const r = RF_ALT_RAW.find(x => x.id === a.id), b = measureBaseline(r, m.measure);
+      ...[...R.alts].sort((a, b) => measureReduced(R.raw.find(x => x.id === b.id), m.measure) - measureReduced(R.raw.find(x => x.id === a.id), m.measure)).map((a, k) => {
+        const r = R.raw.find(x => x.id === a.id), b = measureBaseline(r, m.measure);
         return { id: a.id, rank: k + 1, name: a.name, note: 'Change · avoided risk', byYear: Object.fromEntries(RF_RISK_YEARS.map(y => [y, Math.max(0, b[y] - ((r.riskResidualByMeasure[m.measure] || {})[y] || 0))])) }; })];
     const shown = RF_RISK_YEARS.slice(0, 6);
     return <>
@@ -316,8 +321,8 @@ function RfValue({ refine, setRefine, alt: scoped }) {
               ...shown.map(y => ({ key: y, title: fy(y), type: 'number', render: r => Math.round(r.byYear[y]).toLocaleString() })), { key: 'sum', title: 'Σ', type: 'number', render: r => <span className="t-label-m-medium">{Math.round(rfSum(r.byYear)).toLocaleString()}</span> }]} rows={rows} />
           </div>
         </RfCard>
-        <RfCard title="Residual Risk"><div style={{ height: 'var(--proto-chart-l)' }}><LineChart data={RF_RISK_YEARS.map(y => ({ label: fy(y), base: Math.round(base[y]), ...Object.fromEntries(RF_ALTS.map(a => [a.id, Math.round(((RF_ALT_RAW.find(x => x.id === a.id).riskResidualByMeasure[m.measure]) || {})[y] || 0)])) }))}
-          series={[{ key: 'base', label: 'Baseline', dashed: true }, ...RF_ALTS.map(a => ({ key: String(a.id), label: a.name }))]} /></div></RfCard>
+        <RfCard title="Residual Risk"><div style={{ height: 'var(--proto-chart-l)' }}><LineChart data={RF_RISK_YEARS.map(y => ({ label: fy(y), base: Math.round(base[y]), ...Object.fromEntries(R.alts.map(a => [a.id, Math.round(((R.raw.find(x => x.id === a.id).riskResidualByMeasure[m.measure]) || {})[y] || 0)])) }))}
+          series={[{ key: 'base', label: 'Baseline', dashed: true }, ...R.alts.map(a => ({ key: String(a.id), label: a.name }))]} /></div></RfCard>
       </> : <RfCard title="Questionnaire Answers">
         <RfTable rowHeight={60} groupBy={r => r.answer ? 'Ready' : 'Need input'} columns={[{ key: 'q', title: 'Question', width: '2fr', primary: true, render: r => <span className="col"><span className="t-label-m-medium">{r.q}</span><span className="t-body-m-regular muted">{r.kind}</span></span> },
           { key: 'model', title: 'Value model', width: '1fr', render: r => <Badge size="s" color="white">{r.model}</Badge> },
@@ -331,47 +336,48 @@ function RfValue({ refine, setRefine, alt: scoped }) {
   }
   return <>
     <RfTitle title={scoped ? 'Alternative value' : 'Value'} text={scoped ? `${alt.name}: the value models applied to this alternative.` : 'Shows the investment value model baseline and the value models assigned to this investment.'} />
-    <RfStats cards={[{ size: 's', title: 'Total value created', value: fmtValue(alt.value), caption: 'framework score' }, { size: 's', title: 'Avg risk reduction', value: rfPct(avg) },
+    <RfStats cards={[{ size: 's', title: 'Total value created', value: fmtValue(alt.value), caption: 'framework score' }, { size: 's', title: 'Avg risk reduction', value: avg == null ? '—' : rfPct(avg) },
       { size: 's', title: 'Benefit-cost ratio', value: alt.bcr ? `${alt.bcr}x` : '—' }, { size: 's', title: 'Evaluation horizon', value: `${fy(yrs[0])}–${fy(RF_RISK_YEARS[RF_RISK_YEARS.length - 1])}` }]} />
     <RfCard title="Selected Models" actions={<Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => setLib(true)}>Add</Button>}>
-      <RfTable rowHeight={48} rowProps={r => ({ 'data-model': r.id })} onRowClick={r => { setOpen(r.id); setTab(needs(r) ? 'q' : 'measures'); }} columns={[
+      <RfTable rowHeight={48} rowProps={r => ({ 'data-model': r.id })} onRowClick={r => { if (!r.measure) { toast({ title: r.name, description: 'This measure has no risk profile in the demo data, so there is nothing to break down by year' }); return; } setOpen(r.id); setTab(needs(r) ? 'q' : 'measures'); }} columns={[
         { key: 'name', title: 'Value model', width: '1.4fr', primary: true },
         { key: 'status', title: 'Status', width: '1fr', render: r => needs(r) ? <span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type="orange">Needs input</Indicator><IFS.Counter>{`0/${needs(r)}`}</IFS.Counter></span> : <Indicator type="green">Ready</Indicator> },
         { key: 'measures', title: 'Measures', type: 'number', width: 'var(--table-col-number-min)' },
         { key: 'output', title: 'Output', width: '1.6fr', render: r => <span className="row" style={{ gap: 'var(--space-100)', minWidth: 0 }}><Badge size="s" color="white">{r.output[0]}</Badge>{r.output.length > 1 && <Badge size="s" color="white">{`+${r.output.length - 1}`}</Badge>}</span> },
         { key: 'red', title: 'Risk reduction', type: 'number', width: 'var(--table-col-number-min)', render: r => r.measure ? rfPct(measureReduced(raw, r.measure)) : '—' },
         { key: 'del', title: '', width: 'var(--table-col-action)', render: r => <IconButton icon="system-trash-delete" type="ghost" size="s" label={`Remove ${r.name}`}
-          onClick={e => { e.stopPropagation(); setRefine(x => ({ ...x, models: (x.models || RF_MODELS.map(mm => mm.id)).filter(id => id !== r.id) })); toast({ title: `${r.name} removed`, description: 'Cooper recalculated the investment value',
+          onClick={e => { e.stopPropagation(); setRefine(x => ({ ...x, models: (x.models || R.models.map(mm => mm.id)).filter(id => id !== r.id) })); toast({ title: `${r.name} removed`, description: 'Cooper recalculated the investment value',
             primaryAction: { label: 'Undo', onClick: () => setRefine(x => ({ ...x, models: [...(x.models || []), r.id] })) } }); }} /> }]} rows={models} />
     </RfCard>
     {lib && <div className="rf-cooper"><Panel title="Models" collapsible={false} onClose={() => setLib(false)}>
       <div className="col" style={{ gap: 'var(--space-stack)' }}>{RF_MODEL_LIBRARY.filter(l => !models.some(m => m.id === l.id)).map(l => <ContentCard key={l.id} size="s" title={l.name} description={l.text} iconRight="system-plus"
-        onClick={() => { setRefine(x => ({ ...x, added: [...(x.added || []), { id: l.id, name: l.name, measures: 1, output: [l.name] }], models: [...(x.models || RF_MODELS.map(mm => mm.id)), l.id] })); setLib(false); toast({ title: `${l.name} added`, description: 'Cooper will ask for its inputs' }); }} />)}</div>
+        onClick={() => { setRefine(x => ({ ...x, added: [...(x.added || []), { id: l.id, name: l.name, measures: 1, output: [l.name] }], models: [...(x.models || R.models.map(mm => mm.id)), l.id] })); setLib(false); toast({ title: `${l.name} added`, description: 'Cooper will ask for its inputs' }); }} />)}</div>
     </Panel></div>}
   </>;
 }
 
 /* ---------------------------------------------------------------- J09 · Investment overview, widgets (Figma 58:31703) */
-function RfOverview({ refine, setRefine }) {
-  const alt = rfAlt(refine.recommended), widgets = refine.widgets || [];
+function RfOverview({ R, refine, setRefine }) {
+  const alt = R.alt(refine.recommended), widgets = refine.widgets || [];
   const baseRisk = rfSum(alt.baselineByYear);
   const generate = () => { if (!widgets.includes('risk-type')) setRefine(x => ({ ...x, widgets: [...(x.widgets || []), 'risk-type'], shared: true })); };
-  const raw = RF_ALT_RAW.find(a => a.id === alt.id);
+  const raw = R.raw.find(a => a.id === alt.id);
   return <>
     <RfTitle title="Investment overview" text="High-level investment summary, key metrics, and current progress"
       right={<Button type="secondary" size="s" iconLeft="system-plus" onClick={generate}>Widgets</Button>} />
     <RfStats cards={[{ size: 's', title: 'Benefit-cost ratio', value: alt.bcr ? `${alt.bcr}x` : '—', caption: 'Benefit returned per $1 spent' }, { size: 's', title: 'Estimated cost', value: fmtMoney(alt.cost), caption: 'Expected delivery cost' },
-      { size: 's', title: 'Investment value', value: fmtValue(alt.value), caption: 'Total expected value' }, { size: 's', title: 'Baseline risk', value: Math.round(baseRisk).toLocaleString(), caption: 'Risk before intervention, 2026–2035' }]} />
+      { size: 's', title: 'Investment value', value: fmtValue(alt.value), caption: 'Total expected value' }, { size: 's', title: 'Baseline risk', value: baseRisk ? Math.round(baseRisk).toLocaleString() : '—', caption: baseRisk ? 'Risk before intervention, 2026–2035' : 'No risk profile in the demo data' }]} />
     <div className="ifs-grid is-halves">
       <RfCard title="Investment Details"><div className="ad-field rf-fields">
-        {[['Name', RF_INV.name], ['Code', RF_INV.code], ['Type', RF_INV.type || 'Program'], ['Planning portfolio', RF_INV.portfolio || '—'], ['Problem statement', RF_INV.description]].map(([l, v]) => <React.Fragment key={l}><span className="t-body-m-regular sec">{l}</span><span className="t-body-m-regular">{v}</span></React.Fragment>)}
+        {[['Name', R.inv.name], ['Code', R.inv.code], ['Type', R.inv.type || 'Program'], ['Planning portfolio', R.inv.portfolio || '—'], ['Problem statement', R.inv.description || '—']].map(([l, v]) => <React.Fragment key={l}><span className="t-body-m-regular sec">{l}</span><span className="t-body-m-regular">{v}</span></React.Fragment>)}
       </div></RfCard>
       <RfCard title="Affected Assets & area"><NDS label="3D map (MapLibre)" style={{ position: 'relative', height: 'var(--proto-map-h)', borderRadius: 'var(--radius-radius-200)', overflow: 'hidden' }}>
-        <MapView labels={false} lenses={INITIAL_LENSES} year={END} interactive={false} focus={rfPadmounts.map(a => a.id)} /></NDS></RfCard>
-      <RfCard title="Yearly Forecast"><div style={{ height: 'var(--proto-chart-l)' }}><ColumnChart data={Object.keys(alt.spendByYear).sort().map(y => ({ label: `FY${y.slice(2)}`, value: alt.spendByYear[y] }))} valueLabel="Spend" format={v => fmtMoney(v)} /></div></RfCard>
+        {R.assets.length ? <MapView labels={false} lenses={INITIAL_LENSES} year={END} interactive={false} focus={R.assets.map(a => a.id)} />
+          : <EmptyState cause="empty-container" size="section" heading="No assets linked" body="The demo data links no assets to this investment, so there is nothing to map." />}</NDS></RfCard>
+      <RfCard title="Yearly Forecast"><div style={{ height: 'var(--proto-chart-l)' }}><ColumnChart data={Object.entries(alt.costByYear || alt.spendByYear).sort(([a], [b]) => a.localeCompare(b)).filter(([, v]) => v).map(([y, v]) => ({ label: `FY${y.slice(2)}`, value: v }))} valueLabel="Spend" format={v => fmtMoney(v)} /></div></RfCard>
       <RfCard title="Investment Value"><div style={{ height: 'var(--proto-chart-l)' }}><IFS.BarChart data={alt.valueByMeasure.map(m => ({ label: m.measure.replace(' Risk', ''), value: Math.round(m.value) }))} valueLabel="Value" labelWidth={160} /></div></RfCard>
-      {widgets.includes('risk-type') && <RfCard title="Annualized Outcome Risk by Risk Type"><div style={{ height: 'var(--proto-chart-l)' }}>
-        <LineChart data={RF_RISK_YEARS.map(y => ({ label: `FY${y.slice(2)}`, ...Object.fromEntries(RF_RISK_MEASURES.map(m => [m, Math.round((raw.riskResidualByMeasure[m] || {})[y] || 0)])) }))} series={RF_RISK_MEASURES.map(m => ({ key: m, label: m.replace(' Risk', '') }))} /></div></RfCard>}
+      {widgets.includes('risk-type') && R.measures.length > 0 && <RfCard title="Annualized Outcome Risk by Risk Type"><div style={{ height: 'var(--proto-chart-l)' }}>
+        <LineChart data={RF_RISK_YEARS.map(y => ({ label: `FY${y.slice(2)}`, ...Object.fromEntries(R.measures.map(m => [m, Math.round((raw.riskResidualByMeasure[m] || {})[y] || 0)])) }))} series={R.measures.map(m => ({ key: m, label: m.replace(' Risk', '') }))} /></div></RfCard>}
     </div>
     {refine.shared && <div className="build-snack"><IFS.Snackbar title="Widget shared with your team" primaryAction={{ label: 'Okay', onClick: () => setRefine(x => ({ ...x, shared: false })) }} onClose={() => setRefine(x => ({ ...x, shared: false }))}>
       {`${PEOPLE.LF.name} · ${PEOPLE.NL.name}`}</IFS.Snackbar></div>}

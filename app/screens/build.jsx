@@ -5,8 +5,8 @@
 const ALTERNATIVES = IDEA_ALTS.map(a => ({ id: a.id, name: a.name, desc: ALT_DESC[a.name], bcr: bcrOf(a.valueTotal, a.spendTotal), value: a.valueTotal,
   cost: fmtMoney(a.spendTotal), time: spanYears(a), valueLabel: fmtValue(a.valueTotal), valueByMeasure: a.valueByMeasure, recommendedInData: a.isRecommended }));
 // The portfolio to compare against: the other real Whistler investments with spend and value
-const PORTFOLIO = WHISTLER_INVESTMENTS.filter(i => i.id !== IDEA_INV.id).map(i => ({ name: i.name, bcr: bcrOf(i.totalValue, i.totalSpend), value: i.totalValue }))
-  .filter(p => p.bcr !== null);
+const PORTFOLIO = WHISTLER_INVESTMENTS.map(i => ({ id: i.id, name: i.name, bcr: bcrOf(i.totalValue, i.totalSpend), value: i.totalValue }))
+  ;
 const BINS = {
   bcr: [[0, 0.5, '< 0.5'], [0.5, 1, '0.5–1'], [1, 1.5, '1–1.5'], [1.5, 2, '1.5–2'], [2, 3, '2–3'], [3, 5, '3–5'], [5, 1e9, '5+']],
   value: [[0, 2e3, '< 2K'], [2e3, 5e3, '2K–5K'], [5e3, 15e3, '5K–15K'], [15e3, 30e3, '15K–30K'], [30e3, 60e3, '30K–60K'], [60e3, 150e3, '60K–150K'], [150e3, 1e12, '150K+']],
@@ -30,22 +30,27 @@ const Sec = ({ title, extra, actions, children, style, cooper }) => (
 );
 const SubHead = ({ children }) => <span className="t-label-m-medium" style={{ display: 'block', padding: 'var(--space-100) 0 var(--space-200)' }}>{children}</span>;
 
-function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview, recommendedId, persona = 'owner', review, setReview, onDecide, onOpenRefine }) {
+function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, onSendForReview, recommendedId, persona = 'owner', review, setReview, onDecide, onOpenRefine, invId }) {
+  // Any openable idea (shared/build-model.js canOpenIdea). The pad-mount idea keeps its study-driven content; others show their real record and alternatives
+  const main = !invId || invId === CLUSTER.ideaInvestmentId, R = rfContext(invId), INV = R.inv;
+  const ALTS = main ? ALTERNATIVES : R.alts.map(a => ({ id: a.id, name: a.name, desc: altDesc(a.name), bcr: a.bcr, value: a.value, cost: fmtMoney(a.cost), time: a.years,
+    valueLabel: fmtValue(a.value), valueByMeasure: a.valueByMeasure, added: a.added }));
+  const myAssets = main ? null : ASSETS.filter(a => a.investmentId === INV.id);
   // J11: the reviewer (Noah Lindgren, Finance Lead) sees the idea read-only with Cooper's Readiness Evaluation and Decide;
   // the owner sees the approval chain in place of the canvas while the idea is with the reviewers
   const rows = (review && review.rows) || REVIEWERS();
-  const reviewer = persona === 'estimator' && status === 'review';
+  const reviewer = main && persona === 'estimator' && status === 'review';
   const myRow = rows.find(r => r.id === 'NL') || {};
-  const ownerChain = !reviewer && (['review', 'deferred', 'rejected', 'refining'].includes(status) || (status === 'shaping' && review && review.revisions && !review.reopened));
+  const ownerChain = main && !reviewer && (['review', 'deferred', 'rejected', 'refining'].includes(status) || (status === 'shaping' && review && review.revisions && !review.reopened));
   const [decide, setDecide] = useState(null);       // 'proceed' | 'request' | 'park' | 'stop' while its dialog is open
   const [decideNote, setDecideNote] = useState('');
   const s = study(lenses, END);
   // J07: System confidence sidebar (Figma 43:76732): the kit's issue report, gates and open questions from shared/build-model.js
-  const c = IFS.useIssueReport({ issues: useMemo(() => shapeIssues(), []), gates: SHAPE_GATES });
+  const c = IFS.useIssueReport({ issues: useMemo(() => shapeIssuesFor(INV.id), [INV.id]), gates: SHAPE_GATES });
   const [panel, setPanel] = useState(false);
   const [dismiss, setDismiss] = useState(null);      // note text while the Dismiss modal is open
   // J07: edit types (Figma 43:68623): manual edit, or Edit with Cooper
-  const needDefault = `The 12 pad-mount transformers in Alpine Meadows have been in service since 1944–45 and are now at ${ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][0]}× their design life. With the study’s ${s.act.length} lenses applied, ${s.now.over} of ${ASSETS.length} assets in the cluster cross their intervention tolerance by ${END}, the next new crossing in ${s.first ?? '—'}. Left alone, outages affect ~${CLUSTER.customers.toLocaleString()} Alpine Meadows customers.`;
+  const needDefault = !main ? `${INV.description || INV.name}\n\nCooper compared ${ALTS.length} alternatives${ALTS.some(a => a.added) ? ' (one suggested by Cooper)' : ''}; the recommended one costs ${fmtMoney(R.rec.cost)} over ${R.rec.years}.` : `The 12 pad-mount transformers in Alpine Meadows have been in service since 1944–45 and are now at ${ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][0]}× their design life. With the study’s ${s.act.length} lenses applied, ${s.now.over} of ${ASSETS.length} assets in the cluster cross their intervention tolerance by ${END}, the next new crossing in ${s.first ?? '—'}. Left alone, outages affect ~${CLUSTER.customers.toLocaleString()} Alpine Meadows customers.`;
   const [need, setNeed] = useState(needDefault);
   const [editNeed, setEditNeed] = useState(null);    // draft text while editing by hand
   const [askNeed, setAskNeed] = useState(false);     // Edit with Cooper bar open
@@ -53,12 +58,13 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
   const [cooperSaid, setCooperSaid] = useState(null);
   const ans = idea?.answers || [];
   // the recommended alternative is shared with Refine (Set as recommended there changes it here too)
-  const recAlt = (recommendedId && IDEA_ALTS.find(a => a.id === recommendedId)) || altForIntent(ans[0]) || IDEA_ALTS.find(a => a.isRecommended);
-  const rec = ALTERNATIVES.find(a => a.id === recAlt.id), others = ALTERNATIVES.filter(a => a.id !== rec.id);
+  const recAlt = main ? (recommendedId && IDEA_ALTS.find(a => a.id === recommendedId)) || altForIntent(ans[0]) || IDEA_ALTS.find(a => a.isRecommended)
+    : ALTS.find(a => a.id === recommendedId) || ALTS.find(a => a.id === R.rec.id);
+  const rec = ALTS.find(a => a.id === recAlt.id), others = ALTS.filter(a => a.id !== rec.id);
   const overRows = s.now.rows.filter(r => r.over);
   const [metric, setMetric] = useState('bcr');
   const key = metric === 'bcr' ? 'bcr' : 'value', val = rec[key];
-  const all = [...PORTFOLIO.map(p => ({ name: p.name, v: p[key] })), { name: IDEA_INV.name, v: val, me: true }];
+  const all = [...PORTFOLIO.filter(p => p.id !== INV.id && p.bcr !== null).map(p => ({ name: p.name, v: p[key] })), { name: INV.name, v: val, me: true }];
   const rank = 1 + all.filter(p => !p.me && p.v > val).length, pct = Math.round((1 - (rank - 1) / all.length) * 100);
   const standing = pct >= 75 ? 'Top quartile' : pct >= 50 ? 'Second quartile' : pct >= 25 ? 'Third quartile' : 'Bottom quartile';
   const counts = BINS[key].map(([lo, hi]) => all.filter(p => p.v >= lo && p.v < hi).length), maxC = Math.max(...counts, 1);
@@ -66,11 +72,11 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
   const sorted = [...all].sort((a, b) => b.v - a.v), me = sorted.findIndex(p => p.me);
   const similar = sorted.slice(Math.max(0, me - 3), Math.max(0, me - 3) + 5);
   const unit = metric === 'bcr' ? 'BCR' : 'value';
-  const fmtV = v => metric === 'bcr' ? v.toFixed(2) : fmtValue(v);
+  const fmtV = v => v == null ? "—" : metric === "bcr" ? v.toFixed(2) : fmtValue(v);
 
   const DECIDE = { proceed: { label: 'Proceed', description: 'The idea becomes an investment.' }, request: { label: 'Request info', description: 'Send it back to Shape with what you need.' },
     park: { label: 'Park', description: 'Revisit it after a set time.' }, stop: { label: 'Stop', description: 'Close the idea.' } };
-  const header = <PageHeader title={IDEA_INV.name} id={IDEA_INV.code} onBack={onBack}
+  const header = <PageHeader title={INV.name} id={INV.code} onBack={onBack}
     status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={IDEA_STATUS[status].type}>{IDEA_STATUS[status].label}</Indicator>{status === 'review' && <IFS.Counter>{reviewCount(rows)}</IFS.Counter>}</span>}
     center={reviewer ? <Stepper current={0} steps={[{ label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />
       : <Stepper current={ownerChain ? (status === 'refining' ? 2 : 1) : 0} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
@@ -104,8 +110,8 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
         <div className="page">
           <Sec title="Idea Overview">
             <div className="col" style={{ gap: 'var(--space-150)', padding: '0 var(--space-150) var(--space-150)' }}>
-              <span className="t-label-l-medium">{IDEA_INV.name}</span>
-              <span className="t-body-m-regular sec">{IDEA_INV.description}</span>
+              <span className="t-label-l-medium">{INV.name}</span>
+              <span className="t-body-m-regular sec">{INV.description}</span>
             </div>
           </Sec>
 
@@ -140,7 +146,8 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
             </div>
             <Sec title="Affected Assets & area" style={{ height: '100%' }}>
               <NDS label="3D map (MapLibre)" style={{ height: 'var(--proto-map-h)', borderRadius: 'var(--radius-radius-200)', overflow: 'hidden' }}>
-                <MapView labels={false} lenses={lenses} year={END} interactive={false} focus={overRows.map(r => r.a.id)} />
+                {main || myAssets.length ? <MapView labels={false} lenses={lenses} year={END} interactive={false} focus={main ? overRows.map(r => r.a.id) : myAssets.map(a => a.id)} />
+                  : <EmptyState cause="empty-container" size="section" heading="No assets linked" body="The demo data links no assets to this idea, so there is nothing to map yet." />}
                 <div style={{ position: 'absolute', right: 'var(--space-200)', top: 'var(--space-200)', zIndex: 'var(--proto-z-raised)' }}><IconButton icon="map" type="tertiary" size="s" label="Open in Explore" onClick={onBack} /></div>
               </NDS>
             </Sec>
@@ -150,7 +157,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
             <div className="col" style={{ gap: 'var(--space-300)' }}>
               <ContentCard title={rec.name} description={rec.desc}
                 bottom={<div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-250)' }}>
-                  <StatCard size="s" title="BCR" value={String(rec.bcr)} /><StatCard size="s" title="Cost range" value={rec.cost} />
+                  <StatCard size="s" title="BCR" value={String(rec.bcr ?? "—")} /><StatCard size="s" title="Cost range" value={rec.cost} />
                   <StatCard size="s" title="Timing" value={rec.time} /><StatCard size="s" title="Potential value" value={rec.valueLabel} description="value score" />
                 </div>} />
               <div>
@@ -186,7 +193,8 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-600)' }}>
                 <div>
                   <SubHead>Why this investment matters</SubHead>
-                  <p className="t-body-m-regular" style={{ margin: 0 }}>This program replaces the oldest distribution equipment in Alpine Meadows, protecting ~{CLUSTER.customers.toLocaleString()} customers from outages. Acting before the next tolerance crossing in {s.first ?? '—'} reduces the cluster’s value at stake (${s.now.valueM}M by {END}) and lowers safety and environmental risk. At a BCR of {rec.bcr} it ranks #{rank} of {all.length} Whistler investments, in the {standing.toLowerCase()}.</p>
+                  {!main ? <p className="t-body-m-regular" style={{ margin: 0 }}>{`${rec.name} costs ${rec.cost} over ${rec.time} for a value score of ${rec.valueLabel}. At a BCR of ${rec.bcr ?? '—'} it ranks #${rank} of ${all.length} Whistler investments, in the ${standing.toLowerCase()}.`}</p> :
+                  <p className="t-body-m-regular" style={{ margin: 0 }}>This program replaces the oldest distribution equipment in Alpine Meadows, protecting ~{CLUSTER.customers.toLocaleString()} customers from outages. Acting before the next tolerance crossing in {s.first ?? '—'} reduces the cluster’s value at stake (${s.now.valueM}M by {END}) and lowers safety and environmental risk. At a BCR of {rec.bcr} it ranks #{rank} of {all.length} Whistler investments, in the {standing.toLowerCase()}.</p>}
                 </div>
                 <div style={{ borderLeft: 'var(--border-widths-border-100) solid var(--border-base)', paddingLeft: 'var(--space-300)' }}>
                   <SubHead>Similar investments by {metric === 'bcr' ? 'BCR' : 'value'}</SubHead>

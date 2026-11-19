@@ -38,12 +38,12 @@ function BuildLibrary({ navBar, ideas, setIdeas, onOpenIdea, onOpenRefine, onNew
           <IFS.Table className="build-ideas" columns={ideaCols} rows={shown} defaultSort={{ key: 'modified', dir: 'desc' }}
             tabs={<SegmentedControl size="s" value={kind} onChange={setKind} options={[{ value: 'all', label: `All ideas ${n.all}` }, { value: 'Project', label: `Project ideas ${n.Project}` }, { value: 'Program', label: `Program ideas ${n.Program}` }]} />}
             search={<IFS.SmartSearch placeholder="Ask anything about idea pad" />}
-            onRowClick={r => r.mine ? onOpenIdea(r) : toast({ title: r.name, description: 'Only the pad-mount idea is shaped in this flow' })} />
+            onRowClick={r => r.mine || canOpenIdea(r.id) ? onOpenIdea(r) : toast({ title: r.name, description: 'Only the first three ideas and the pad-mount idea open in this prototype' })} />
         ) : (
           <IFS.Table columns={invCols} rows={invRows} defaultSort={{ key: 'cost', dir: 'desc' }} rowProps={r => ({ 'data-inv': r.id })}
             tabs={<SegmentedControl size="s" value="all" onChange={() => {}} options={[{ value: 'all', label: `All investments ${invRows.length}` }]} />}
             search={<IFS.SmartSearch placeholder="Ask anything about investments" />}
-            onRowClick={r => r.id === CLUSTER.ideaInvestmentId ? onOpenRefine(r) : toast({ title: r.name, description: 'Opening other investments isn’t part of this flow' })} />
+            onRowClick={r => canOpenInvestment(r.id) ? onOpenRefine(r) : toast({ title: r.name, description: 'Only the first three investments and the pad-mount program open in this prototype' })} />
         )}
       </div>
     </AppShell>

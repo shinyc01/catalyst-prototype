@@ -102,3 +102,74 @@ function readinessEvaluation(notes) {
       { id: 'notes', title: 'Approval notes', count: notes.length, notes },
     ] };
 }
+
+// ---- Cooper's alternatives rule [Confirmed] (Shiny, 2026-11-19): every idea and investment has AT LEAST THREE alternatives.
+// The real CLTDEMO alternatives come first. When a record has fewer than three, Cooper suggests the rest [Added], by a fixed rule [Assumed]:
+//   Phased delivery    = the recommended alternative's scope over two more years: +5% cost, 90% of the value, a quarter of its risk reduction lost.
+//   Defer and monitor  = inspection and maintenance only: 8% of the cost as OPEX over the same years, 10% of the value and of the risk reduction.
+const ALT_MIN = 3;
+const altPlusY = (d, n) => d ? `${+d.slice(0, 4) + n}${d.slice(4)}` : d;
+const altMapV = (o, f) => o ? Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)])) : o;
+const altSpread = (byYear, k) => { const out = {}; Object.entries(byYear || {}).forEach(([y, v]) => { [1, 2].forEach(n => { out[+y + n] = (out[+y + n] || 0) + v * k / 2; }); }); return out; };
+const ALT_SUGGEST = [
+  { name: 'Phased delivery', make: b => ({ spendTotal: b.spendTotal * 1.05, valueTotal: b.valueTotal * 0.9, startDate: altPlusY(b.startDate, 1),
+      firstSpendDate: altPlusY(b.firstSpendDate, 1), lastSpendDate: altPlusY(b.lastSpendDate, 2), spendByYear: altSpread(b.spendByYear, 1.05),
+      spendByAccountByYear: altMapV(b.spendByAccountByYear, o => altSpread(o, 1.05)), keep: 0.75,
+      milestones: (b.milestones || []).map(m => ({ ...m, forecastDate: altPlusY(m.forecastDate, 1) })) }) },
+  { name: 'Defer and monitor', make: b => { const ys = Object.keys(b.spendByYear || {}), per = b.spendTotal * 0.08 / (ys.length || 1), sp = Object.fromEntries(ys.map(y => [y, per]));
+      return { spendTotal: b.spendTotal * 0.08, valueTotal: b.valueTotal * 0.1, startDate: b.startDate, firstSpendDate: b.firstSpendDate, lastSpendDate: b.lastSpendDate,
+        spendByYear: sp, spendByAccountByYear: { OPEX: sp }, keep: 0.1, milestones: [] }; } },
+];
+// Suggested alternatives get ids above 900,000,000 (real alternative ids are far lower), so page links like alt-<id>-cost parse
+function altSuggested(base, s, invId, k) {
+  const x = s.make(base), keep = x.keep;
+  // residual risk: the same baseline, keeping only `keep` of the base alternative's risk reduction (per year, then per measure in proportion)
+  const resid = base.riskBaselineByYear && altMapV(base.riskBaselineByYear, (b, y) => b - keep * (b - ((base.riskResidualByYear || {})[y] || 0)));
+  const ratio = y => ((base.riskResidualByYear || {})[y] ? resid[y] / base.riskResidualByYear[y] : 1);
+  delete x.keep;
+  return { ...base, ...x, id: 9e8 + invId * 10 + k, name: s.name, order: null, isSelected: false, isRecommended: false, added: true,
+    valueByMeasure: (base.valueByMeasure || []).map(m => ({ ...m, value: m.value * (x.valueTotal / (base.valueTotal || 1)) })),
+    riskResidualByYear: resid || base.riskResidualByYear,
+    riskResidualByMeasure: base.riskResidualByMeasure && altMapV(base.riskResidualByMeasure, o => altMapV(o, (v, y) => v * ratio(y))) };
+}
+const altsOfCache = {};
+function altsOf(invId) {
+  if (altsOfCache[invId]) return altsOfCache[invId];
+  const real = WHISTLER_ALTERNATIVES.filter(a => a.investmentId === invId);
+  const base = real.find(a => a.isRecommended) || real.find(a => a.isSelected) || real[0];
+  const out = [...real];
+  ALT_SUGGEST.forEach((s, k) => { if (base && out.length < ALT_MIN && !out.some(a => a.name === s.name)) out.push(altSuggested(base, s, invId, k)); });
+  return (altsOfCache[invId] = out);
+}
+// [Added] one-line descriptions of the real alternative names (the demo data has none) and of Cooper's suggestions
+const ALT_DESC_MORE = {
+  'Refurbish Transformer': 'Overhaul the existing unit (bushings, oil, cooling) to extend its life by about ten years.',
+  'Replace Transformer': 'Replace the unit with a new one of the same rating.',
+  'Upgrade Transformer': 'Replace the unit with a higher-rated one, adding capacity for load growth.',
+  'New CCS Facility': 'Build and run a carbon capture and storage facility at the plant.',
+  'Partner with new technology': 'Co-invest with a technology partner in a shared capture facility.',
+  'Purchase Carbon Credits': 'Meet the emissions target by buying carbon credits each year instead of capturing emissions.',
+  'Recommended': 'Deliver the automation program with the in-house team.',
+  'Third Party Outsource': 'Contract a third party to deliver and run the automation systems.',
+  'Phased delivery': 'Cooper’s suggestion: the recommended scope, delivered over two more years to spread the spend.',
+  'Defer and monitor': 'Cooper’s suggestion: hold the work, inspect and maintain what is there, and revisit it next cycle.',
+};
+const altDesc = name => (typeof ALT_DESC !== 'undefined' && ALT_DESC[name]) || ALT_DESC_MORE[name] || '—';
+
+// ---- Which Build records open (Shiny, 2026-11-19): the first three ideas on the Idea Pad (newest first, its default sort) and the first three
+// investments (highest cost first, its default sort), plus the pad-mount program. The rest still show "not part of this flow".
+const BUILD_OPEN_IDEAS = [...IDEA_SEEDS].sort((a, b) => String(b.modified).localeCompare(String(a.modified))).slice(0, 3).map(r => r.id);
+const BUILD_OPEN_INVESTMENTS = [...WHISTLER_INVESTMENTS].sort((a, b) => b.totalSpend - a.totalSpend).slice(0, 3).map(i => i.id);
+const canOpenIdea = id => id === CLUSTER.ideaInvestmentId || BUILD_OPEN_IDEAS.includes(id);
+const canOpenInvestment = id => id === CLUSTER.ideaInvestmentId || BUILD_OPEN_INVESTMENTS.includes(id);
+// Shape's System confidence for any other idea [Assumed]: the cost range of its alternatives, and a goal without a measure
+function shapeIssuesFor(invId) {
+  if (invId === CLUSTER.ideaInvestmentId) return shapeIssues();
+  const alts = altsOf(invId), lo = Math.min(...alts.map(a => a.spendTotal)), hi = Math.max(...alts.map(a => a.spendTotal));
+  return [
+    { id: 'cost', kind: 'question', gate: 'need', title: 'Cost needs confirmation', description: `The cost range (${fmtMoney(lo)}–${fmtMoney(hi)}) comes from the alternatives’ spend forecasts. Confirm they still hold.`, answer: true, upload: true,
+      solutions: [{ id: 'estimator', title: 'Ask the estimator to confirm the costs', description: `Send the forecasts to ${PEOPLE.NL.name} (capital finance) to confirm.`, recommended: true },
+        { id: 'escalate', title: 'Apply this year’s escalation', description: 'Escalate the forecasts by the planning calendar’s inflation rate.' }] },
+    { id: 'goals', kind: 'warning', gate: 'context', title: 'One goal has no measure yet', description: 'Maintain public & worker safety is aligned, but no safety measure is filled in this draft.', okay: true },
+  ];
+}

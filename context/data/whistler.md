@@ -49,7 +49,8 @@ The inputs are real outlook values. The mapping formulas are `[Assumed]` and liv
 - **Investments:**
   - Catalyst stage badge mapped from the Whistler stage (Initial → Explore, Long Term Planning → Plan, Short Term Planning → Build, Executing → Results);
   - **BCR** = value per $M of spend ÷ 2,000, because Whistler "value" is a framework score, not money;
-  - one-line descriptions for the 3 pad-mount alternatives;
+  - one-line descriptions for the 3 pad-mount alternatives and for the other real alternative names (Refurbish / Replace / Upgrade Transformer, the CCS options, Automation's two) plus Cooper's two suggestions (`ALT_DESC_MORE`);
+  - **alternatives for all 45 investments** are now generated (111 real; detail and risk profiles where the source has them), and Cooper's suggested ones fill each up to three (`altsOf`, 26 `[Added]`);
   - enterprise goals (Figma copy);
   - value-measure → Strategic relevance category mapping.
 

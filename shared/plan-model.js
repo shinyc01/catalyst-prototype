@@ -107,12 +107,12 @@ const PLAN_GROUPS = planGroups();
 // Build → Plan hand-off [Confirmed] (Shiny, 2026-11-19): an investment belongs to a portfolio (the company structure) from the moment it is created,
 // but it joins the planning cycle only once it is approved. The approved Build investment (refine.status 'approved') joins as "New to Scenario",
 // the real group new investments sit in, with its recommended alternative. The optimisation results stay those of the real run [Assumed].
-const planFromBuild = refine => {
-  if (!refine || refine.status !== 'approved') return [];
-  const a = rfAlt(refine.recommended) || RF_ALTS[0];
-  return [{ id: RF_INV.id, code: RF_INV.code, name: RF_INV.name, stage: RF_INV.stage, portfolio: RF_INV.portfolio, planningGroup: 'New to Scenario',
-    alternative: a.name, startDate: a.first, capex: a.cost, value: a.value, fromBuild: true }];
-};
+const planFromBuild = (refine, others = {}) => [[CLUSTER.ideaInvestmentId, refine], ...Object.entries(others || {}).map(([id, r]) => [+id, r])]
+  .filter(([, r]) => r && r.status === 'approved').map(([id, r]) => {
+    const R = rfContext(id), a = R.alt(r.recommended) || R.rec || R.alts[0];
+    return { id: R.inv.id, code: R.inv.code, name: R.inv.name, stage: R.inv.stage, portfolio: R.inv.portfolio, planningGroup: 'New to Scenario',
+      alternative: a.name, startDate: a.first, capex: a.cost, value: a.value, fromBuild: true };
+  });
 
 /* ---------------------------------------------------------------- warnings computed from the scenarios */
 const BASE = PLAN_SCENARIOS.find(s => s.id === PLAN_BASELINE_ID);
