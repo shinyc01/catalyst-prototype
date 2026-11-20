@@ -75,4 +75,6 @@ Answer these with the product designer, then move each answer into the right con
 71. **J15: Cooper's grouping rules.** The programme match (same station, consecutive project numbers, same start month) and the "executive mandate" citation are `[Added]` on real records; the real data has no mandate or programme field. What signals should Cooper use?
 72. **J15: Cooper-built scenarios and Compare.** A new scenario stays a draft in Setup; the optimisation results are the real five scenarios, so Compare doesn't show it. Should Optimize produce (mock) results for it?
 73. **J15: "MID" scenario.** Figma's chat says "Start from MID"; this plan has no MID scenario, so Cooper offers the real Optimized scenario. Which scenario should be the default source?
+74. **J17: re-optimization results.** The prototype shows the real "05_Re-Optimized Plan" (Whistler's re-run with the latest actuals) whatever the Portfolio Owner asks Cooper. Should each request (lower budget, lower risk, more funding) produce its own mock result?
+75. **J17: who is told, and where?** Cooper notifies the owners of moved investments in a Plan notification only. Should Build show the revised schedule per investment ("Cooper revised the schedule")?
 

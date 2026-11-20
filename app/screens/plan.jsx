@@ -55,7 +55,8 @@ const mergeConfidence = (c, g) => {
 };
 
 /* ============================================================ Setup */
-function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup, setSetup, onOptimize, run, onHome }) {
+function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup, setSetup, onOptimize, run, onHome, reopt, setReopt, onReoptCancel, onReoptRun }) {
+  const reMode = reopt && ['building', 'draft'].includes(reopt.status);
   const issues = useMemo(() => planIssues(rows, saved), []);
   const c = useIssueReport({ issues, gates: PLAN_GATES });
   const g = useIssueReport({ issues: useMemo(() => planGroupIssues(saved), []), gates: PLAN_GATES });
@@ -103,7 +104,11 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
   const header = <PageHeader title={PLAN_TITLE} onBack={onHome} onTitleMenu={() => toast({ title: 'Switch plans isn’t part of this flow' })}
     status={<Indicator type="blue">Planning</Indicator>}
     center={<Stepper current={0} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
-    actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
+    actions={reMode ? <div className="row" style={{ gap: 'var(--space-200)' }}>
+      <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+      <Button type="secondary" size="s" onClick={onReoptCancel}>Cancel</Button>
+      <Button type="primary" size="s" disabled={reopt.status !== 'draft'} onClick={onReoptRun} aria-label="Optimize">Optimize</Button>
+    </div> : <div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IB icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
       <Tooltip content={run ? 'Optimization is running' : waiting ? `Waiting for ${waiting} owner fix${waiting > 1 ? 'es' : ''}` : ready ? 'Optimize the scenarios' : 'Resolve System confidence first'} type="bottom">
@@ -120,12 +125,14 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
           <span className="t-heading-h2-medium">Setup</span>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <Tabs value={tab} onChange={setTab} aria-label="Setup" items={[{ value: 'readiness', label: 'Data readiness' }, { value: 'groups', label: 'Planning groups' },
-              { value: 'scenarios', label: 'Scenarios', count: SETUP_SCENARIOS.length + (setup.created || []).length }]} />
+              { value: 'scenarios', label: 'Scenarios', count: reMode ? 1 : SETUP_SCENARIOS.length + (setup.created || []).length }]} />
             {tab === 'scenarios' && <Button type="secondary" size="s" iconLeft="system-plus" onClick={() => setChat(true)}>New scenario</Button>}
           </div>
           {tab === 'readiness' && <Readiness rows={rows} setRows={setRows} filter={filter} setFilter={setFilter} />}
           {tab === 'groups' && <Groups g={g} saved={saved} />}
-          {tab === 'scenarios' && <Scenarios setup={setup} setSetup={setSetup} building={chat && chat.building} />}
+          {tab === 'scenarios' && (reMode ? <Scenarios setup={setup} setSetup={setSetup} only={reopt.status === 'draft' ? [planReoptScenario(reopt)] : []} building={reopt.status === 'building' && planReoptScenario(reopt).name} />
+            : <Scenarios setup={setup} setSetup={setSetup} building={chat && chat.building} />)}
+          {reopt && reopt.status !== 'done' && reopt.status !== 'running' && <ReoptChat reopt={reopt} setReopt={setReopt} />}
           {tab === 'scenarios' && chat && <ScenarioChat chat={chat} setChat={setChat} setSetup={setSetup} />}
         </div>
         <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
@@ -264,8 +271,8 @@ function Groups({ g, saved }) {
 }
 
 /* ------------------------------------------------------------ Setup › Scenarios (restrictions + constraints, editable) */
-function Scenarios({ setup, setSetup, building }) {
-  const made = (setup.created || []).map(planCreatedScenario);
+function Scenarios({ setup, setSetup, building, only }) {
+  const made = only || (setup.created || []).map(planCreatedScenario);
   const [open, setOpen] = useState(made.length ? made[0].id : SETUP_SCENARIOS[0].id);
   useEffect(() => { if (made.length) setOpen(made[0].id); }, [made.length]);
   return (
@@ -278,11 +285,12 @@ function Scenarios({ setup, setSetup, building }) {
         </div>} />
         <IFS.CollaboratorCursor user="cooper" name="Cooper" className="plan-scen-cursor" />
       </NDS>}
-      {made.concat(SETUP_SCENARIOS).map(s => <ScenarioCard key={s.id} s={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} setup={setup} setSetup={setSetup} />)}
+      {(only ? made : made.concat(SETUP_SCENARIOS)).map(s => <ScenarioCard key={s.id} s={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} setup={setup} setSetup={setSetup} />)}
     </div>
   );
 }
 const scenConstraints = (setup, s) => {
+  if (s.adjust) return setup.constraints?.[s.id] || s.adjust(planConstraintsOf(s.from).map(r => ({ ...r, id: `${s.id}-${r.measureId}` })));
   if (s.created) return setup.constraints?.[s.id] || planConstraintsOf(s.from).map(r => r.measureId === 37
     ? { ...r, id: `${s.id}-${r.measureId}`, changed: [s.capYear], years: { ...r.years, [s.capYear]: { ...r.years[s.capYear], max: s.capTo } } } : { ...r, id: `${s.id}-${r.measureId}` });
   let rows = setup.constraints?.[s.id] || planConstraintsOf(s.id);
@@ -306,7 +314,7 @@ function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
           <span className="row" style={{ gap: 'var(--space-200)' }}><span className="t-heading-h4-semibold">{s.name}</span>{s.created && <Indicator type="purple">Draft</Indicator>}</span>
           <span className="t-body-m-regular">{s.desc}</span>
         </div>
-        <Metric label="Budget" value={s.created ? `${s.capYear} cap ${fmtMoney(s.capFrom)} → ${fmtMoney(s.capTo)}` : budget == null ? '—' : `${fmtMoney(budget)} CAPEX`} />
+        <Metric label="Budget" value={s.budgetLabel || (s.created ? `${s.capYear} cap ${fmtMoney(s.capFrom)} → ${fmtMoney(s.capTo)}` : budget == null ? '—' : `${fmtMoney(budget)} CAPEX`)} />
         <Metric label="Resources" value={pm ? `${fmtNum(pm.years[2028].max)} PM hours` : '—'} />
         <Metric label="Enterprise goal" value={rel ? `Reliability risk ≤ ${fmtCompact(rel.years[2028].max)}` : '—'} />
         <IB icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: explain ${s.short}` })} />
@@ -318,6 +326,39 @@ function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
       </div>} />
   );
 }
+/* ------------------------------------------------------------ J17 · Re-optimize a Compare scenario with Cooper (Figma 85:75447) */
+function ReoptChat({ reopt, setReopt }) {
+  const src = SETUP_SCENARIOS.find(x => x.id === reopt.from) || SETUP_SCENARIOS[2];
+  const [input, setInput] = useState('');
+  const ans = reopt.answers || [];
+  const send = text => {
+    if (!text || !text.trim() || reopt.status !== 'chat') return;
+    const t = text.trim(); setInput('');
+    if (!ans.length) { setReopt(r => ({ ...r, answers: [t], kind: reoptKind(t) })); return; }
+    setReopt(r => ({ ...r, answers: [...ans, t], adjust: /adjust/i.test(t), status: 'building' }));            // main moves to Setup › Scenarios
+    setTimeout(() => setReopt(r => r && r.status === 'building' ? { ...r, status: 'draft' } : r), 2600);
+  };
+  const k = REOPT_KINDS[reopt.kind] || REOPT_KINDS.budget;
+  return (
+    <div className="plan-chat">
+      <ChatCompactPanel type="text" title={`Re-optimize · ${src.short}`} newChat={false} inputValue={input} onInputChange={setInput} onSend={() => send(input)}
+        analyzing={reopt.status === 'building'} onStop={() => {}} onClose={() => setReopt(r => r && r.status === 'chat' ? null : { ...r, chatClosed: true })}
+        style={{ height: 'calc(100vh - var(--proto-chat-offset))', maxHeight: 'var(--proto-chat-max-h)' }}>
+        <CooperMessage status="answered" text={`What would you like to change in ${src.short}? Tell me what you want to adjust. I’ll update this scenario’s settings and prepare it for a new optimization run.`}
+          options={!ans.length ? { intro: 'Start with', items: Object.values(REOPT_KINDS).map(x => x.label) } : undefined} onOption={send} />
+        {ans[0] && <UserMessage>{ans[0]}</UserMessage>}
+        {ans[0] && <CooperMessage status="answered" text="I can set up a new scenario, but I need one more decision before I finish the configuration."
+          options={ans.length === 1 ? { title: 'Planning groups and constraints', intro: 'Should a new scenario use the same planning groups and constraints, or should I adjust them?', items: ['Keep them the same', 'Let Cooper adjust them'] } : undefined} onOption={send} />}
+        {ans[1] && <UserMessage>{ans[1]}</UserMessage>}
+        {reopt.status === 'building' && <CooperProgress step={1} total={3} label="Analyzing context…" />}
+        {['draft', 'running', 'done'].includes(reopt.status) && <CooperMessage status="answered" text={`Based on what you asked, I’ve prepared a ${k.what} scenario. Everything is ready — you can now run the optimization.`}
+          followUps={['Show me what changed', Object.values(REOPT_KINDS).find(x => x !== k).label, Object.values(REOPT_KINDS).filter(x => x !== k)[1].label]}
+          onFollowUp={f => toast({ title: 'Cooper', description: /changed/.test(f) ? `${k.budget}; the changed cells are orange in Constraints.` : 'Cancel this draft first to try another change.' })} />}
+      </ChatCompactPanel>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------ Setup › New scenario: Cooper builds it from a conversation (J15, Figma 85:177903) */
 const SC_SOURCE = () => SETUP_SCENARIOS.find(x => x.id === PLAN_NEW_FROM);
 const SC_STEPS = [
@@ -610,7 +651,9 @@ function Notifications({ open, notes, onClose, onOpen }) {
 }
 
 /* ============================================================ Compare (Figma 85:65862; results stream in while optimizing, 85:83784) */
-function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval, onBack, onSetup }) {
+function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval, onBack, onSetup, reopt, setReopt }) {
+  const CARDS = compareScenarios(reopt);
+  const reRunning = reopt && reopt.status === 'running';
   const [tab, setTab] = useState('overview');
   // J18: System confidence (open questions gate Send for approval), Cooper's evaluation and the evidence chain
   const conf = useIssueReport({ issues: useMemo(() => compareIssues(), []) });
@@ -618,11 +661,11 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
   const answered = compareIssues().every(i => { const st = (conf.status || {})[i.id]; return st && (st.applied || st.answer || st.file); });
   const evalId = final || COOPER_PICK;
   const [, tick] = useState(0);
-  useEffect(() => { if (!run) return; const iv = setInterval(() => tick(t => t + 1), 500); return () => clearInterval(iv); }, [run]);
+  useEffect(() => { if (!run && !reRunning) return; const iv = setInterval(() => tick(t => t + 1), 500); return () => clearInterval(iv); }, [run, reRunning]);
   const p = done ? 1 : runProgress(run);
   const others = COMPARE_SCENARIOS.filter(c => !c.baseline);
   const ready = c => c.baseline || done || p >= (others.indexOf(c) + 1) / (others.length + 1);   // "baseline will already be here, rest … get populated as the results come in"
-  const shown = COMPARE_SCENARIOS.filter(ready);
+  const shown = CARDS.filter(ready);
   const pct = (a, b) => `${a >= b ? '+' : ''}${Math.round((a / b - 1) * 100)}%`;
   const sent = stage === 'approval';
   const header = <PageHeader title={PLAN_TITLE} onBack={onBack} status={<Indicator type="blue">Planning</Indicator>}
@@ -638,7 +681,7 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
     return (
       <ContentCard className={`plan-card${isFinal ? ' is-final' : ''}`} cooper={pick} selected={isFinal}
         top={<div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
-          <span className="t-label-l-medium">{c.short}</span>
+          <span className="row" style={{ gap: 'var(--space-200)' }}><span className="t-label-l-medium">{c.short}</span>{c.reopt && <Indicator type="purple">Re-optimized</Indicator>}</span>
           <div className="row" style={{ gap: 'var(--space-200)', alignItems: 'baseline' }}>
             <span className="t-heading-h2-medium">{fmtMoney(c.capex)}</span>
             {c.baseline ? <span className="t-label-m-regular muted">baseline</span>
@@ -646,11 +689,12 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
           </div>
           <div style={{ borderTop: 'var(--border-widths-border-100) solid var(--border-base)' }} />
           <div><Badge size="s" color="black">{c.baseline ? `${PLAN_INVESTMENTS.length} investments` : `${c.onSchedule} of ${PLAN_INVESTMENTS.length} on schedule`}</Badge></div>
-          <span className="t-body-m-regular sec">{c.baseline ? `Value ${fmtCompact(c.value)} · as requested` : `Value ${fmtCompact(c.value)} (${pct(c.value, COMPARE_BASE.value)}) · ${c.deferred} deferred, ${c.altChanged} alternatives changed`}{pick ? ' · Cooper’s pick' : ''}</span>
+          <span className="t-body-m-regular sec">{c.baseline ? `Value ${fmtCompact(c.value)} · as requested` : `Value ${fmtCompact(c.value)} (${pct(c.value, COMPARE_BASE.value)}) · ${c.deferred} deferred, ${c.altChanged} alternatives changed`}{pick ? ' · Cooper’s pick' : ''}{c.reopt ? ` · the real re-run with the latest actuals (asked: ${c.asked})` : ''}</span>
           <StatCard size="s" title="Retained risk (2032)" value={c.risk2032 == null ? '—' : fmtCompact(c.risk2032)} description={c.baseline ? 'aggregate risk' : `${pct(c.risk2032, COMPARE_BASE.risk2032)} vs baseline`} descriptionPosition="inline" />
         </div>}
         bottom={<div className="row" style={{ gap: 'var(--space-200)', width: '100%' }}>
-          {!c.baseline && <IB icon="arrow-refresh" type="tertiary" size="s" label={`Re-optimize ${c.short}`} onClick={() => toast({ title: 'Re-optimize isn’t part of this flow' })} />}
+          {!c.baseline && !c.reopt && <IB icon="arrow-refresh" type="tertiary" size="s" label={`Re-optimize ${c.short}`} disabled={!done || sent || (reopt && reopt.status !== 'done')}
+            onClick={() => setReopt({ from: c.id, status: 'chat', answers: [] })} />}
           <div style={{ flex: 1 }}>
             {isFinal ? <Button type="secondary" size="s" iconLeft="system-check" disabled style={{ width: '100%' }}>Final plan</Button>
               : <Button type="secondary" size="s" disabled={!done || sent} style={{ width: '100%' }} aria-label={`Select ${c.short} as final plan`} onClick={() => onSelect(c.id)}>Select as final plan</Button>}
@@ -675,7 +719,8 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
             <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => setCooperOpen(true)}>Cooper’s evaluation</Button>
           </div>
         </div>
-        <div className="plan-cards">{COMPARE_SCENARIOS.map(c => <Card key={c.id} c={c} />)}</div>
+        <div className="plan-cards">{CARDS.map(c => <Card key={c.id} c={c} />)}
+          {reRunning && <ContentCard className="plan-card" loading title={`${planReoptScenario(reopt).short} · ${Math.round(reoptProgress(reopt) * 100)}%`} />}</div>
         <div><Tabs value={tab} onChange={setTab} aria-label="Compare" items={[{ value: 'overview', label: 'Overview' }, { value: 'measures', label: 'Value measures and constraints' }, { value: 'investments', label: 'Investments' }]} /></div>
         {tab === 'overview' && <div className="col" style={{ gap: 'var(--space-300)' }}>
           <PSec title="Value Comparison">
@@ -700,7 +745,7 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
           return <PSec title="Investments">
             <div className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
               <div className="row" style={{ gap: 'var(--space-300)' }}><span className="t-body-m-regular sec">Baseline</span><span className="t-body-m-regular sec">compared to</span>
-                <div style={{ width: 'var(--proto-picker-w)' }}><Select value={id} onChange={setCmp} options={COMPARE_SCENARIOS.filter(c => !c.baseline).map(c => ({ value: c.id, label: c.short }))} /></div>
+                <div style={{ width: 'var(--proto-picker-w)' }}><Select value={id} onChange={setCmp} options={CARDS.filter(c => !c.baseline).map(c => ({ value: c.id, label: c.short }))} /></div>
                 <span className="t-body-m-regular muted">Derived from the scenario’s totals</span></div>
               <Table rowHeight={48} groupBy="band" defaultCollapsed={['No shift']} rows={rows} columns={[
                 { key: 'name', title: 'Investment', width: '2fr', primary: true, render: r => <span className="col"><span className="t-label-m-medium plan-ellipsis">{r.name}</span><span className="t-body-m-regular muted">{r.code}</span></span> },
@@ -715,6 +760,7 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
             bottom={<div className="ifs-trc-card__issues"><IssueNavigator controller={conf} /></div>} />
         </Panel>
       </div></div>
+      {reopt && reopt.status === 'chat' && <ReoptChat reopt={reopt} setReopt={setReopt} />}
       {cooperOpen && !evid && <div className="rec-evidence"><AgentWindow text={cooperEvaluation(evalId)} onClose={() => setCooperOpen(false)} onAsk={() => {}}
         secondaryAction={{ label: 'Evidence chain', onClick: () => setEvid(true) }} /></div>}
       {evid && <div className="rec-evidence"><IFS.EvidenceChainDrawer open={evid} onOpenChange={setEvid} value={87} rationale={compareEvidence(evalId)} benchmark={{ empty: true }} /></div>}

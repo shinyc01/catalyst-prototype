@@ -15,6 +15,7 @@ Built from the JTBD journey documents, Build and Value first. Live: https://shin
 | 3 | **J25** Execution tracking | — | — | **Skipped** (question 57: no execution data in the records) |
 | 4 | **J21** Approval workflow (Plan) | 014 | [`#plan-approve?persona=portfolio`](https://shinyc01.github.io/catalyst-prototype/#plan-approve?persona=portfolio) | Built |
 | 4 | **J18** Results & scenario comparison | 015 | [`#plan-compare?persona=portfolio&demo=optimized`](https://shinyc01.github.io/catalyst-prototype/#plan-compare?persona=portfolio&demo=optimized) | Built |
+| 5 | **J17** In-cycle re-optimization | 017 | [`#plan-compare?persona=portfolio&demo=reopt`](https://shinyc01.github.io/catalyst-prototype/#plan-compare?persona=portfolio&demo=reopt) | Built 2026-11-20 |
 | 4 | **J15** Planning groups & scenario setup | 016 | [`#plan-groups?persona=portfolio`](https://shinyc01.github.io/catalyst-prototype/#plan-groups?persona=portfolio) | Built 2026-11-20 |
 
 **New personas** (Prototype settings): Ines Calder, CX Consultant (Value) and Noah Lindgren, Estimator / Cost Modeller (also the Finance Lead reviewer in J11). Both `[Added]`: no Figma persona owns them.

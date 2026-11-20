@@ -86,7 +86,7 @@ const PO_DECISIONS = [
   { id: 'cluster', title: `Approve emergency funding · ${CLUSTER.short}`, badge: 'Explore', priority: 'critical', added: daysAgo(0), collaborator: 'HG', open: 'explore',
     description: `${CLUSTER_INV.length} investments on the ${CLUSTER.short} cluster need ${fmtMoney(clusterSpend2028)} in 2028 against a ${fmtMoney(CLUSTER_RESERVE_2028)} reserve.`,
     fvc: `${fmtM(clusterSpend2028)} / ${fmtM(CLUSTER_RESERVE_2028)}`, value: fmtCompact(clusterValue) },
-  { id: 7244, title: `Approve re-optimized plan · ${SC(7244).name}`, badge: 'Plan', priority: 'critical', added: daysAgo(1), collaborator: 'NL',
+  { id: 7244, title: `Approve re-optimized plan · ${SC(7244).name}`, badge: 'Plan', priority: 'critical', added: daysAgo(1), collaborator: 'NL', open: 'reopt',
     description: `${SC(7244).deferredVsRequested} investments deferred and ${SC(7244).advancedVsRequested} brought forward to fit the 2028 CAPEX cap.`,
     fvc: `${fmtM(SC(7244).capex2028)} / ${fmtM(SC(7244).capexMax2028)}`, value: fmtCompact(SC(7244).totalValue) },
   { id: 6924, title: `Review latest actuals · ${SC(6924).name}`, badge: 'Results', priority: 'critical', added: daysAgo(3), collaborator: 'PI',
@@ -108,7 +108,7 @@ const AM_WORKS = [
   { id: 'w-veg', title: 'Vegetation dispatch notes — OHL-14-2379', badge: 'Build', when: 'Nov 10', status: 'Updated', note: `${PEOPLE.TQ.name.split(' ')[0]} attached two field photos to the open span.` },
 ];
 const PO_WORKS = [
-  { id: 'w-reopt', title: 'Re-optimization — CAPEX 2028', badge: 'Build', when: 'Overnight', status: 'Updated', featured: true,
+  { id: 'w-reopt', title: 'Re-optimization — CAPEX 2028', badge: 'Plan', open: 'reopt', when: 'Overnight', status: 'Updated', featured: true,
     note: `Cooper re-ran ${SC(7244).name} with the latest actuals while you were away.` },
   { id: 'w-defer', title: `Deferral review — ${SC(6924).name}`, badge: 'Plan', when: 'Yesterday', status: 'Draft', note: 'Unmatched error you left off – resolve at § b.' },
   { id: 'w-opex', title: 'Constraint check — OPEX 2029', badge: 'Plan', when: 'Nov 10', status: 'Draft', note: 'Unmatched error you left off – resolve at § b.' },

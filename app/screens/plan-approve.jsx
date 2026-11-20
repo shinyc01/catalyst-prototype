@@ -18,7 +18,7 @@ const paApproved = rows => rows.every(r => r.status === 'success');
 const paOpen = (g, gates) => !PA_OPENS_AFTER[g] || paApproved(gates[PA_OPENS_AFTER[g]]);
 
 function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish }) {
-  const c = COMPARE_SCENARIOS.find(x => x.id === final) || COMPARE_SCENARIOS[1];
+  const c = compareScenarios().find(x => x.id === final) || COMPARE_SCENARIOS[1];
   const [open, setOpen] = useState({ executive: true });
   const [pub, setPub] = useState(false);
   const all = PA_GATES.every(g => paApproved(gates[g.id]));

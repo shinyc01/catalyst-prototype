@@ -78,7 +78,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
       menu={opts.archived ? [{ label: 'Remind me later', icon: 'system-clock-time', onClick: () => { unhide(d); hide(d, 'snoozed'); } }, { label: 'Unarchive', icon: 'chat-archive', onClick: () => unhide(d) }]
         : [{ label: 'Remind me later', icon: 'system-clock-time', onClick: () => hide(d, 'snoozed') }, { label: 'Archive', icon: 'chat-archive', onClick: () => hide(d, 'archived') }]}>
       <HomeRowCard type={i === 0 && !opts.archived ? 'primary' : 'secondary'} rank={opts.archived ? undefined : i + 1} title={d.title} badge={d.badge}
-        description={<Trunc text={d.description} />} metrics={metricsOf(d)} onOpen={() => onOpen(d)}
+        data-card={d.id} description={<Trunc text={d.description} />} metrics={metricsOf(d)} onOpen={() => onOpen(d)}
         media={i === 0 && !opts.archived && d.id === 'cluster' ? mapMedia : undefined} />
     </RowShell>
   );

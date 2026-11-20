@@ -198,13 +198,14 @@ const OWNER_FIX_MS = 6000;                                         // how long a
 
 /* ---------------------------------------------------------------- Compare (results of the run) */
 // Cards: the Baseline (what was requested) plus the five optimised scenarios, with their REAL results.
-const COMPARE_SCENARIOS = [PLAN_BASELINE_ID, ...SETUP_SCENARIOS.map(s => s.id)].map(id => {
+const compareRow = (id, extra = {}) => {
   const s = PLAN_SCENARIOS.find(x => x.id === id), setup = SETUP_SCENARIOS.find(x => x.id === id);
   const risk = s.outcomes.find(o => o.measureId === 21), last = PLAN_YEARS.indexOf(2032);
   return { id, name: s.name, short: setup ? setup.short : 'Baseline', baseline: id === PLAN_BASELINE_ID, capex: s.capexTotal, value: s.totalValue,
     onSchedule: PLAN_INVESTMENTS.length - s.deferredVsRequested, deferred: s.deferredVsRequested, advanced: s.advancedVsRequested,
-    altChanged: s.alternativeChangedVsRequested, risk2032: risk ? risk.byYear[last] : null };
-});
+    altChanged: s.alternativeChangedVsRequested, risk2032: risk ? risk.byYear[last] : null, ...extra };
+};
+const COMPARE_SCENARIOS = [PLAN_BASELINE_ID, ...SETUP_SCENARIOS.map(s => s.id)].map(id => compareRow(id));
 const COMPARE_BASE = COMPARE_SCENARIOS[0];
 // Cooper's pick [Assumed]: the most value per dollar of CAPEX among the optimised scenarios
 const COOPER_PICK = COMPARE_SCENARIOS.filter(c => !c.baseline).reduce((b, c) => (c.value / c.capex > b.value / b.capex ? c : b)).id;
@@ -220,11 +221,11 @@ const compareIssues = () => [
 ];
 // Cooper's evaluation of a scenario (Figma compare §5.3), from the real records
 function cooperEvaluation(id) {
-  const c = COMPARE_SCENARIOS.find(x => x.id === id) || COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK), b = COMPARE_BASE;
+  const c = compareScenarios().find(x => x.id === id) || COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK), b = COMPARE_BASE;
   const d = (x, y) => `${x >= y ? '+' : '−'}${Math.abs(Math.round((x / y - 1) * 100))}%`;
-  return `${c.short} gives the most value per dollar of the optimized scenarios: ${fmtCompact(c.value)} of value (${d(c.value, b.value)} vs the requested plan) for ${fmtMoney(c.capex)} of CAPEX (${d(c.capex, b.capex)}). It keeps ${c.onSchedule} of ${PLAN_INVESTMENTS.length} investments on schedule and defers ${c.deferred}. The trade-off: retained risk in 2032 is ${c.risk2032 == null ? 'not reported' : `${fmtCompact(c.risk2032)} (${d(c.risk2032, b.risk2032)})`}.`;
+  return c.reopt ? `${c.short} is the re-run with the latest actuals: ${fmtCompact(c.value)} of value (${d(c.value, b.value)} vs the requested plan) for ${fmtMoney(c.capex)} of CAPEX (${d(c.capex, b.capex)}). It defers ${c.deferred} investments and brings ${c.advanced} forward; ${c.altChanged} change alternative. Retained risk in 2032 is ${c.risk2032 == null ? 'not reported' : fmtCompact(c.risk2032)}.` : `${c.short} gives the most value per dollar of the optimized scenarios: ${fmtCompact(c.value)} of value (${d(c.value, b.value)} vs the requested plan) for ${fmtMoney(c.capex)} of CAPEX (${d(c.capex, b.capex)}). It keeps ${c.onSchedule} of ${PLAN_INVESTMENTS.length} investments on schedule and defers ${c.deferred}. The trade-off: retained risk in 2032 is ${c.risk2032 == null ? 'not reported' : `${fmtCompact(c.risk2032)} (${d(c.risk2032, b.risk2032)})`}.`;
 }
-const compareEvidence = id => { const c = COMPARE_SCENARIOS.find(x => x.id === id) || COMPARE_SCENARIOS[1];
+const compareEvidence = id => { const c = compareScenarios().find(x => x.id === id) || COMPARE_SCENARIOS[1];
   return [
     { title: 'Scenario setup', items: [{ type: 'file', title: 'Budget range tested', content: 'quote', children: `${COMPARE_SCENARIOS.length - 1} scenarios were created around the ${fmtMoney(COMPARE_BASE.capex)} requested plan to test lower and higher funding levels.` },
       { type: 'file', title: 'Same optimization scope', content: 'quote', children: `All scenarios use the same ${PLAN_INVESTMENTS.length} investments, planning groups and horizon, so the comparison is consistent.` }] },
@@ -232,7 +233,7 @@ const compareEvidence = id => { const c = COMPARE_SCENARIOS.find(x => x.id === i
   ]; };
 // Investments tab [Added]: per-investment changes derived from the real per-scenario counts (deferred, advanced, alternative changed)
 function scenarioChanges(id) {
-  const c = COMPARE_SCENARIOS.find(x => x.id === id); if (!c || c.baseline) return [];
+  const c = compareScenarios().find(x => x.id === id); if (!c || c.baseline) return [];
   const order = [...PLAN_INVESTMENTS].sort((a, b) => ((a.id * 2654435761) % 997) - ((b.id * 2654435761) % 997));
   return order.map((inv, k) => {
     const kind = k < c.deferred ? 'deferred' : k < c.deferred + (c.advanced || 0) ? 'advanced' : k < c.deferred + (c.advanced || 0) + c.altChanged ? 'alt' : 'none';
@@ -241,3 +242,27 @@ function scenarioChanges(id) {
     return { id: inv.id, name: inv.name, code: inv.code, alternative: inv.alternative, start: inv.startDate, months, kind, band, capex: inv.capex };
   });
 }
+
+/* ---------------------------------------------------------------- J17 · in-cycle re-optimization */
+// [Assumed] Cooper sets up a re-optimization of one Compare scenario from a short chat (Figma 85:75447). Whatever is asked, the result
+// shown is the REAL "05_Re-Optimized Plan" (7244): Whistler's re-run with the latest actuals (open question 74). The setup change per answer is [Added].
+const PLAN_REOPT_ID = 7244;
+const REOPT_SECONDS = 10;                                          // demo length of a re-optimization run [Assumed]
+const scaleMax = (rows, measureId, f) => rows.map(r => r.measureId !== measureId ? r : { ...r, changed: SETUP_YEARS.filter(y => r.years[y].max != null),
+  years: Object.fromEntries(SETUP_YEARS.map(y => [y, { ...r.years[y], max: r.years[y].max == null ? null : Math.round(r.years[y].max * f) }])) });
+const REOPT_KINDS = {
+  risk: { label: 'Reduce retained risk', name: s => `${s} · lower risk`, what: 'lower-risk', budget: 'Aggregate risk caps −10%', adjust: rows => scaleMax(rows, 21, 0.9) },
+  budget: { label: 'Test a 5% lower budget', name: s => `${s} −5% budget`, what: 'lower-budget', budget: 'CAPEX caps −5%', adjust: rows => scaleMax(rows, 37, 0.95) },
+  more: { label: 'See what more funding could unlock', name: s => `${s} +5% budget`, what: 'higher-budget', budget: 'CAPEX caps +5%', adjust: rows => scaleMax(rows, 37, 1.05) },
+};
+const reoptKind = text => /risk/i.test(text || '') ? 'risk' : /more|unlock|\+|higher|increase/i.test(text || '') ? 'more' : 'budget';
+function planReoptScenario(ro) {
+  const src = SETUP_SCENARIOS.find(x => x.id === ro.from) || SETUP_SCENARIOS[2], k = REOPT_KINDS[ro.kind] || REOPT_KINDS.budget;
+  return { id: 'reopt', created: true, reopt: true, from: src.id, short: k.name(src.short), name: k.name(src.short), budgetLabel: k.budget, adjust: k.adjust, maxShift: 3,
+    desc: `Re-optimizes ${src.short} with the latest actuals: ${k.budget.replace('−', 'down ').replace('+', 'up ')}; ${ro.adjust ? 'Cooper adjusts planning groups and the other constraints' : 'planning groups and the other constraints stay the same'}. Executing investments keep their schedule.` };
+}
+const reoptProgress = ro => ro && ro.startedAt ? Math.min(1, (Date.now() - ro.startedAt) / (REOPT_SECONDS * 1000)) : 0;
+// The Compare cards: the five real scenarios + the re-optimized one once its run is done
+const compareScenarios = (ro = (typeof Store !== 'undefined' ? Store.get('plan.reopt', null) : null)) =>
+  ro && ro.status === 'done' ? COMPARE_SCENARIOS.concat(compareRow(PLAN_REOPT_ID, { short: `${(SETUP_SCENARIOS.find(x => x.id === ro.from) || SETUP_SCENARIOS[2]).short} re-optimized`, reopt: true, asked: planReoptScenario(ro).budgetLabel })) : COMPARE_SCENARIOS;
+
