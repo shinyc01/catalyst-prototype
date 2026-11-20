@@ -266,3 +266,21 @@ const reoptProgress = ro => ro && ro.startedAt ? Math.min(1, (Date.now() - ro.st
 const compareScenarios = (ro = (typeof Store !== 'undefined' ? Store.get('plan.reopt', null) : null)) =>
   ro && ro.status === 'done' ? COMPARE_SCENARIOS.concat(compareRow(PLAN_REOPT_ID, { short: `${(SETUP_SCENARIOS.find(x => x.id === ro.from) || SETUP_SCENARIOS[2]).short} re-optimized`, reopt: true, asked: planReoptScenario(ro).budgetLabel })) : COMPARE_SCENARIOS;
 
+/* ---------------------------------------------------------------- J20 / J22 · Cooper's answers on Plan home and Approve [Assumed] */
+// Built from the real scenario results; peer data isn't in the demo set, so "Compare to peer" says so and compares within the plan.
+function planCooperAnswer(kind, { final, gates } = {}) {
+  const all = compareScenarios(), opt = all.filter(c => !c.baseline), b = COMPARE_BASE;
+  const c = all.find(x => x.id === final) || all.find(x => x.id === COOPER_PICK);
+  const d = (x, y) => `${x >= y ? '+' : '−'}${Math.abs(Math.round((x / y - 1) * 100))}%`;
+  const safest = opt.filter(x => x.risk2032 != null).reduce((m, x) => (x.risk2032 < m.risk2032 ? x : m));
+  const rank = [...opt].sort((x, y) => (x.risk2032 ?? Infinity) - (y.risk2032 ?? Infinity)).findIndex(x => x.id === c.id) + 1;
+  if (kind === 'strategy') return `Mostly on track. ${c.short}${final ? ' (the final plan)' : ' (Cooper’s pick)'} delivers ${fmtCompact(c.value)} of value, ${d(c.value, b.value)} against the requested plan, for ${d(c.capex, b.capex)} CAPEX. Retained risk in 2032 is ${fmtCompact(c.risk2032)} (${d(c.risk2032, b.risk2032)}). The gap: ${c.deferred} investments are deferred, so their objectives are served later than requested.`;
+  if (kind === 'attention') {
+    const g = gates ? ['executive', 'technical', 'financial'].filter(k => (gates[k] || []).every(r => r.status === 'success')).length : 0;
+    return final ? `The final plan is ${c.short}. ${gates ? `${g} of 3 approval gates have passed.` : ''} ${c.deferred} deferred investments are worth a look before the Executive gate: ${c.altChanged} also change alternative.`
+      : `No final plan is chosen yet. Compare the optimized scenarios: ${COMPARE_SCENARIOS.find(x => x.id === COOPER_PICK).short} gives the most value per dollar, ${safest.short} retains the least risk.`;
+  }
+  if (kind === 'peer') return `I don’t have peer utilities’ plans in this data set, so here is ${c.short} against this plan’s own scenarios: its retained risk ranks ${rank} of ${opt.length} (lowest is ${safest.short}, ${fmtCompact(safest.risk2032)}), and it funds ${c.onSchedule} of ${PLAN_INVESTMENTS.length} investments on schedule.`;
+  return `Best practice is to fund the lowest retained risk your budget allows. ${safest.short} retains ${fmtCompact(safest.risk2032)} in 2032 for ${fmtMoney(safest.capex)}; ${c.short} retains ${fmtCompact(c.risk2032)} for ${fmtMoney(c.capex)} (${d(c.capex, safest.capex)} CAPEX).`;
+}
+

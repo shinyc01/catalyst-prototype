@@ -17,7 +17,17 @@ const PA_SLOW = { TM: true, TQ: true, LF: true };
 const paApproved = rows => rows.every(r => r.status === 'success');
 const paOpen = (g, gates) => !PA_OPENS_AFTER[g] || paApproved(gates[PA_OPENS_AFTER[g]]);
 
-function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish }) {
+function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish, persona, onCompare, onDecided }) {
+  // J22: a signed-in reviewer (the CFO, or the Director of Capital Planning) decides in place
+  const me = (PERSONAS[persona] || {}).initials, myGate = PA_GATES.find(g => (gates[g.id] || []).some(r => r.id === me));
+  const myRow = myGate && gates[myGate.id].find(r => r.id === me);
+  const [decide, setDecide] = useState(null), [note, setNote] = useState(''), [answer, setAnswer] = useState(null);
+  const decideNow = () => {
+    const k = decide, n = note.trim(); setDecide(null); setNote('');
+    setGates(gs => ({ ...gs, [myGate.id]: gs[myGate.id].map(r => r.id === me ? { ...r, status: k === 'approve' ? 'success' : 'revisions', comment: n || r.comment } : r) }));
+    toast({ title: k === 'approve' ? 'You approved the plan' : 'You requested changes', description: n ? `Comment: “${n}”` : `${myGate.label} gate` });
+    onDecided && onDecided(k, n);
+  };
   const c = compareScenarios().find(x => x.id === final) || COMPARE_SCENARIOS[1];
   const [open, setOpen] = useState({ executive: true });
   const [pub, setPub] = useState(false);
@@ -38,12 +48,17 @@ function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish 
   const header = <PageHeader title={PLAN_PORTFOLIO.name} id={PLAN_CYCLE} onBack={onBack} status={<Indicator type="blue">Planning</Indicator>}
     center={<Stepper current={all ? 3 : 2} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
     actions={<div className="row" style={{ gap: 'var(--space-200)' }}><Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+      {myRow && paOpen(myGate.id, gates) && (myRow.status === 'awaiting'
+        ? <SplitButton size="s" onClick={() => setDecide('approve')} menuLabel="More decisions" items={[{ label: 'Approve', description: 'Approve the plan at this gate.', onClick: () => setDecide('approve') },
+            { label: 'Request changes', description: 'Send it back with what needs to change.', onClick: () => setDecide('request') }]}>Decide</SplitButton>
+        : <Button type="secondary" size="s" iconLeft={myRow.status === 'success' ? 'system-check' : undefined} disabled>{myRow.status === 'success' ? 'Approved' : 'Changes requested'}</Button>)}
       <Button type="primary" size="s" disabled={!all || stage === 'published'} onClick={() => setPub(true)}>{stage === 'scheduled' ? 'Re-schedule' : stage === 'published' ? 'Published' : 'Publish'}</Button></div>} />;
   return (
-    <AppShell navBar={navBar} header={header} bottom={<BottomSheet prompts={['Compare to peer', 'Compare to best practice']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
+    <AppShell navBar={navBar} header={header} bottom={<BottomSheet prompts={['Compare to peer', 'Compare to best practice']} onPrompt={p => setAnswer(planCooperAnswer(/peer/.test(p) ? 'peer' : 'best', { final }))} />}>
       <div className="page">
         <div className="col" style={{ gap: 'var(--space-100)' }}>
-          <div className="row" style={{ gap: 'var(--space-200)' }}><span className="t-heading-h2-medium">Approval</span><Badge size="s" color="white">{c.short}</Badge></div>
+          <div className="row" style={{ gap: 'var(--space-200)' }}><span className="t-heading-h2-medium">Approval</span><Badge size="s" color="white">{c.short}</Badge>
+            <span style={{ flex: 1 }} />{onCompare && <Button type="tertiary" size="s" iconLeft="compare" onClick={onCompare}>Open the comparison</Button>}</div>
           <span className="t-body-m-regular sec">Reviewers and approvers are preconfigured by your administrator based on your role and plan type.</span>
         </div>
         <div className="ifs-grid">{[['Cost', fmtMoney(c.capex), `${c.name}`], ['Retained risk (2032)', c.risk2032 == null ? '—' : fmtCompact(c.risk2032), 'aggregate risk'], ['Investments funded', String(c.onSchedule), `of ${PLAN_INVESTMENTS.length} · ${c.deferred} deferred`]]
@@ -59,11 +74,18 @@ function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish 
               {avail && (ok ? <Indicator type="green">Approved</Indicator> : <span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type="orange">Under review</Indicator><IFS.Counter>{`${rows.filter(r => r.status === 'success').length}/${rows.length}`}</IFS.Counter></span>)}
               {!avail && <span className="t-body-m-regular muted">Opens when Executive is approved</span>}
             </button>
-            {isOpen && <IFS.ApprovalChainTable view="full" details currentUserId="OF" ownerId="OF" onChange={a => setGates(gs => ({ ...gs, [g.id]: a.map(x => { const r = { ...x }; delete r.action; return r; }) }))}
+            {isOpen && <IFS.ApprovalChainTable view="full" details currentUserId={me || 'OF'} ownerId="OF" onChange={a => setGates(gs => ({ ...gs, [g.id]: a.map(x => { const r = { ...x }; delete r.action; return r; }) }))}
               approvers={rows.map(r => g.id === 'executive' && r.id === 'TQ' && r.status !== 'success' ? { ...r, action: { label: 'Change reviewer', icon: 'users-group', onClick: () => change(g.id, r) } } : r)}
               onPush={a => push(g.id, a)} />}
           </div>; })}</div>} />
       </div>
+      {answer && <div className="rec-evidence"><AgentWindow text={answer} onClose={() => setAnswer(null)} onAsk={() => {}} /></div>}
+      <Modal open={decide !== null} onOpenChange={o => !o && setDecide(null)} title={decide === 'approve' ? 'Approve the plan' : 'Request changes'} width="var(--overlay-width-m)"
+        secondaryAction={{ label: 'Cancel', onClick: () => setDecide(null) }}
+        primaryAction={{ label: decide === 'approve' ? 'Approve' : 'Request changes', disabled: decide === 'request' && !note.trim(), onClick: decideNow }}>
+        <IFS.TextArea size="l" label="Comment" placeholder={decide === 'approve' ? 'Optional. Everyone in the approval chain sees it.' : 'Required: what needs to change?'} value={note}
+          onChange={e => setNote(e && e.target ? e.target.value : e)} />
+      </Modal>
       <PaPublish open={pub} onClose={() => setPub(false)} onDone={(kind, when) => { setPub(false); if (kind === 'schedule') setGates(gs => ({ ...gs, scheduledAt: when })); onPublish(kind === 'schedule' ? 'scheduled' : 'published', when); }} />
     </AppShell>
   );

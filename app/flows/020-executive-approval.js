@@ -1,0 +1,26 @@
+(window.FLOWS = window.FLOWS || []).push({
+  id: 'executive-approval',
+  title: 'J22 · Plan · Executive review and approval',
+  summary: 'The CFO opens the plan waiting at the Executive gate from Command, reviews cost, retained risk and funded investments, pressure-tests it with Cooper and the comparison, and approves with a comment.',
+  persona: 'cfo',
+  added: '2026-11-20', addedBy: 'Shiny',
+  sources: [
+    { label: 'Journey J22 (CFO / VP Planning) — saved verbatim', url: 'context/flows/executive-approval.md' },
+    { label: 'Figma · Approve — Executive gate', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=84-108440' },
+    { label: 'Figma · Compare — Scenario comparison', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=85-55947' },
+  ],
+  steps: [
+    { hash: '#command?persona=cfo&demo=approval', target: '[data-card="approve-plan"]', title: 'A decision awaits',
+      body: 'Theo Marsh, CFO, sees the capital plan waiting at the Executive gate at the top of Command. Open it.' },
+    { target: '.page .ifs-grid', advance: 'next', title: 'The decision in one view',
+      body: 'Cost, retained risk and investments funded and deferred, from the chosen scenario’s real results.' },
+    { target: { text: 'Compare to peer' }, title: 'Pressure-test it', body: 'Ask Cooper to compare.' },
+    { target: '.rec-evidence', advance: 'next', title: 'Cooper’s answer',
+      body: 'Peer data isn’t in this data set, so Cooper says so and compares with the plan’s own scenarios.' },
+    { target: { text: 'Open the comparison' }, title: 'Evidence on demand', body: 'Retained risk per scenario, on Compare.' },
+    { hash: '#plan-approve?persona=cfo', target: { text: 'Decide' }, title: 'Decide', body: 'Approve, or request changes with a comment.' },
+    { target: '.ifs-modal', advance: 'next', title: 'Add a comment', body: 'Optional for an approval, required for a change request. Everyone in the chain sees it.' },
+    { target: '.ifs-modal [aria-label="Approve"], .ifs-modal .ifs-button--primary', title: 'Approve', body: 'Your row turns Approved and the gate count advances.' },
+    { target: '[data-gate="executive"]', advance: 'next', title: 'Recorded', body: 'The Executive gate shows your decision; the other reviewers follow.' },
+  ],
+});

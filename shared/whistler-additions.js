@@ -10,6 +10,8 @@ const PERSONAS = {
   asset:     { key: 'asset',     role: 'Asset Manager',    id: 'mdelgado',   name: 'Mara Delgado', first: 'Mara', initials: 'MD', title: 'Asset Manager, Alpine Meadows & Nesters',  why: 'manager on 27 Whistler investments, incl. Alpine Meadows Station, Pine Ridge and Nester' },
   portfolio: { key: 'portfolio', role: 'Portfolio Owner',  id: 'ofitch', name: 'Owen Fitch',  first: 'Owen',    initials: 'OF', title: 'Portfolio Owner, Electrical',              why: 'Whistler administrator; owns the Electrical portfolio [Added role]' },
   estimator: { key: 'estimator', role: 'Estimator / Cost Modeller', id: 'nlindgren', name: 'Noah Lindgren', first: 'Noah', initials: 'NL', title: 'Estimator / Cost Modeller, Capital Finance', why: '[Added] J10: the estimator is served through collaboration requests (Command v2 §3); no Figma persona' },
+  cpm: { key: 'cpm', role: 'Capital Planning Manager', id: 'kmori', name: 'Kenji Mori', first: 'Kenji', initials: 'KM', title: 'Director of Capital Planning', why: '[Added] J20 / J23: no Figma persona; the Director of Capital Planning reviews in the Executive gate (J21)' },
+  cfo: { key: 'cfo', role: 'CFO / VP Planning', id: 'tmarsh', name: 'Theo Marsh', first: 'Theo', initials: 'TM', title: 'Chief Financial Officer', why: '[Added] J22: the CFO approves in the Executive gate (J21); no Figma persona section' },
   consultant: { key: 'consultant', role: 'CX Consultant', id: 'icalder', name: 'Ines Calder', first: 'Ines', initials: 'IC', title: 'CX Consultant, value frameworks', why: '[Added] J12–J14: no Figma persona owns Value; the journeys name a CX Consultant' },
 };
 // The Explore → Build flow is the Investment Owner's journey

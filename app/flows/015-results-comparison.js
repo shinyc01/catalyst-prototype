@@ -10,7 +10,7 @@
     { label: 'Figma · Compare — Evidence chain', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=85-58438' },
   ],
   steps: [
-    { hash: '#plan-compare?persona=portfolio&demo=optimized', target: '.plan-cards', advance: 'next', title: 'See the scenarios side by side',
+    { hash: '#plan-compare?persona=portfolio&demo=results', target: '.plan-cards', advance: 'next', title: 'See the scenarios side by side',
       body: 'The requested plan and the optimized scenarios: CAPEX, investments on schedule, value and retained risk, all from the real Demo Portfolio runs.' },
     { target: { text: 'Cooper’s evaluation' }, title: 'Get the expert read', body: 'Cooper says which scenario it would pick and why.' },
     { target: { text: 'Evidence chain', exact: true }, title: 'Check the reasoning', body: 'The evidence behind the evaluation, and how strong it is.' },

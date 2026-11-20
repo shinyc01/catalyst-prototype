@@ -78,4 +78,6 @@ Answer these with the product designer, then move each answer into the right con
 74. **J17: re-optimization results.** The prototype shows the real "05_Re-Optimized Plan" (Whistler's re-run with the latest actuals) whatever the Portfolio Owner asks Cooper. Should each request (lower budget, lower risk, more funding) produce its own mock result?
 75. **J17: who is told, and where?** Cooper notifies the owners of moved investments in a Plan notification only. Should Build show the revised schedule per investment ("Cooper revised the schedule")?
 76. **J19 / Results: living dashboards and the Result Pack** have no Figma (Results has no handover). The J19 tour hands over through Send for approval, as today's designs do. Is a separate recommendation package still needed? When will Results be designed?
+77. **J22: reviewer actions on Approve.** Figma shows only statuses; the prototype gives a signed-in reviewer Decide → Approve / Request changes with a comment (as Build's reviewer). Is that the intended control? Who can override, and what does Request changes do to the plan?
+78. **J20 / J22: Cooper's answers on Plan home and Approve** are built from the real results with `[Assumed]` wording; "Compare to peer" has no peer data in the demo set. What should Cooper compare against?
 

@@ -11,7 +11,7 @@
     { label: 'Figma · Approved — Publish / Schedule', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=84-108890' },
   ],
   steps: [
-    { hash: '#plan-approve?persona=portfolio', target: '.page', advance: 'next', title: 'See where approval stands',
+    { hash: '#plan-approve?persona=portfolio&demo=approval', target: '.page', advance: 'next', title: 'See where approval stands',
       body: 'The chosen scenario’s cost, retained risk and funded investments, then the three gates. Executive opens first; the others are locked until it approves.' },
     { target: '[aria-label^="Push Theo"]', title: 'Chase a slow approver',
       body: 'Theo Marsh (CFO) hasn’t answered. Push him a reminder: once every 24 hours.' },

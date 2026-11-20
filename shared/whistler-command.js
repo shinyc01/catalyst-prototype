@@ -42,8 +42,8 @@ function ageVsLife(kind) {
 /* ---------- people: real Whistler users + [Added] collaborators ---------- */
 const PEOPLE = {
   RB: { name: 'Ravi Banerjee', initials: 'RB', type: 'blue', role: 'Investment Owner, Transmission' },
-  KM: { name: 'Kenji Mori', initials: 'KM', type: 'yellow', role: 'Product Lead' },
-  TM: { name: 'Theo Marsh', initials: 'TM', type: 'light-blue', role: 'Product Lead' },
+  KM: { name: 'Kenji Mori', initials: 'KM', type: 'yellow', role: 'Director of Capital Planning' },
+  TM: { name: 'Theo Marsh', initials: 'TM', type: 'light-blue', role: 'CFO' },
   PI: { name: 'Priyanka Iyer', initials: 'PI', type: 'dark-pink', role: 'Data Engineer' },
   LF: { name: 'Luca Ferri', initials: 'LF', type: 'green', role: 'Field supervisor' },
   NL: { name: 'Noah Lindgren', initials: 'NL', type: 'purple', role: 'Capital Finance Analyst' },
@@ -166,8 +166,16 @@ const BASE_EVENTS = [
   { date: '2026-11-26', type: 'private', time: '16:00', lasts: '1 day', by: 'HG' },
 ];
 
+// J22 [Added]: the CFO's decision queue starts with the plan waiting at the Executive gate; the rest is the Portfolio Owner's portfolio view
+const CFO_DECISIONS = [
+  { id: 'approve-plan', title: 'Approve the capital plan · 2028 Plan', badge: 'Plan', priority: 'critical', added: daysAgo(0), collaborator: 'OF', open: 'approve',
+    description: `${PERSONAS.portfolio.name} sent the 2028 Plan for approval. The Executive gate waits for your decision.`,
+    fvc: `${fmtM(SC(6864).capex2028)} / ${fmtM(SC(6864).capexMax2028)}`, value: fmtCompact(SC(6864).totalValue) },
+].concat(PO_DECISIONS.filter(d => d.id !== 'cluster'));
 const COMMAND = {
   owner: { decisions: OWNER_DECISIONS, works: OWNER_WORKS, convos: OWNER_CONVOS, following: OWNER_FOLLOWING, metrics: 'cpv', followTitle: 'Projects I follow' },
   asset: { decisions: AM_DECISIONS, works: AM_WORKS, convos: AM_CONVOS, following: AM_FOLLOWING, metrics: 'hi', followTitle: 'Projects I follow' },
   portfolio: { decisions: PO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed works' },
+  cfo: { decisions: CFO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed works' },
+  cpm: { decisions: PO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed works' },
 };
