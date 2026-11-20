@@ -45,3 +45,13 @@ About 24 s: readiness check to 30%, solving to 85%, validating to 100%. Results 
 ## Investments from Build [Confirmed]
 
 Created investments live in a portfolio but are not in a plan. Only an investment approved in Build joins the plan: `planFromBuild(refine)` adds the approved Build investment to **New to Scenario** (counts and lists in Setup › Planning groups and each scenario's Investment Groups). The optimisation results and scenario totals stay those of the real run `[Assumed]`, so it is not yet in Compare or Approve figures.
+
+## Planning groups (J15) `[Added]` / `[Assumed]`
+- Groups are the real Requested-scenario groups (Under Consideration 178 · New to Scenario 34 (+ Build approvals) · Required by Management 8 · Executing 72 · Blankets 4). Under Consideration and New to Scenario are open to the optimizer.
+- Cooper's questions (`PLAN_GROUP_ISSUES` in `shared/plan-model.js`): the Neptune Station programme (137729, 137730, 137731) and the SCADA mandate pair (137611, 137781). The rules that found them are `[Assumed]` (open question 71).
+- What an answer does is derived from the saved System confidence state (`planGrouping`): Create a group → a new group "Neptune Station capacity programme" (not adjustable: funded together, forced in); Move → Required by Management; Leave → nothing. Undo or Delete restores. A rename is stored in `plan.groupNames`.
+- Every screen reads groups through `planGroups(extra)` / `planInvestmentsWith(extra)`, so Setup's chart, list and the Scenarios tab's investment groups agree.
+
+## Cooper-built scenarios (J15) `[Added]`
+- `planCreatedScenario(spec)`: copies the real Optimized scenario's constraints and changes the 2029 CAPEX cap: cut 10% ($437.8M → $394.0M), hold flat at 2028's cap, or grow 5%. Max date shift is 3 years (or 2 if Owen says no). Stored in `plan.setup.created`.
+- It is a draft in Setup only; the run and Compare keep the five real scenarios (open question 72).

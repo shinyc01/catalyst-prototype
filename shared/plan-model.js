@@ -101,9 +101,49 @@ const planOutcome = (sid, measureId) => (PLAN_SCENARIOS.find(x => x.id === sid).
 // [Added] restriction defaults per scenario (the source holds no optimizer settings)
 const SETUP_RESTRICTIONS = { altChanges: true, interpolate: false, shiftDates: true, maxShift: 3, granularity: 'Years' };
 // Planning groups: the real groups of the Requested scenario, and which are open to the optimizer by default [Added]
-const planGroups = (extra = []) => ['Under Consideration', 'New to Scenario', 'Required by Management', 'Executing', 'Blankets']
-  .map(g => ({ id: g, label: g, count: PLAN_INVESTMENTS.concat(extra).filter(i => i.planningGroup === g).length, adjustable: ['Under Consideration', 'New to Scenario'].includes(g) }));
-const PLAN_GROUPS = planGroups();
+const PLAN_BASE_GROUPS = ['Under Consideration', 'New to Scenario', 'Required by Management', 'Executing', 'Blankets'];
+const PLAN_ADJUSTABLE = ['Under Consideration', 'New to Scenario'];
+const PLAN_GROUP_INFO = {                                            // [Figma] 85:159619 text for Required by management; the others [Added]
+  'Under Consideration': { desc: 'Competing for funding. The optimizer may fund, defer or drop each one.', principles: ['No mandate record', 'Has an estimate basis', 'Not yet executing'] },
+  'New to Scenario': { desc: 'Approved in Build this cycle. They compete for funding like Under consideration.', principles: ['Approved in Build', 'Recommended alternative set'] },
+  'Required by Management': { desc: 'Decided outside the plan. The optimizer skips these — their alternative, start date and funding stay exactly as the scenario holds them.', principles: ['Mandate record exists', 'No purchase order raised', 'Approved cost estimate present'] },
+  'Executing': { desc: 'Already under way. Kept as the scenario holds them.', principles: ['Purchase order raised', 'Execution has started'] },
+  'Blankets': { desc: 'Recurring budget lines (emergency capital). Kept as the scenario holds them.', principles: ['Blanket budget line'] },
+};
+// J15 · Cooper-detected groupings [Added] from real Under Consideration records; the matching rules are [Assumed] (open question 71).
+//  - Programme: three Neptune Station capacity jobs, consecutive project numbers (P3772–P3774), all start Jun 2028.
+//  - Mandate: the primary SCADA upgrade and its training programme cite the SCADA mandate [Added].
+const PLAN_PROGRAMME = { ids: [137729, 137730, 137731], label: 'Neptune Station capacity programme' };
+const PLAN_MANDATE = { ids: [137611, 137781] };
+const PLAN_GROUP_ISSUES = [
+  { id: 'g-prog', kind: 'question', gate: 'groups', title: '3 Neptune Station jobs form one programme',
+    description: 'They share Neptune Station, start together in Jun 2028 and carry the same value driver. Funded apart they leave gaps in the same station’s capacity.',
+    solutions: [{ id: 'group', title: 'Create a group from this match', description: 'They stop competing for funding and forced into every scenario.', recommended: true },
+      { id: 'move', title: 'Move to “Required by management”', description: 'Forced in. Stops competing for funding.' },
+      { id: 'leave', title: 'Leave them competing', description: 'The optimizer may fund some and drop the others.' }] },
+  { id: 'g-mandate', kind: 'question', gate: 'groups', title: 'Executive mandate cited for 2 investments',
+    description: 'The primary SCADA system upgrade and its training and change management cite the SCADA mandate, but they sit in Under consideration, so the optimizer may drop them.',
+    solutions: [{ id: 'move', title: 'Move to “Required by management”', description: 'Forced in. Stops competing for funding.', recommended: true },
+      { id: 'leave', title: 'Leave them competing', description: 'The optimizer may fund or drop them like any other.' }] },
+];
+// What the answers did (derived from the saved System confidence state, so Undo restores it): moved investments and created groups
+const planStore = () => (typeof Store !== 'undefined' ? Store.get('plan.confidence', {}) : {}) || {};
+function planGrouping(saved = planStore()) {
+  const moves = {}, created = [], names = (typeof Store !== 'undefined' && Store.get('plan.groupNames', {})) || {};
+  const p = (saved['g-prog'] || {}).applied, m = (saved['g-mandate'] || {}).applied;
+  if (p === 'group') { const label = names[PLAN_PROGRAMME.label] || PLAN_PROGRAMME.label; created.push(label); PLAN_PROGRAMME.ids.forEach(id => { moves[id] = label; }); }
+  if (p === 'move') PLAN_PROGRAMME.ids.forEach(id => { moves[id] = 'Required by Management'; });
+  if (m === 'move') PLAN_MANDATE.ids.forEach(id => { moves[id] = 'Required by Management'; });
+  return { moves, created, matched: p ? [] : PLAN_PROGRAMME.ids };
+}
+const planInvestmentsWith = (extra = [], saved) => { const { moves } = planGrouping(saved); return extra.concat(PLAN_INVESTMENTS).map(i => moves[i.id] ? { ...i, planningGroup: moves[i.id] } : i); };
+const planGroups = (extra = [], saved) => {
+  const all = planInvestmentsWith(extra, saved), { created } = planGrouping(saved);
+  return PLAN_BASE_GROUPS.concat(created).map(g => ({ id: g, label: g, count: all.filter(i => i.planningGroup === g).length,
+    adjustable: PLAN_ADJUSTABLE.includes(g), created: created.includes(g),
+    ...(PLAN_GROUP_INFO[g] || { desc: 'Created from Cooper’s match. Funded together and forced into every scenario.', principles: ['Same station', 'Same start window', 'Same value driver'] }) }));
+};
+const PLAN_GROUPS = planGroups([], {});
 // Build → Plan hand-off [Confirmed] (Shiny, 2026-11-19): an investment belongs to a portfolio (the company structure) from the moment it is created,
 // but it joins the planning cycle only once it is approved. The approved Build investment (refine.status 'approved') joins as "New to Scenario",
 // the real group new investments sit in, with its recommended alternative. The optimisation results stay those of the real run [Assumed].
@@ -124,6 +164,20 @@ const PLAN_PEAK_GAP = (() => {
   PLAN_YEARS.forEach((y, k) => { const cap = BASE_CAPEX.max[k]; if (cap && BASE_CAPEX.byYear[k] - cap > (best ? best.gap : 0)) best = { year: y, requested: BASE_CAPEX.byYear[k], cap, gap: BASE_CAPEX.byYear[k] - cap }; });
   return best;
 })();
+// J15 · a scenario Cooper builds from a conversation (Setup › New scenario). [Added]: copies a real scenario's constraints and changes
+// one year's CAPEX cap; the source scenario is the real "02_Optimized 2028 Plan" (Figma says MID, which this plan doesn't have).
+const PLAN_NEW_FROM = 6864, PLAN_NEW_YEAR = 2029;
+const planCapOf = (sid, year) => { const o = PLAN_SCENARIOS.find(x => x.id === sid).outcomes.find(o => o.measureId === 37); return o.max[PLAN_YEARS.indexOf(year)]; };
+const PLAN_NEW_CAPS = { cut: { pct: -0.1, label: 'Cut it 10%', name: y => `${y} cap cut 10%` }, flat: { flat: true, label: 'Hold it flat at the 2028 level', name: y => `${y} cap held flat` },
+  grow: { pct: 0.05, label: 'Let it grow 5%', name: y => `${y} cap +5%` } };
+function planCreatedScenario(spec) {                     // spec = { id, cap: 'cut'|'flat'|'grow', shift, from, year }
+  const from = spec.from || PLAN_NEW_FROM, year = spec.year || PLAN_NEW_YEAR, rule = PLAN_NEW_CAPS[spec.cap] || PLAN_NEW_CAPS.cut;
+  const capFrom = planCapOf(from, year), capTo = Math.round(rule.flat ? planCapOf(from, year - 1) : capFrom * (1 + rule.pct));
+  const src = SETUP_SCENARIOS.find(x => x.id === from) || {};
+  const how = rule.flat ? `held flat at the ${year - 1} level` : `${Math.abs(rule.pct * 100)}% ${rule.pct < 0 ? 'lower' : 'higher'} than ${src.short}`;
+  return { id: spec.id, created: true, from, capYear: year, capFrom, capTo, maxShift: spec.shift, short: rule.name(year), name: rule.name(year),
+    desc: `${year} CAPEX cap ${how}; resource and strategic constraints stay the same. Restrictions allow alternative and timing changes.` };
+}
 const MIN_CAPEX_FROM = (() => { const o = PLAN_SCENARIOS.find(s => s.id === 54824).outcomes.find(o => o.measureId === 37); const k = o.max.findIndex(v => v === 0); return PLAN_YEARS[k]; })();
 
 /* ---------------------------------------------------------------- the optimisation run */

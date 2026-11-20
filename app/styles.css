@@ -35,6 +35,7 @@
   --proto-chat-max-h: calc(155 * var(--proto-unit));     /* Study chat: 620 */
   --proto-chat-offset: calc(45 * var(--proto-unit));     /* Study chat: viewport minus 180 */
   --proto-sticky-offset: calc(2 * var(--size-64));       /* Plan sticky column: viewport minus 128 */
+  --proto-under-bottom: calc(var(--size-64) + var(--space-300)); /* floating Cooper chat: clears the bottom bar, 76 */
   --proto-tree-indent: var(--size-18);                   /* asset tree indent per level */
   --proto-motion-fast: .15s;                             /* no motion tokens in DS 2.0 yet */
   --proto-motion: .2s;
@@ -137,6 +138,17 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .plan-subrows { padding-left: var(--space-600); gap: var(--space-50); }
 .plan-cards { display: grid; /* cards on a page: page gap */ grid-auto-flow: column; grid-auto-columns: var(--proto-card-w); gap: var(--page-gap); overflow-x: auto; padding: var(--space-50) var(--space-50) var(--space-100); }
 .plan-card.is-final { outline: var(--border-widths-border-100) solid var(--border-strong); }
+/* J15 Planning groups: Cooper's match on top of the table (Figma 85:158979 lighter fill + dashed orange divider), group principles inset */
+.plan-row-match { background: var(--background-color-alpha-warning-base); }
+.plan-row-match--last { border-bottom: var(--border-widths-border-100) dashed var(--border-warning); }
+.plan-principles { gap: var(--space-100); padding: var(--space-200); border-radius: var(--radius-radius-200); background: var(--background-elevation-1-secondary); }
+.plan-principle { padding-left: var(--space-200); border-left: var(--border-widths-border-200) solid var(--border-base); }
+/* J15 New scenario: the floating Cooper chat (bottom right, above the bottom bar) and the row Cooper is building (orange outline + cursor) */
+.plan-chat { position: fixed; right: var(--page-margin); bottom: var(--proto-under-bottom); z-index: var(--proto-z-map-panel); width: var(--region-panel); }
+.plan-scen-building { position: relative; display: block; }
+.plan-scen-building .plan-scen { outline: var(--border-widths-border-100) solid var(--border-warning); }
+.plan-scen-cursor { position: absolute; left: 50%; top: var(--space-600); }
+.plan-changed { color: var(--text-warning); }
 .plan-up { color: var(--text-success); }
 .plan-down { color: var(--text-danger); }
 /* Global search (J02, Figma 2:21957): the NavBar search expands into a 600px field; the dropdown hangs under it */

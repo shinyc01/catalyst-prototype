@@ -72,3 +72,7 @@ Answer these with the product designer, then move each answer into the right con
 68. **Refine side navigation:** Figma draws two trees. Most frames put **Value** under the investment and give each alternative only Details and Cost & Schedule; the newest Gantt frame drops investment Value and gives each alternative **Details / Cost & Schedule / Value**. The prototype keeps both (investment Value and ↳ Value per alternative). Which is right?
 69. **Comparison chart view:** Figma's radar chart isn't in the DS; the prototype uses the kit's grouped column chart. Add a radar to the DS, or keep the substitute?
 70. **Alternative comparison rows without data:** ROI, payback, NPV, IRR, budget fit, priority and vendor show "—" (no source in the demo data). Should the prototype compute any of them, and how?
+71. **J15: Cooper's grouping rules.** The programme match (same station, consecutive project numbers, same start month) and the "executive mandate" citation are `[Added]` on real records; the real data has no mandate or programme field. What signals should Cooper use?
+72. **J15: Cooper-built scenarios and Compare.** A new scenario stays a draft in Setup; the optimisation results are the real five scenarios, so Compare doesn't show it. Should Optimize produce (mock) results for it?
+73. **J15: "MID" scenario.** Figma's chat says "Start from MID"; this plan has no MID scenario, so Cooper offers the real Optimized scenario. Which scenario should be the default source?
+
