@@ -47,18 +47,28 @@ function planIssues(rowState, saved) {
   ];
   return list.map(i => saved[i.id] ? { ...i, status: saved[i.id] } : i);
 }
+const planGroupIssues = saved => PLAN_GROUP_ISSUES.map(i => saved[i.id] ? { ...i, status: saved[i.id] } : i);
+// One System confidence for the three gates: Data readiness + Scenarios come from c, Planning groups from g (Figma: each tab has its own questions)
+const mergeConfidence = (c, g) => {
+  const gates = c.gates.map((x, k) => g.issues.some(i => i.gate === x.id) ? g.gates[k] : x);
+  return { ...c, gates, readiness: Math.round(gates.filter(x => x.done).length / gates.length * 100), allResolved: c.allResolved && g.allResolved };
+};
 
 /* ============================================================ Setup */
 function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup, setSetup, onOptimize, run, onHome }) {
   const issues = useMemo(() => planIssues(rows, saved), []);
   const c = useIssueReport({ issues, gates: PLAN_GATES });
+  const g = useIssueReport({ issues: useMemo(() => planGroupIssues(saved), []), gates: PLAN_GATES });
+  const all = mergeConfidence(c, g), panelCtl = tab === 'groups' ? g : c;
+  const [chat, setChat] = useState(false);
+  useEffect(() => { setSaved(st => ({ ...st, ...g.status })); }, [g.status]);
   const [panel, setPanel] = useState(true);
   const [filter, setFilter] = useState('all');
   const prev = useRef(c.status);
 
   // Persist what was resolved, and carry each solution through to the table and the scenarios
   useEffect(() => {
-    const before = prev.current; prev.current = c.status; setSaved(c.status);
+    const before = prev.current; prev.current = c.status; setSaved(st => ({ ...st, ...c.status }));
     const ids = new Set([...Object.keys(before), ...Object.keys(c.status)]);
     ids.forEach(id => {
       const a = (c.status[id] || {}), b = (before[id] || {});
@@ -89,7 +99,7 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
   }, [rows]);
 
   const waiting = PLAN_ROWS.filter(r => rows[r.id] === 'sent').length;
-  const ready = c.allResolved && !waiting && !run;
+  const ready = all.allResolved && !waiting && !run;
   const header = <PageHeader title={PLAN_TITLE} onBack={onHome} onTitleMenu={() => toast({ title: 'Switch plans isn’t part of this flow' })}
     status={<Indicator type="blue">Planning</Indicator>}
     center={<Stepper current={0} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
@@ -110,20 +120,21 @@ function PlanSetup({ navBar, tab, setTab, rows, setRows, saved, setSaved, setup,
           <span className="t-heading-h2-medium">Setup</span>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <Tabs value={tab} onChange={setTab} aria-label="Setup" items={[{ value: 'readiness', label: 'Data readiness' }, { value: 'groups', label: 'Planning groups' },
-              { value: 'scenarios', label: 'Scenarios', count: SETUP_SCENARIOS.length }]} />
-            {tab === 'scenarios' && <Button type="secondary" size="s" iconLeft="system-plus" onClick={() => toast({ title: 'New scenario isn’t part of this flow' })}>New scenario</Button>}
+              { value: 'scenarios', label: 'Scenarios', count: SETUP_SCENARIOS.length + (setup.created || []).length }]} />
+            {tab === 'scenarios' && <Button type="secondary" size="s" iconLeft="system-plus" onClick={() => setChat(true)}>New scenario</Button>}
           </div>
           {tab === 'readiness' && <Readiness rows={rows} setRows={setRows} filter={filter} setFilter={setFilter} />}
-          {tab === 'groups' && <Groups />}
-          {tab === 'scenarios' && <Scenarios setup={setup} setSetup={setSetup} />}
+          {tab === 'groups' && <Groups g={g} saved={saved} />}
+          {tab === 'scenarios' && <Scenarios setup={setup} setSetup={setSetup} building={chat && chat.building} />}
+          {tab === 'scenarios' && chat && <ScenarioChat chat={chat} setChat={setChat} setSetup={setSetup} />}
         </div>
         <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
-          <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
+          <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || g.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
             className={panel ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
-            <ContentCard className="ifs-trc-card" title={<ConfidenceGates controller={c} label="Optimization readiness" />}
-              bottom={<div className={`ifs-trc-card__issues ${c.present.length > 1 ? 'has-kinds' : ''}`}>
-                {c.present.length > 1 && <div className="ifs-trc-card__kinds"><IssueKindSwitch controller={c} /></div>}
-                <IssueNavigator controller={c} />
+            <ContentCard className="ifs-trc-card" title={<ConfidenceGates controller={all} label="Optimization readiness" />}
+              bottom={<div className={`ifs-trc-card__issues ${panelCtl.present.length > 1 ? 'has-kinds' : ''}`}>
+                {panelCtl.present.length > 1 && <div className="ifs-trc-card__kinds"><IssueKindSwitch controller={panelCtl} /></div>}
+                <IssueNavigator controller={panelCtl} />
               </div>} />
           </Panel>
         </div>
@@ -204,22 +215,45 @@ function Readiness({ rows, setRows, filter, setFilter }) {
   );
 }
 
-/* ------------------------------------------------------------ Setup › Planning groups (gate passed) */
-function Groups() {
-  const extra = planFromBuild(Store.get('build.refine'), Store.get('build.refineOther')), groups = planGroups(extra);   // an investment approved in Build joins New to Scenario
-  const [sel, setSel] = useState(extra.length ? 'New to Scenario' : groups[0].id);
-  const data = groups.map(g => ({ label: g.label, value: g.count }));
-  const rows = extra.concat(PLAN_INVESTMENTS).filter(i => i.planningGroup === sel).slice(0, 12);
+/* ------------------------------------------------------------ Setup › Planning groups (J15: Cooper-detected groupings, Figma 85:158974) */
+function Groups({ g, saved }) {
+  const extra = planFromBuild(Store.get('build.refine'), Store.get('build.refineOther'));          // an investment approved in Build joins New to Scenario
+  const [, force] = useState(0);
+  const groups = planGroups(extra, saved), all = planInvestmentsWith(extra, saved), { matched } = planGrouping(saved);
+  const [sel, setSel] = useState('Under Consideration');
+  const [open, setOpen] = useState(null);
+  const cur = groups.find(x => x.id === sel) ? sel : groups[0].id;
+  const inGroup = all.filter(i => i.planningGroup === cur);
+  const hi = cur === 'Under Consideration' ? inGroup.filter(i => matched.includes(i.id)) : [];      // Cooper's match sits on top, highlighted (Figma 85:158979)
+  const rows = hi.concat(inGroup.filter(i => !hi.includes(i))).slice(0, 12).map((r, k) => ({ ...r, _hi: k < hi.length, _last: k === hi.length - 1 }));
+  const [renaming, setRenaming] = useState(null);                                                   // { id, text }
+  const rename = () => {
+    const name = (renaming.text || '').trim(), id = renaming.id; setRenaming(null);
+    if (!name || name === id) return;
+    Store.set('plan.groupNames', { ...Store.get('plan.groupNames', {}), [PLAN_PROGRAMME.label]: name }); setSel(name); force(n => n + 1);
+    toast({ title: `Renamed to ${name}` });
+  };
+  const remove = id => { g.undo('g-prog'); setSel('Under Consideration'); toast({ title: `${id} deleted`, description: 'Its investments are back in Under consideration' }); };
   return (
     <div className="col" style={{ gap: 'var(--space-500)' }}>
-      <BarChart title="Investments count by planning group" data={data} valueLabel="Investments" labelWidth={170} height={220} />
+      <BarChart title="Investments count by planning group" data={groups.map(x => ({ label: x.label, value: x.count }))} valueLabel="Investments" labelWidth={220} height={220} />
       <PSec title="Investment Groups">
         <div style={{ display: 'grid', gridTemplateColumns: 'var(--proto-plan-side-w) 1fr', gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
           <div className="col" style={{ gap: 'var(--space-100)' }}>
-            {groups.map(g => <ContentCard key={g.id} size="s" iconLeft="arrow-caret-right-filled" selected={sel === g.id} onClick={() => setSel(g.id)}
-              title={g.label} description={g.adjustable ? 'The optimizer may change these' : 'Kept as the scenario holds them'} control={<Counter>{g.count}</Counter>} />)}
+            {groups.map(x => <ContentCard key={x.id} size="s" iconLeft={open === x.id ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} selected={cur === x.id}
+              onClick={() => { if (renaming) return; setSel(x.id); setOpen(open === x.id ? null : x.id); }}
+              title={renaming && renaming.id === x.id ? <div onClick={e => e.stopPropagation()} onKeyDown={e => { if (e.key === 'Enter') rename(); if (e.key === 'Escape') setRenaming(null); }}>
+                <TextField size="m" autoFocus value={renaming.text} onChange={t => setRenaming(r => ({ ...r, text: t }))} onBlur={rename} aria-label="Group name" /></div> : x.label}
+              control={<div className="row" style={{ gap: 'var(--space-100)' }} onClick={e => e.stopPropagation()}><Counter>{x.count}</Counter>
+                {x.created && <Menu more label={`${x.label} actions`} items={[{ label: 'Rename', icon: 'system-edit-rename', onClick: () => setRenaming({ id: x.id, text: x.label }) },
+                  { label: 'Delete', icon: 'system-trash-delete', destructive: true, onClick: () => remove(x.id) }]} />}</div>}
+              bottom={open === x.id ? <div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
+                <span className="t-body-m-regular">{x.desc}</span>
+                <NDS label="Grouping principles inset" className="col plan-principles"><span className="t-label-m-medium sec">Grouping principles</span>
+                  {x.principles.map(p => <span key={p} className="t-body-m-regular plan-principle">{p}</span>)}</NDS>
+              </div> : undefined} />)}
           </div>
-          <Table rowHeight={48} rows={rows} columns={[
+          <Table rowHeight={48} rows={rows} rowProps={r => ({ className: `${r._hi ? 'plan-row-match' : ''}${r._last ? ' plan-row-match--last' : ''}` })} columns={[
             { key: 'name', title: 'Investment', width: '1.6fr', render: r => <div className="col" style={{ minWidth: 0 }}><span className="t-label-m-medium plan-ellipsis">{r.name}</span><span className="t-body-s-regular sec">{r.code}</span></div> },
             { key: 'stage', title: 'Stage', width: 'calc(var(--table-col-short-min) + var(--space-700))' }, { key: 'capex', title: 'Cost', width: 'var(--table-col-number-min)', render: r => fmtMoney(r.capex) },
             { key: 'value', title: 'Value', width: 'var(--table-col-number-min)', render: r => fmtValue(r.value) }, { key: 'start', title: 'Schedule', width: 'var(--table-col-date)', render: r => fmtDate(r.startDate) }]} />
@@ -230,15 +264,27 @@ function Groups() {
 }
 
 /* ------------------------------------------------------------ Setup › Scenarios (restrictions + constraints, editable) */
-function Scenarios({ setup, setSetup }) {
-  const [open, setOpen] = useState(SETUP_SCENARIOS[0].id);
+function Scenarios({ setup, setSetup, building }) {
+  const made = (setup.created || []).map(planCreatedScenario);
+  const [open, setOpen] = useState(made.length ? made[0].id : SETUP_SCENARIOS[0].id);
+  useEffect(() => { if (made.length) setOpen(made[0].id); }, [made.length]);
   return (
     <div className="col" style={{ gap: 'var(--space-200)' }}>
-      {SETUP_SCENARIOS.map(s => <ScenarioCard key={s.id} s={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} setup={setup} setSetup={setSetup} />)}
+      {building && <NDS label="Scenario being built (skeleton row + Cooper cursor)" className="plan-scen-building">
+        <ContentCard className="plan-scen" top={<div className="row" style={{ width: '100%', gap: 'var(--space-400)', padding: 'var(--space-100) var(--space-150)' }}>
+          <IFS.Spinner text="Cooper is building the scenario" showText={false} />
+          <div className="col" style={{ flex: 1, gap: 'var(--space-100)' }}><span className="t-heading-h4-semibold">{building}</span><IFS.Skeleton width="60%" /></div>
+          {['Budget', 'Resources', 'Enterprise goal'].map(l => <div key={l} className="col plan-metric"><span className="t-body-s-regular sec">{l}</span><IFS.Skeleton width="80%" /></div>)}
+        </div>} />
+        <IFS.CollaboratorCursor user="cooper" name="Cooper" className="plan-scen-cursor" />
+      </NDS>}
+      {made.concat(SETUP_SCENARIOS).map(s => <ScenarioCard key={s.id} s={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} setup={setup} setSetup={setSetup} />)}
     </div>
   );
 }
 const scenConstraints = (setup, s) => {
+  if (s.created) return setup.constraints?.[s.id] || planConstraintsOf(s.from).map(r => r.measureId === 37
+    ? { ...r, id: `${s.id}-${r.measureId}`, changed: [s.capYear], years: { ...r.years, [s.capYear]: { ...r.years[s.capYear], max: s.capTo } } } : { ...r, id: `${s.id}-${r.measureId}` });
   let rows = setup.constraints?.[s.id] || planConstraintsOf(s.id);
   if (s.id === 54824 && setup.relaxMin && !setup.constraints?.[s.id]) {                  // warning solved: Min CAPEX takes the Baseline CAPEX caps
     const base = planConstraintsOf(PLAN_BASELINE_ID).find(r => r.measureId === 37);
@@ -246,7 +292,7 @@ const scenConstraints = (setup, s) => {
   }
   return rows;
 };
-const scenRestrictions = (setup, s) => ({ ...SETUP_RESTRICTIONS, ...(setup.shiftAll ? { shiftDates: true } : {}), ...(setup.restrictions?.[s.id] || {}) });
+const scenRestrictions = (setup, s) => ({ ...SETUP_RESTRICTIONS, ...(setup.shiftAll ? { shiftDates: true } : {}), ...(s.created ? { shiftDates: s.maxShift > 0, maxShift: s.maxShift } : {}), ...(setup.restrictions?.[s.id] || {}) });
 function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
   const cons = scenConstraints(setup, s), res = scenRestrictions(setup, s);
   const capex = cons.find(r => r.measureId === 37), pm = cons.find(r => r.measureId === 181), rel = cons.find(r => r.measureId === 67);
@@ -257,10 +303,10 @@ function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
       <div className="row" style={{ width: '100%', gap: 'var(--space-400)', padding: 'var(--space-100) var(--space-150)' }}>
         <IB icon={open ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} type="ghost" size="s" label={open ? `Collapse ${s.name}` : `Expand ${s.name}`} onClick={onToggle} />
         <div className="col" style={{ flex: 1, minWidth: 0, gap: 'var(--space-100)' }}>
-          <span className="t-heading-h4-semibold">{s.name}</span>
+          <span className="row" style={{ gap: 'var(--space-200)' }}><span className="t-heading-h4-semibold">{s.name}</span>{s.created && <Indicator type="purple">Draft</Indicator>}</span>
           <span className="t-body-m-regular">{s.desc}</span>
         </div>
-        <Metric label="Budget" value={budget == null ? '—' : `${fmtMoney(budget)} CAPEX`} />
+        <Metric label="Budget" value={s.created ? `${s.capYear} cap ${fmtMoney(s.capFrom)} → ${fmtMoney(s.capTo)}` : budget == null ? '—' : `${fmtMoney(budget)} CAPEX`} />
         <Metric label="Resources" value={pm ? `${fmtNum(pm.years[2028].max)} PM hours` : '—'} />
         <Metric label="Enterprise goal" value={rel ? `Reliability risk ≤ ${fmtCompact(rel.years[2028].max)}` : '—'} />
         <IB icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: explain ${s.short}` })} />
@@ -272,9 +318,55 @@ function ScenarioCard({ s, open, onToggle, setup, setSetup }) {
       </div>} />
   );
 }
+/* ------------------------------------------------------------ Setup › New scenario: Cooper builds it from a conversation (J15, Figma 85:177903) */
+const SC_SOURCE = () => SETUP_SCENARIOS.find(x => x.id === PLAN_NEW_FROM);
+const SC_STEPS = [
+  () => ({ text: `What do you want to explore in ${PLAN_NEW_YEAR}? I’ve read the portfolio, the value framework and last cycle’s plan. 3 things stand out that no scenario tests yet.`,
+    intro: 'Start with', items: [`Stress the ${PLAN_NEW_YEAR} cap`, 'Protect cost first', 'Cheapest plan that still clears every obligation'] }),
+  () => ({ text: `Should I start from ${SC_SOURCE().short}, or build the assumptions fresh?`, items: [`Start from ${SC_SOURCE().short}`, 'Build it fresh'] }),
+  () => ({ text: `How hard should ${PLAN_NEW_YEAR} be held? Today ${SC_SOURCE().short} caps ${PLAN_NEW_YEAR} CAPEX at ${fmtMoney(planCapOf(PLAN_NEW_FROM, PLAN_NEW_YEAR))}, and that envelope defers ${SC_SOURCE().deferredVsRequested} investments across the plan.`,
+    items: Object.values(PLAN_NEW_CAPS).map(c => c.label) }),
+  () => ({ text: 'If the work no longer fits, may I move dates further out?', items: ['Yes, up to 3 years', 'No, keep the 2-year limit'] }),
+];
+const scCap = t => /flat|hold/i.test(t) ? 'flat' : /grow|\+|up|rais|more/i.test(t) && !/cut|lower|less|-/i.test(t) ? 'grow' : 'cut';
+function ScenarioChat({ chat, setChat, setSetup }) {
+  const st = chat === true ? { msgs: [{ role: 'cooper', step: 0 }], step: 0, answers: [] } : chat;
+  const [input, setInput] = useState('');
+  useEffect(() => { if (chat === true) setChat(st); }, []);
+  const send = text => {
+    if (!text || !text.trim() || st.busy || st.done) return;
+    const answers = [...st.answers, text.trim()], step = st.step + 1, msgs = [...st.msgs, { role: 'user', text: text.trim() }];
+    setInput('');
+    if (step < SC_STEPS.length) { setChat({ ...st, answers, step, msgs: [...msgs, { role: 'cooper', step }] }); return; }
+    const spec = { id: `new-${Date.now()}`, cap: scCap(answers[2]), shift: /no|keep/i.test(answers[3]) ? 2 : 3 };
+    const made = planCreatedScenario(spec);
+    setChat({ ...st, answers, step, msgs, busy: 1 });
+    setTimeout(() => setChat(c => c && ({ ...c, busy: 2, building: made.name })), 1200);
+    setTimeout(() => {
+      setSetup(s => ({ ...s, created: [spec, ...(s.created || [])] }));
+      setChat(c => c && ({ ...c, busy: 0, building: null, done: true, msgs: [...c.msgs, { role: 'cooper', text: `I’ve created “${made.name}” scenario as a draft — run Optimize when you are ready.` }] }));
+    }, 2800);
+  };
+  if (chat === true) return null;
+  return (
+    <div className="plan-chat">
+      <ChatCompactPanel type="text" title="New scenario" newChat={false} inputValue={input} onInputChange={setInput} onSend={() => send(input)} analyzing={!!st.busy} onStop={() => {}}
+        onNewChat={() => setChat(true)} onClose={() => setChat(false)} style={{ height: 'calc(100vh - var(--proto-chat-offset))', maxHeight: 'var(--proto-chat-max-h)' }}>
+        {st.msgs.map((m, k) => {
+          if (m.role === 'user') return <UserMessage key={k}>{m.text}</UserMessage>;
+          if (m.text) return <CooperMessage key={k} status="answered" text={m.text} />;
+          const q = SC_STEPS[m.step](), last = k === st.msgs.length - 1 && !st.busy;
+          return <CooperMessage key={k} status="answered" text={q.text} options={last ? { intro: q.intro, items: q.items } : undefined} onOption={send} />;
+        })}
+        {st.busy ? <CooperProgress step={st.busy} total={3} label={st.busy === 1 ? 'Analyzing context…' : 'Building new scenario…'} /> : null}
+      </ChatCompactPanel>
+    </div>
+  );
+}
 function Restrictions({ s, res, setSetup }) {
   const set = patch => setSetup(st => ({ ...st, restrictions: { ...st.restrictions, [s.id]: { ...res, ...patch } } }));
-  const adjustable = PLAN_GROUPS.filter(g => (res.groups || PLAN_GROUPS.filter(x => x.adjustable).map(x => x.id)).includes(g.id));
+  const GROUPS = planGroups(planFromBuild(Store.get('build.refine'), Store.get('build.refineOther')));     // follows the J15 moves
+  const adjustable = GROUPS.filter(g => (res.groups || GROUPS.filter(x => x.adjustable).map(x => x.id)).includes(g.id));
   const Row = ({ title, desc, k }) => (
     <div className="row" style={{ gap: 'var(--space-400)', justifyContent: 'space-between', padding: 'var(--space-200) 0' }}>
       <div className="col" style={{ gap: 'var(--space-50)' }}><span className="t-label-m-medium">{title}</span><span className="t-body-s-regular sec">{desc}</span></div>
@@ -285,7 +377,7 @@ function Restrictions({ s, res, setSetup }) {
       <div className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
         <StatCardsRow cards={[
           { size: 's', title: 'Investments adjustable', value: fmtNum(adjustable.reduce((t, g) => t + g.count, 0)) },
-          { size: 's', title: 'Planning groups enabled', value: `${adjustable.length}`, description: `/ ${PLAN_GROUPS.length}`, descriptionPosition: 'inline' },
+          { size: 's', title: 'Planning groups enabled', value: `${adjustable.length}`, description: `/ ${GROUPS.length}`, descriptionPosition: 'inline' },
           { size: 's', title: 'Max date shift', value: res.shiftDates ? `${res.maxShift}yr` : 'None' },
           { size: 's', title: 'Alternative changes', value: res.altChanges ? 'Allowed' : 'Off' },
           { size: 's', title: 'Interpolation', value: res.interpolate ? 'On' : 'Off' }]} />
@@ -301,7 +393,7 @@ function InvestmentGroups({ s, res, setSetup }) {
   const [sel, setSel] = useState(on[0] || PLAN_GROUPS[0].id);
   const toggle = id => setSetup(st => ({ ...st, restrictions: { ...st.restrictions, [s.id]: { ...res, groups: on.includes(id) ? on.filter(x => x !== id) : [...on, id] } } }));
   const extra = planFromBuild(Store.get('build.refine'), Store.get('build.refineOther')), groups = planGroups(extra);
-  const rows = extra.concat(PLAN_INVESTMENTS).filter(i => i.planningGroup === sel).slice(0, 8);
+  const rows = planInvestmentsWith(extra).filter(i => i.planningGroup === sel).slice(0, 8);
   return (
     <PSec title="Investment Groups">
       <div style={{ display: 'grid', gridTemplateColumns: 'var(--proto-plan-side-w) 1fr', gap: 'var(--space-300)', padding: 'var(--space-200) var(--space-150) var(--space-150)' }}>
@@ -351,7 +443,9 @@ function Constraints({ s, rows, setSetup }) {
           <TextField size="m" autoFocus value={edit.text ?? (v == null ? '' : String(v))} onChange={t => setEdit(ed => ({ ...ed, text: t }))} aria-label={`${r.measure} ${y} ${k}`} />
         </div>);
     }
-    return <NDS label="Inline edit cell"><button className="plan-cell" aria-label={`Edit ${r.measure} ${y} ${k}`} onClick={() => setEdit({ id: r.id, year: y, k })}>{fmtUnit(v, r.unit)}<Icon name="system-edit-rename" size={16} /></button></NDS>;
+    return <NDS label="Inline edit cell"><button className="plan-cell" aria-label={`Edit ${r.measure} ${y} ${k}`} onClick={() => setEdit({ id: r.id, year: y, k })}>
+      {k === 'max' && (r.changed || []).includes(y) ? <Tooltip content="Changed by Cooper from the copied scenario" type="top"><span className="plan-changed">{fmtUnit(v, r.unit)}</span></Tooltip> : fmtUnit(v, r.unit)}
+      <Icon name="system-edit-rename" size={16} /></button></NDS>;
   };
   return (
     <PSec title="Constraints">
@@ -509,7 +603,7 @@ function Notifications({ open, notes, onClose, onOpen }) {
       <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
         {!notes.length && <span className="t-body-m-regular sec">Nothing new. Notifications about your plans and investments appear here.</span>}
         {notes.map(n => <NotificationCard key={n.id} type="specific" read={n.read} title={n.title} details={n.details} meta={n.meta} time={ago(n.time)}
-          actionRequired={false} avatar={n.cooper ? undefined : n.avatar} actions={n.link ? [{ label: 'View results', onClick: () => onOpen(n) }] : undefined} />)}
+          actionRequired={false} avatar={n.cooper ? undefined : n.avatar} actions={n.link ? [{ label: n.action || 'Open', onClick: () => onOpen(n) }] : undefined} />)}
       </div>
     </Drawer>
   );
