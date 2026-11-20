@@ -20,6 +20,10 @@ Built from the JTBD journey documents, Build and Value first. Live: https://shin
 | 6 | **J20** Consolidation and sensitivities | 019 | [`#plan?persona=cpm&demo=final`](https://shinyc01.github.io/catalyst-prototype/#plan?persona=cpm&demo=final) | Built; Results not built (no Figma) |
 | 6 | **J22** Executive review and approval | 020 | [`#command?persona=cfo&demo=approval`](https://shinyc01.github.io/catalyst-prototype/#command?persona=cfo&demo=approval) | Built |
 | 6 | **J23** Publish the baseline | 021 | [`#plan-approve?persona=cpm&demo=approved`](https://shinyc01.github.io/catalyst-prototype/#plan-approve?persona=cpm&demo=approved) | Built; Result Pack not built (no Figma) |
+| 7 | **J04** Act on a coverage gap | 022 | [`#command?persona=asset`](https://shinyc01.github.io/catalyst-prototype/#command?persona=asset) | Built; PA run and model stewardship not designed |
+| 7 | **J27** Feedback loop and next-cycle prep | 023 | [`#command?persona=asset`](https://shinyc01.github.io/catalyst-prototype/#command?persona=asset) | Built |
+| 7 | **J24**, **J26** | — | — | **Held** (question 79: Plan › Execution vs Results) |
+| 7 | **J01**, **J28** | — | — | **Skipped**: no Figma links in the journeys |
 | 4 | **J15** Planning groups & scenario setup | 016 | [`#plan-groups?persona=portfolio`](https://shinyc01.github.io/catalyst-prototype/#plan-groups?persona=portfolio) | Built 2026-11-20 |
 
 **New personas** (Prototype settings): Ines Calder, CX Consultant (Value) and Noah Lindgren, Estimator / Cost Modeller (also the Finance Lead reviewer in J11). Both `[Added]`: no Figma persona owns them.
