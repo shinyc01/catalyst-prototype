@@ -12,7 +12,7 @@
     { label: 'Figma · Send to build', url: 'https://www.figma.com/design/RIgfAXt18AXHLu8s0wuvQ1/?node-id=29-357809' },
   ],
   steps: [
-    { hash: '#explore-recs?persona=asset', title: 'Cooper surfaced the risks', advance: 'next',
+    { hash: '#explore-recs?persona=asset&demo=recs', title: 'Cooper surfaced the risks', advance: 'next',
       body: 'You’re Mara Delgado, Asset Manager. Cooper reviewed the predictive results and grouped 5 recommendations by risk, value and impact.' },
     { target: { text: '2 of 3 transformer banks' }, title: 'Open the highest risk', body: 'Expand it: what’s included, the three metrics that matter most, and what happens if no action is taken. The map dims everything else.' },
     { target: { text: 'Take me there' }, title: 'Locate the issue', body: 'Cooper flies the map to the assets.' },

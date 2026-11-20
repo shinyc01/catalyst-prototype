@@ -1,0 +1,25 @@
+(window.FLOWS = window.FLOWS || []).push({
+  id: 'pa-model-configuration',
+  title: 'J04 · Explore · Act on a coverage gap',
+  summary: 'Cooper finds that no study covers the pad-mount transformers beyond 2028 and frames one. The Asset Manager grounds the strategy in the study’s risk trajectory, answers Cooper’s questions and compares the alternatives it builds, then opens the idea in Build. Model stewardship and “Scope a PA run” are not designed and not built.',
+  persona: 'asset',
+  added: '2026-11-20', addedBy: 'Shiny',
+  sources: [
+    { label: 'Journey J04 (Asset Manager) — saved verbatim', url: 'context/flows/pa-model-configuration.md' },
+    { label: 'Figma · Explore — Lens on, study', url: 'https://www.figma.com/design/RIgfAXt18AXHLu8s0wuvQ1/?node-id=29-187620' },
+    { label: 'Figma · Explore — Horizon scrubber', url: 'https://www.figma.com/design/RIgfAXt18AXHLu8s0wuvQ1/?node-id=29-228366' },
+    { label: 'Figma · Explore — Create Idea (Cooper Q&A → alternatives)', url: 'https://www.figma.com/design/RIgfAXt18AXHLu8s0wuvQ1/?node-id=29-221451' },
+  ],
+  steps: [
+    { hash: '#command?persona=asset', target: '[data-card="coverage"]', title: 'Cooper found a coverage gap',
+      body: 'No study or strategy covers the pad-mount transformers beyond 2028. Cooper framed a study. Open it.' },
+    { target: '[aria-label="Play horizon"]', title: 'Ground it in current risk', body: 'Play the horizon: the risk trajectory and the year each unit crosses the threshold.' },
+    { target: { text: 'Create idea' }, title: 'Tell Cooper the intent', body: 'Cooper asks about the intent, the horizon and the budget trade-off.' },
+    { target: { text: 'Replace the worst units first' }, title: 'Sequencing', body: 'Your answer picks the recommended alternative.' },
+    { target: { text: '10 years' }, title: 'Horizon', body: 'The strategy looks ten years out.' },
+    { target: { text: 'Defer volume' }, title: 'Budget trade-off', body: 'If the budget is tight, defer volume rather than quality.' },
+    { target: { text: 'Open in Build' }, title: 'Move the strategy forward', body: 'The idea carries the study’s lenses and results into Build, with Cooper’s alternatives compared.' },
+    { title: 'What isn’t built', advance: 'next',
+      body: 'Stewarding the degradation curves and PoF/CoF parameters, and “Scope a PA run”, are specified but not designed.' },
+  ],
+});

@@ -11,7 +11,7 @@
     { label: 'Figma · Shape mode', url: 'https://www.figma.com/design/8VmjGH9Ihg8TFzDQiKTPpi/?node-id=2841-29115' },
   ],
   steps: [
-    { hash: '#value?persona=consultant', target: '.ifs-cooper-chip', title: 'Learn where models drift', body: 'The active framework has recommendations. Open them.' },
+    { hash: '#value?persona=consultant&demo=recal', target: '.ifs-cooper-chip', title: 'Learn where models drift', body: 'The active framework has recommendations. Open them.' },
     { target: { text: 'Update Risk Calculation Inputs' }, title: 'A model drifted',
       body: 'Observed failures diverged from WDRM’s predictions. Expand it.' },
     { target: '.rf-cooper .ifs-rec-item > .ifs-button', title: 'See the evidence', body: 'The impact and the evidence behind it.' },

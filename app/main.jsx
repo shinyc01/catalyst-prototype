@@ -21,6 +21,8 @@ function initialFromHash(h) {
   if (p.get('demo') === 'optimized') s.demoRun = true;
   if (p.get('demo') === 'refining') s.demoRefining = true;
   if (p.get('demo') === 'planning') s.demoPlanning = true;
+  if (p.get('demo') === 'recal') s.demoRecal = true;
+  if (p.get('demo') === 'recs') s.demoRecs = true;                // J05 / J27 tours: every Cooper recommendation open again (replayable)              // J14 / J27 tours: Cooper's model recalibration not yet applied (replayable)
   if (['final', 'approval', 'approved'].includes(p.get('demo'))) s.demoGate = p.get('demo');   // J20 / J22 / J23 tours: the plan in approval, or approved at every gate (replayable)
   if (['reopt', 'results'].includes(p.get('demo'))) { s.demoRun = true; s.demoReopt = true; }   // results in, nothing chosen yet (J17 / J18 / J19 tours, replayable)   // J17 tour: results in, no re-optimization yet (replayable)        // J15 / J16 tours: Plan back at "Time to Plan" (replayable)
   if (p.get('demo') === 'shaping') s.demoShaping = true;          // J11 tour: the pad-mount idea back in Shape, before review (replayable)        // J08 tour: the pad-mount idea has already passed review, so it is an investment            // J18 tour: arrive with the optimization already finished
@@ -62,7 +64,7 @@ function App() {
   const demoGate = kind => { setRun(r => r && r.done ? r : { startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setReopt(null); setFinalPlan(COOPER_PICK);
     const g = paInitialGates(); setPlanGates(kind === 'approved' ? Object.fromEntries(Object.entries(g).map(([k, rows]) => [k, rows.map(r => ({ ...r, status: 'success' }))])) : g); setPlanStage(kind === 'final' ? 'setup' : kind); };
   useEffect(() => { if (init.demoGate) demoGate(init.demoGate); }, []);
-  useEffect(() => { if (init.demoPlanning) resetPlanning(); if (init.demoReopt) { setReopt(null); setFinalPlan(null); setPlanStage(st => ['approval', 'approved', 'scheduled', 'published'].includes(st) ? 'setup' : st); } }, []);
+  useEffect(() => { if (init.demoRecs) setRecsOpenIds(RECOMMENDATIONS.map(r => r.id)); if (init.demoRecal) setValueRecs(l => (l || []).filter(x => x !== 'inputs')); if (init.demoPlanning) resetPlanning(); if (init.demoReopt) { setReopt(null); setFinalPlan(null); setPlanStage(st => ['approval', 'approved', 'scheduled', 'published'].includes(st) ? 'setup' : st); } }, []);
   useEffect(() => { if (init.demoRun && !(run && run.done)) { setRun({ startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); } }, []);
   const [sentAt, setSentAt] = usePersisted('plan.sentAt', {});
   const [planStage, setPlanStage] = usePersisted('plan.stage', 'time');
@@ -88,6 +90,7 @@ function App() {
   }, []);
   const [trace, setTrace] = usePersisted('explore.trace', {});
   const [studies, setStudies] = usePersisted('studies', STUDY_SEEDS);
+  const [recsKey, setRecsKey] = useState(0);                     // a link to #explore-recs reopens Cooper's list even when Explore is already open
   const [recsOpenIds, setRecsOpenIds] = usePersisted('recs.open', RECOMMENDATIONS.map(r => r.id));   // J05: recommendations not yet sent to Build
   const [buildSnack, setBuildSnack] = useState(null);      // J03 Study Library (seeded from the real asset groups)
   const [studyScope, setStudyScope] = usePersisted('study.scope', null);    // { id, name, ids, studyId } — the population the Study is on           // J02 Trace Report answers (the flood fix changes the lens source)
@@ -155,6 +158,9 @@ function App() {
       if (n.demoShaping) { setIdeas(m => ({ ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'shaping', modified: STORY_DAY, created: true } })); setReview({ rows: REVIEWERS(), round: 0 }); setRefine(r => { const n = { ...r, status: 'refining' }; delete n.approvers; return n; }); }
       if (n.demoRefining) setIdeas(m => IDEA_PROMOTED.includes((m[CLUSTER.ideaInvestmentId] || {}).status) ? m : { ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'refining', modified: STORY_DAY, created: true } });
       if (n.demoPlanning) resetPlanning();
+      if (n.recs) setRecsKey(k => k + 1);
+      if (n.demoRecs) setRecsOpenIds(RECOMMENDATIONS.map(r => r.id));
+      if (n.demoRecal) setValueRecs(l => (l || []).filter(x => x !== 'inputs'));
       if (n.demoGate) demoGate(n.demoGate);
       if (n.demoReopt) { setReopt(null); setFinalPlan(null); setPlanStage(st => ['approval', 'approved', 'scheduled', 'published'].includes(st) ? 'setup' : st); }
       if (n.demoRun) { setRun(r => r && r.done ? r : { startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); }
@@ -285,10 +291,11 @@ function App() {
         if (d.open === 'explore') go('explore');
         else if (d.open === 'study') go('study');
         else if (d.open === 'reopt') location.hash = '#plan-compare?persona=portfolio&demo=reopt';
+        else if (d.open === 'recal') location.hash = `#value?persona=${persona}&demo=recal`;
         else if (d.open === 'approve') location.hash = `#plan-approve?persona=${persona}&demo=approval`;
         else if (d.open === 'build') { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
-      {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
+      {screen === 'explore' && <Explore {...shared} key={`${persona}-${recsKey}`} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
         recsOpenIds={recsOpenIds} recsAtStart={init.recs || /^#explore-recs/.test(location.hash)} onSendToBuild={r => {
           setRecsOpenIds(l => l.filter(x => x !== r.id));
           setBuildSnack({ text: `${r.interventions.length} strategies sent to Build for ${r.area}`, invId: r.invId });

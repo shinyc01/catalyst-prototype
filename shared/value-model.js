@@ -123,7 +123,7 @@ const VF_RECS = [
   { id: 'waste', group: 'Strategic objectives', title: 'Add Waste Reduction Objective', description: 'This objective could improve resource efficiency and strengthen sustainability performance across the portfolio.', impact: [{ label: 'Total capital', value: '62nd', delta: '+1' }, { label: 'Risk coverage', value: '94%', delta: '+3%' }] },
   { id: 'carbon', group: 'Measures', title: 'Add Carbon Intensity Measure', description: 'Introduce a Carbon Intensity measure to capture environmental impact more directly at the portfolio level.', impact: [{ label: 'Total capital', value: '62nd', delta: '+1' }, { label: 'Portfolio benefit-cost', value: '2.5', delta: '+0.3' }] },
   { id: 'prior', group: 'Value models', title: 'Refine Investment Prioritization', description: 'Weight reliability outcomes by customer count so dense feeders rank first.', impact: [{ label: 'Risk coverage', value: '94%', delta: '+1%' }] },
-  { id: 'inputs', group: 'Value models', title: 'Update Risk Calculation Inputs', description: 'Observed failures on underground cable diverged from predictions; refresh the failure curves in WDRM.', impact: [{ label: 'Risk coverage', value: '94%', delta: '+2%' }] },
+  { id: 'inputs', group: 'Value models', title: 'Update Risk Calculation Inputs', description: 'Observed failures on the Pine Ridge overhead lines diverged from predictions; refresh the failure curves in WDRM.', impact: [{ label: 'Risk coverage', value: '94%', delta: '+2%' }] },
 ];
 
 // ---- Overview / Capital flow: totals from the real Plan investments

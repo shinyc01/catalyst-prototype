@@ -77,6 +77,13 @@ const AM_DECISIONS = [
   ...[[2891, 2, 'RB'], [104860, 3, 'RB'], [2892, 5, 'RB'], [2893, 8, 'HG'], [8380, 1, 'HG']].map(([id, ago, collaborator]) => {
     const i = invById(id); return { id, rec: i.code, title: i.name, badge: STAGE_TO_CATALYST[i.stage] || 'Plan', priority: 'critical', added: daysAgo(ago), collaborator,
       description: firstSentence(i.description), ...assetMetrics(assetsOfInv(id)) }; }),
+  // J04 / J27 [Added]: Cooper's coverage-gap finding (a study it framed) and a model recalibration waiting for the Asset Manager's confirmation
+  { id: 'coverage', title: `No long-range position on the ${CLUSTER.short} pad-mounts`, badge: 'Explore', priority: 'critical', added: daysAgo(1), collaborator: 'HG', open: 'study',
+    description: `No study or strategy covers these ${ASSETS.filter(a => a.kind === 'padmount').length} pad-mount transformers beyond 2028. Cooper framed a 10-year study with the condition outlook and the climate lenses.`,
+    ...assetMetrics(ASSETS.filter(a => a.kind === 'padmount').map(a => a.id)) },
+  { id: 'recal', title: 'Confirm recalibration · Pine Ridge line failure curves', badge: 'Value', priority: 'critical', added: daysAgo(2), collaborator: 'IC', open: 'recal', verb: 'Confirm recalibration',
+    description: 'Observed failures on the Pine Ridge overhead lines diverged from WDRM v4’s predictions. Cooper proposes refreshing the failure curves.',
+    ...assetMetrics(ASSETS.filter(a => a.kind === 'line').map(a => a.id)) },
 ];
 // Portfolio Owner (Owen): approvals on the plan. Scenario numbers are real (Demo Portfolio); the cluster reserve is [Added].
 const SC = id => WHISTLER_SCENARIOS.find(s => s.id === id);
