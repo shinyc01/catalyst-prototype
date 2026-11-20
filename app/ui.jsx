@@ -3,9 +3,9 @@
 const {
   AppShell, NavBar, PageTop, HomeRowCard, SegmentedControl, IconButton, Button, ProgressBar, Calendar, BottomSheet,
   ExploreHeader, MapToolbar, MapToolCluster, MapToolButton, FtaButton, FloatingBar, AgentWindow, Badge, StatCard,
-  ContentCard, Panel, NavItem, NavSubtitle, Switch, Select, LineChart, BarChartItem, InfoHintItem, ChatCompactPanel,
+  ContentCard, Panel, NavItem, NavSubtitle, Switch, Select, LineChart, BarChartItem, LegendSwatch, ChatCompactPanel,
   UserMessage, CooperMessage, CooperProgress, PageHeader, Stepper, Indicator, Slider, EmptyState, SplitButton, DataVizCard, VerticalBarChartItem,
-  Icon, Tooltip, Menu, ActionMenu, Modal, Drawer, Chip, Avatar, TextField, DatePicker,
+  Icon, Tooltip, Menu, Modal, Drawer, Chip, Avatar, TextField, DatePicker,
 } = IFS;
 const { useState, useEffect, useRef, useMemo } = React;
 const toast = IFS.toast;

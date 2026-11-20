@@ -10,7 +10,7 @@
     { label: 'Figma · Cost & Schedule — table', url: 'https://www.figma.com/design/BmOuH8YCHltiitqwNW2ARt/?node-id=76-8792' },
   ],
   steps: [
-    { hash: '#build-refine-compare?persona=estimator', target: '[aria-label="Comments"]', title: 'You’re needed',
+    { hash: '#build-refine-compare?persona=estimator', target: '[aria-label^="Comments"]', title: 'You’re needed',
       body: 'Hollis Grant mentioned you on the pad-mount program. Open Comments.' },
     { target: '.page-dock .ifs-cdcard', title: 'Read what is asked',
       body: 'Comment #56: Cooper filled 3 of the 5 cost lines from the unit cost model; 2 need a person.' },

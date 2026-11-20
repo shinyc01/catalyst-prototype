@@ -200,9 +200,9 @@ function Overview({ s, lenses, year, onAsset }) {
         </div>
         <span className="t-label-m-medium">{s.now.score}</span>
       </div>
-      <InfoHintItem label="Base condition" color="var(--border-grey)" value={String(s.base.score)} />
-      {s.contrib.map(c => <InfoHintItem key={c.id} label={LENS_INFO[c.id].label} color={LENS_INFO[c.id].color} value={`+${c.delta}`} />)}
-      {lenses.filter(l => !l.on).map(l => <InfoHintItem key={l.id} label={`${l.label} (off)`} neutral value="—" />)}
+      <LegendSwatch layout="row" label="Base condition" color="var(--border-grey)" value={String(s.base.score)} />
+      {s.contrib.map(c => <LegendSwatch layout="row" key={c.id} label={LENS_INFO[c.id].label} color={LENS_INFO[c.id].color} value={`+${c.delta}`} />)}
+      {lenses.filter(l => !l.on).map(l => <LegendSwatch layout="row" key={l.id} label={`${l.label} (off)`} neutral value="—" />)}
     </div>
   </>;
 }

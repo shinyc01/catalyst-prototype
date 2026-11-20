@@ -30,7 +30,7 @@
       body: 'Ask Cooper for a widget. It builds it from the risk profile and shares it with your team.' },
     { target: '.ifs-bottom-sheet__buttons .ifs-button', title: 'Attach supporting evidence',
       body: 'The documents in Cooper’s context. Upload more with the icon next to them.' },
-    { target: '[aria-label="Comments"]', title: 'Comment for reviewers',
+    { target: '[aria-label^="Comments"]', title: 'Comment for reviewers',
       body: 'Comments and the System confidence panel close the loop before Send for approval.' },
   ],
 });
