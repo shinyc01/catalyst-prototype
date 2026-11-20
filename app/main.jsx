@@ -20,7 +20,8 @@ function initialFromHash(h) {
   if (name === 'plan-compare') s.screen = 'plan-compare';
   if (p.get('demo') === 'optimized') s.demoRun = true;
   if (p.get('demo') === 'refining') s.demoRefining = true;
-  if (p.get('demo') === 'planning') s.demoPlanning = true;        // J15 / J16 tours: Plan back at "Time to Plan" (replayable)
+  if (p.get('demo') === 'planning') s.demoPlanning = true;
+  if (p.get('demo') === 'reopt') { s.demoRun = true; s.demoReopt = true; }   // J17 tour: results in, no re-optimization yet (replayable)        // J15 / J16 tours: Plan back at "Time to Plan" (replayable)
   if (p.get('demo') === 'shaping') s.demoShaping = true;          // J11 tour: the pad-mount idea back in Shape, before review (replayable)        // J08 tour: the pad-mount idea has already passed review, so it is an investment            // J18 tour: arrive with the optimization already finished
   if (name === 'plan-approve') s.screen = 'plan-approve';
   if (name.startsWith('plan-') && name !== 'plan-compare' && name !== 'plan-approve') { s.screen = 'plan-setup'; s.tab = { 'plan-setup': 'readiness', 'plan-groups': 'groups', 'plan-scenarios': 'scenarios' }[name] || 'readiness'; }
@@ -54,9 +55,10 @@ function App() {
   const [planSetup, setPlanSetup] = usePersisted('plan.setup', {});
   const [run, setRun] = usePersisted('plan.run', null);                    // { startedAt, scenarios, done }
   // J15 / J16: start the cycle over (nothing resolved, no run, no Cooper-built scenarios, no group renames)
+  const [reopt, setReopt] = usePersisted('plan.reopt', null);           // J17: { from, kind, adjust, answers, status chat|building|draft|running|done, startedAt }
   const [planEpoch, setPlanEpoch] = useState(0);                         // remounts Setup after a reset, so System confidence starts over
-  const resetPlanning = () => { setPlanEpoch(e => e + 1); setPlanRows({}); setPlanSaved({}); setPlanSetup({}); setRun(null); setPlanStage('time'); setPlanGates(paInitialGates()); setFinalPlan(null); Store.set('plan.groupNames', {}); };
-  useEffect(() => { if (init.demoPlanning) resetPlanning(); }, []);
+  const resetPlanning = () => { setPlanEpoch(e => e + 1); setPlanRows({}); setPlanSaved({}); setPlanSetup({}); setRun(null); setPlanStage('time'); setPlanGates(paInitialGates()); setFinalPlan(null); setReopt(null); Store.set('plan.groupNames', {}); };
+  useEffect(() => { if (init.demoPlanning) resetPlanning(); if (init.demoReopt) { setReopt(null); setFinalPlan(null); } }, []);
   useEffect(() => { if (init.demoRun && !(run && run.done)) { setRun({ startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); } }, []);
   const [sentAt, setSentAt] = usePersisted('plan.sentAt', {});
   const [planStage, setPlanStage] = usePersisted('plan.stage', 'time');
@@ -149,6 +151,7 @@ function App() {
       if (n.demoShaping) { setIdeas(m => ({ ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'shaping', modified: STORY_DAY, created: true } })); setReview({ rows: REVIEWERS(), round: 0 }); setRefine(r => { const n = { ...r, status: 'refining' }; delete n.approvers; return n; }); }
       if (n.demoRefining) setIdeas(m => IDEA_PROMOTED.includes((m[CLUSTER.ideaInvestmentId] || {}).status) ? m : { ...m, [CLUSTER.ideaInvestmentId]: { ...(m[CLUSTER.ideaInvestmentId] || {}), status: 'refining', modified: STORY_DAY, created: true } });
       if (n.demoPlanning) resetPlanning();
+      if (n.demoReopt) { setReopt(null); setFinalPlan(null); setPlanStage(st => st === 'approval' ? 'setup' : st); }
       if (n.demoRun) { setRun(r => r && r.done ? r : { startedAt: Date.now() - 60000, scenarios: SETUP_SCENARIOS.map(x => x.id), done: true }); setPlanStage(st => ['time', 'setup'].includes(st) ? 'setup' : st); }
     };
     window.addEventListener('hashchange', apply);
@@ -170,6 +173,20 @@ function App() {
     }, 1000);
     return () => clearInterval(iv);
   }, [planRows, sentAt]);
+  // J17: Cooper set up the re-optimization → Setup › Scenarios; its run finishes on its own, then the new card appears in Compare
+  useEffect(() => { if (reopt && reopt.status === 'building') { setTab('scenarios'); go('plan-setup'); } }, [reopt && reopt.status]);
+  useEffect(() => {
+    if (!reopt || reopt.status !== 'running') return;
+    const iv = setInterval(() => {
+      if (reoptProgress(reopt) >= 1) {
+        setReopt(r => ({ ...r, status: 'done' }));
+        const name = `${(SETUP_SCENARIOS.find(x => x.id === reopt.from) || SETUP_SCENARIOS[2]).short} re-optimized`;
+        notify({ title: `Re-optimization finished: ${name}`, details: `${PLAN_PORTFOLIO.name} · ${PLAN_CYCLE}. Compare it with the other scenarios.`, meta: `${PLAN_CYCLE} · Plan`, action: 'View results', cooper: true, link: 'plan-compare' });
+        toast({ title: 'Re-optimization finished', description: `${name} is ready to compare` });
+      }
+    }, 500);
+    return () => clearInterval(iv);
+  }, [reopt && reopt.status]);
   // The optimisation run finishes on its own; then the badge goes and a notification links to the results
   useEffect(() => {
     if (!run || run.done) return;
@@ -262,6 +279,7 @@ function App() {
       {screen === 'command' && <Command key={persona} navBar={navBar} lenses={lenses} persona={persona} onOpen={d => {
         if (d.open === 'explore') go('explore');
         else if (d.open === 'study') go('study');
+        else if (d.open === 'reopt') location.hash = '#plan-compare?persona=portfolio&demo=reopt';
         else if (d.open === 'build') { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); }
         else toast({ title: d.title.replace(/^.*? · /, ''), description: 'Opens its page — not part of this prototype yet' }); }} />}
       {screen === 'explore' && <Explore {...shared} key={persona} persona={persona} trace={trace} setTrace={setTrace} searchCtx={searchCtx} setSearchCtx={setSearchCtx} studies={studies} setStudies={setStudies} onOpenStudy={openStudy}
@@ -280,7 +298,8 @@ function App() {
         setBuildSnack(null); if (buildSnack.invId === CLUSTER.ideaInvestmentId) { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); } else toast({ title: 'Build’s Idea Pad isn’t part of this prototype yet' }); } }} /></div>}
       <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
         onOpen={n => { setNotesOpen(false); if (!n.link) return; if (n.link.includes('?')) { location.hash = '#' + n.link; return; } if (n.link.startsWith('build')) setBuildInv(CLUSTER.ideaInvestmentId); go(n.link); }} />
-      {screen === 'plan-setup' && <PlanSetup key={planEpoch} navBar={navBar} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}
+      {screen === 'plan-setup' && <PlanSetup key={planEpoch} navBar={navBar} reopt={reopt} setReopt={setReopt}
+        onReoptCancel={() => { setReopt(null); go('plan-compare'); }} onReoptRun={() => { setReopt(r => ({ ...r, status: 'running', startedAt: Date.now() })); go('plan-compare'); }} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}
         setup={planSetup} setSetup={setPlanSetup} run={running} onHome={() => go('plan')}
         onOptimize={() => { setRun({ startedAt: Date.now(), scenarios: SETUP_SCENARIOS.map(s => s.id), investments: PLAN_ROWS.filter(r => planRows[r.id] !== 'excluded').length,
           constraints: SETUP_SCENARIOS.reduce((t, s) => t + scenConstraints(planSetup, s).length, 0) }); setShowRun(true); go('plan'); }} />}
@@ -295,7 +314,11 @@ function App() {
           if (st === 'scheduled') toast({ title: 'Publication scheduled', description: `${PLAN_CYCLE} publishes on ${when}` });
           if (st === 'published') { notify({ title: `${PLAN_CYCLE} published`, details: 'It is the budget baseline.', meta: `${PLAN_CYCLE} · Plan`, link: 'plan' }); toast({ title: `${PLAN_CYCLE} published` }); } }} />}
       {screen === 'plan-compare' && <PlanCompare navBar={navBar} run={running ? run : null} done={!!(run && run.done)} final={finalPlan} stage={planStage}
-        onSelect={id => { setFinalPlan(id); toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
+        reopt={reopt} setReopt={setReopt}
+        onSelect={id => { setFinalPlan(id);
+          if (id === PLAN_REOPT_ID) { const c = compareScenarios(reopt).find(x => x.id === id);          // J17 step 7: tell the owners whose investments moved [Assumed]
+            setTimeout(() => notify({ title: `Cooper revised the schedule of ${c.deferred + c.advanced} investments`, details: `${c.deferred} deferred and ${c.advanced} brought forward in ${c.short}. Their owners are notified in Build.`, meta: `${PLAN_CYCLE} · Plan`, cooper: true }), 600); }
+          toast({ title: `${PLAN_SCENARIOS.find(x => x.id === id).name} is the final plan`, description: 'Send it for approval when you’re ready', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setFinalPlan(null) } }); }}
         onSendApproval={() => sendForApproval()} onBack={() => go('plan')} onSetup={() => { setTab('readiness'); go('plan-setup'); }} />}
       {screen === 'build' && !mainInv && <Build key={buildInv} invId={buildInv} navBar={navBar} lenses={lenses} idea={null} onBack={() => go('build-library')} persona={persona}
         review={invReview} setReview={setInvReview} onOpenRefine={() => { setRefinePage('overview'); go('build-refine'); }}

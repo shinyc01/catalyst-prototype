@@ -55,3 +55,9 @@ Created investments live in a portfolio but are not in a plan. Only an investmen
 ## Cooper-built scenarios (J15) `[Added]`
 - `planCreatedScenario(spec)`: copies the real Optimized scenario's constraints and changes the 2029 CAPEX cap: cut 10% ($437.8M → $394.0M), hold flat at 2028's cap, or grow 5%. Max date shift is 3 years (or 2 if Owen says no). Stored in `plan.setup.created`.
 - It is a draft in Setup only; the run and Compare keep the five real scenarios (open question 72).
+
+## Re-optimization (J17) `[Assumed]`
+- State `plan.reopt` = { from, kind, adjust, answers, status chat → building → draft → running → done, startedAt }.
+- The draft (`planReoptScenario`) copies the source scenario's constraints and scales one cap: risk −10% (Aggregate risk), CAPEX −5% or +5%. Changed cells are orange.
+- A run takes 10 s (`REOPT_SECONDS`). The result card is the real 7244 "05_Re-Optimized Plan" (`compareScenarios(reopt)`), so its numbers don't follow the request (open question 74).
+- Selecting it as the final plan notifies: "Cooper revised the schedule of deferred + advanced investments".
