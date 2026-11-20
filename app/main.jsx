@@ -242,8 +242,7 @@ function App() {
       {running && <OptimizingBadge onClick={() => { setShowRun(true); go('plan'); }} />}
       <IconButton icon="system-search" label="Search" size="s" onClick={() => setSearchOpen(true)} />
       <IconButton icon="system-settings" label="Settings" size="s" onClick={() => setSettingsOpen(true)} />
-      <span className="ifs-navbar__notify"><IconButton icon="system-notification" label="Notifications" size="s" onClick={() => setNotesOpen(true)} />
-        {notes.some(n => !n.read) && <span className="ifs-navbar__dot" aria-hidden="true" />}</span>
+      <IFS.NotificationButton hasNew={notes.some(n => !n.read)} onClick={() => setNotesOpen(true)} />
     </>} />;
   const effLenses = lensesWithTrace(lenses, trace);
   const shared = { navBar, lenses: effLenses, year, asset, setAsset };

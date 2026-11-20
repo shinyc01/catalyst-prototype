@@ -22,7 +22,7 @@
       body: 'The three real alternatives: cost and years, how many units each replaces, and the risk each removes (from the real baseline and residual risk). The grid below compares CAPEX, OPEX, risk and value.' },
     { target: { text: 'Cooper’s evaluation' }, title: 'Ask Cooper for an evaluation',
       body: 'Cooper weighs cost against risk reduced and says which one it would recommend.' },
-    { target: '[aria-label="Comments"]', title: 'A reviewer has a concern',
+    { target: '[aria-label^="Comments"]', title: 'A reviewer has a concern',
       body: 'The red dot means there are unresolved comments. Open Comments.' },
     { target: '.page-dock .ifs-cdcard', title: 'Open comment #54',
       body: 'Luca Ferri doubts the Minimal Replacement timeline. Open the thread.' },

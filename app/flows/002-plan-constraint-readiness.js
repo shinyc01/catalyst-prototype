@@ -40,7 +40,7 @@
       body: 'Readiness has passed and the owners’ fixes are back, so Optimize is on. It runs all five scenarios.' },
     { target: '.plan-badge', title: 'It runs in the background', advance: 'next',
       body: 'Plan home shows the cycle as Optimizing, and the badge stays in the NavBar in every section. Show progress lists the steps: readiness check, solving, validating.' },
-    { target: '[aria-label="Notifications"]', title: 'Get told when it finishes',
+    { target: '[aria-label^="Notifications"]', title: 'Get told when it finishes',
       body: 'When the run ends, the badge disappears and a notification links to the results. Open the notifications.' },
     { target: { text: 'View results' }, title: 'Open the results',
       body: 'The notification appears when the run ends (about 20 seconds here). Click View results.' },

@@ -1,5 +1,5 @@
 /* App styles: layout only, tokens only. No hex, rgba or raw px: scripts/check.mjs enforces it.
-   Foundations: Catalyst DS 2.0.2 (vendor/ds2: spacing.md, layout.md, typography.md).
+   Foundations: Catalyst DS 2.0.3 (vendor/ds2/rules.md: 2 Type, 3 Spacing and sizing, 4 Layout).
    Spacing uses the --space-* scale and the inset / stack / section roles; sizes use --size-* or the layout regions;
    text uses the semantic --text-* styles. Map panels sit in the DS map slots (page margin from the map edge). */
 /* Prototype tokens (not in DS 2.0): the few sizes the kit has no token for, each built on the DS base unit (--space-100)
@@ -63,7 +63,7 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .scroll { overflow: auto; min-height: 0; }
 .click { cursor: pointer; border-radius: var(--radius-radius-100); }
 .click:hover { background: var(--surface-secondary-alpha); }
-/* Page layout (DS 2.0.2 layout.md): page margin and gap follow screen width; content capped at 1600 and centred;
+/* Page layout (DS 2.0.3 rules.md §4 Layout): page margin and gap follow screen width; content capped at 1600 and centred;
    cards and regions snap to the 12-column .ifs-grid (.ifs-span-N, .ifs-span-panel / .ifs-span-rest). Docked panels sit outside .page, flush to the edge. */
 .page { box-sizing: border-box; width: 100%; max-width: calc(var(--layout-max-content-width) + 2 * var(--page-margin)); margin: 0 auto;
   padding: var(--page-gap) var(--page-margin); display: flex; flex-direction: column; gap: var(--page-gap); min-width: 0; }
@@ -231,7 +231,6 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .build-sec--cooper { box-shadow: inset 0 0 0 var(--border-widths-border-200) var(--border-accent-cooper); border-radius: var(--radius-radius-200); }
 .build-askbar { position: fixed; right: var(--page-margin); bottom: var(--space-1000); z-index: var(--proto-z-map-window); width: var(--region-panel); display: flex; flex-direction: column; gap: var(--space-200); }
 /* J08/J09 Build › Refine */
-.rf-comment-btn { position: relative; display: inline-flex; }
 .rf-callout, .rf-cooper { position: fixed; right: calc(var(--page-margin) + var(--region-panel) + var(--page-gap)); top: var(--proto-under-header); width: var(--region-panel); z-index: var(--proto-z-map-window); }
 .rf-cooper { right: var(--page-margin); }
 .rf-cooper > * { max-height: calc(100vh - var(--proto-under-header) - var(--space-1000)); }

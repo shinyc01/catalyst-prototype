@@ -3,7 +3,7 @@
    Cooper 2365:48305, review 2761:256237, approval 2838:96751, overview 784:43771, capital flow 2011:137249, value models 2456:2307.
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 const { NodeCard: VfNode, CanvasBackground: VfCanvas, CanvasConnector: VfEdge, CanvasHeader: VfColumns, ValueMapButton: VfMapButton, Sankey: VfSankey,
-  QuickStatCard: VfStat, ApprovalChainTable: VfApprovals, SidebarNodeCard: VfPick, Table: VfTable, ConfidenceGates: VfGates, IssueKindSwitch: VfKinds,
+  StatCard: VfStat, ApprovalChainTable: VfApprovals, SidebarNodeCard: VfPick, Table: VfTable, ConfidenceGates: VfGates, IssueKindSwitch: VfKinds,
   IssueNavigator: VfNavigator, RecommendationGroup: VfRecGroup, RecommendationItem: VfRecItem, RecommendationDetail: VfRecDetail, BarChart: VfBarChart } = IFS;
 
 // ---- canvas layout (world px: canvas geometry, the documented exception like map paint) ----------------------------------
@@ -182,7 +182,7 @@ function VfOverview() {
     <div className="ifs-grid">{[['Portfolio Benefit-Cost Ratio', bcr ?? '—', 'value per $1M ÷ 2,000'], ['Total capital', fmtMoney(VF_TOTAL_CAPITAL), `${PLAN_INVESTMENTS.length} investments`], ['Risk coverage', `${Math.round(scored * 100)}%`, 'of investments scored'], ['Industry position', '62nd', 'percentile among peer utilities']]
       .map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat title={t} value={String(v)} description={d} /></div>)}</div>
     <DataVizCard title="Portfolio Under This Framework"><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>{bar(COMPANY.name, VF_WEIGHTS)}{bar('Peer avg', peer)}{bar('Best in class', best)}
-      <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>{VF_OBJECTIVES.map(o => <InfoHintItem key={o.id} label={o.short} color={`var(--data-viz-data-${o.color})`} />)}</div></div></DataVizCard>
+      <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>{VF_OBJECTIVES.map(o => <LegendSwatch key={o.id} label={o.short} color={`var(--data-viz-data-${o.color})`} />)}</div></div></DataVizCard>
     <div className="ifs-grid">
       <div className="ifs-span-8"><DataVizCard title="Strategic Objectives Breakdown"><div style={{ height: 'var(--proto-chart-l)', width: '100%' }}><ColumnChart data={VF_OBJECTIVES.map(o => ({ label: o.short, value: Math.round(cap[o.id]) }))} valueLabel="Capital" format={v => fmtMoney(v)} /></div></DataVizCard></div>
       <div className="ifs-span-4"><DataVizCard title="Framework Coverage by Measure Type"><VfBarChart data={byType} valueLabel="Measures" /></DataVizCard></div>

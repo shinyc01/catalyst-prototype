@@ -188,8 +188,8 @@ function Drivers({ id, lenses, year }) {
     <DSec title={`What’s driving the risk in ${year}`}>
       {r.risk >= tol ? <Indicator type="red">Over tolerance in {year} ({Math.round(r.risk)} ≥ {tol})</Indicator>
         : <Indicator type={cross ? 'orange' : 'green'}>{cross ? `Crosses tolerance in ${cross}` : `Under tolerance to ${END}`}</Indicator>}
-      <InfoHintItem label="Base condition (Whistler outlook)" color="var(--border-grey)" value={String(Math.round(r.baseRisk))} />
-      {ds.map(d => <InfoHintItem key={d.id} label={`${LENS_INFO[d.id].label} · ${LENS_DEFS[d.id].kind}`} color={LENS_INFO[d.id].color} value={`+${Math.round(d.delta)}`} />)}
+      <LegendSwatch layout="row" label="Base condition (Whistler outlook)" color="var(--border-grey)" value={String(Math.round(r.baseRisk))} />
+      {ds.map(d => <LegendSwatch layout="row" key={d.id} label={`${LENS_INFO[d.id].label} · ${LENS_DEFS[d.id].kind}`} color={LENS_INFO[d.id].color} value={`+${Math.round(d.delta)}`} />)}
       {!ds.length && <span className="t-body-m-regular muted">No active lens affects this asset.</span>}
     </DSec>
   );
@@ -434,7 +434,7 @@ const AssetList_unused = ({ rows, onAsset, limit = 6 }) => (
   <NDS label="Clickable asset list" className="col" style={{ gap: 'var(--space-50)' }}>
     {rows.slice(0, limit).map(r => (
       <div key={r.a.id} className="click row" style={{ padding: 'var(--space-100) var(--space-150)', justifyContent: 'space-between' }} onClick={() => onAsset(r.a.id)}>
-        <InfoHintItem label={r.a.name} color={r.band.color} />
+        <LegendSwatch label={r.a.name} color={r.band.color} />
         <span className="t-body-m-regular sec">{Math.round(r.risk)} / {r.tol}</span>
       </div>
     ))}

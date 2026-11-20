@@ -139,7 +139,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
                     {relevance(rec).map(([l, v], i) => v > 0 && <BarChartItem key={l} fill={`var(--data-viz-data-${[4, 5, 3, 6, 6][i]})`} style={{ flex: v }}>{v}%</BarChartItem>)}
                   </div>
                   <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {[['Reliability', 4], ['Financial', 5], ['Environment', 3], ['Social', 6], ['Governance', 6]].map(([l, c]) => <InfoHintItem key={l} label={l} color={`var(--data-viz-data-${c})`} />)}
+                    {[['Reliability', 4], ['Financial', 5], ['Environment', 3], ['Social', 6], ['Governance', 6]].map(([l, c]) => <LegendSwatch key={l} label={l} color={`var(--data-viz-data-${c})`} />)}
                   </div>
                 </div>
               </Sec>

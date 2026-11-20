@@ -24,7 +24,7 @@ function RowShell({ id, children, menu, drag, setDrag, onDropOn, featured, noDra
         onDragOver={e => { if (drag && drag !== id) e.preventDefault(); }} onDrop={e => { e.preventDefault(); onDropOn?.(id); }}>
         {!noDrag && <span className="cmd-handle" aria-hidden="true"><Icon name="system-drag-and-drop" size={16} /></span>}
         {children}
-        {menu && <div className="cmd-kebab"><ActionMenu items={menu} label="Card actions" /></div>}
+        {menu && <div className="cmd-kebab"><Menu more items={menu} label="Card actions" /></div>}
       </div>
     </NDS>
   );
@@ -207,7 +207,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
             <Calendar defaultMonth={STORY_DATE} today={STORY_DATE} events={evByDay} value={day} onChange={setDay} />
             <Button type="tertiary" size="m" iconLeft="system-plus" onClick={() => setAddOpen(true)}>Add event</Button>
             <NDS label="Calendar legend" className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>
-              {Object.values(EVENT_TYPES).map(t => <InfoHintItem key={t.label} label={t.label} color={TONE_COLOR[t.tone]} />)}
+              {Object.values(EVENT_TYPES).map(t => <LegendSwatch key={t.label} label={t.label} color={TONE_COLOR[t.tone]} />)}
             </NDS>
           </div>
         </div>

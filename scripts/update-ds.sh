@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 BASE="https://shinyc01.github.io/catalyst-design-system-2"
 OUT="vendor/ds2"
 mkdir -p "$OUT"
-for f in dist/ifs-ds.js dist/ifs-ds.css dist/api.md dist/examples.md dist/icons.txt dist/tokens.txt guide/rules.md guide/components.md guide/usage.md guide/typography.md guide/spacing.md guide/layout.md guide/content.md; do
+for f in dist/ifs-ds.js dist/ifs-ds.css dist/api.md dist/examples.md dist/icons.txt dist/tokens.txt guide/rules.md guide/components.md; do
   curl -fsSL "$BASE/$f" -o "$OUT/$(basename "$f")"
 done
 SHA=$(gh api repos/shinyc01/catalyst-design-system-2/commits/HEAD --jq .sha 2>/dev/null || echo unknown)

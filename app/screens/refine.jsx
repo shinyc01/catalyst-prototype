@@ -62,8 +62,7 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
     center={<Stepper current={refine.status === 'executing' ? 4 : ['approval', 'approved'].includes(refine.status) ? 3 : 2} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
     actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
-      <span className="rf-comment-btn"><IconButton icon="system-comment" type={side === 'comments' ? 'secondary' : 'tertiary'} size="s" label="Comments" onClick={() => setSide(s => s === 'comments' ? 'confidence' : 'comments')} />
-        {openCount > 0 && <span className="ifs-navbar__dot" aria-hidden="true" />}</span>
+      <IFS.CommentButton type={side === 'comments' ? 'secondary' : 'tertiary'} hasNew={openCount > 0} onClick={() => setSide(s => s === 'comments' ? 'confidence' : 'comments')} />
       <Button type="secondary" size="s" onClick={() => toast({ title: 'Dismiss is on Shape', description: 'An investment in Refine is withdrawn from Approve' })}>Dismiss</Button>
       <Button type="primary" size="s" disabled={['approval', 'approved', 'executing'].includes(refine.status)} onClick={onSendForApproval}>{refine.status === 'approved' ? 'Approved' : refine.status === 'approval' ? 'Sent for approval' : 'Send for approval'}</Button>
     </div>} />;
