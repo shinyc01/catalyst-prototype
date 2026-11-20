@@ -1,0 +1,25 @@
+(window.FLOWS = window.FLOWS || []).push({
+  id: 'plan-consolidation',
+  title: 'J20 · Plan · Consolidation and sensitivities',
+  summary: 'The Capital Planning Manager checks the portfolio’s cycle on Plan home, asks Cooper whether the plan is on track against strategy, reviews the sensitivity scenarios on Compare and sends the plan for approval. The Results narrative (Result Pack) is specification only and not built.',
+  persona: 'cpm',
+  added: '2026-11-20', addedBy: 'Shiny',
+  sources: [
+    { label: 'Journey J20 (Capital Planning Manager) — saved verbatim', url: 'context/flows/plan-consolidation.md' },
+    { label: 'Figma · Plan Home — Electrical Distribution', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=84-277329' },
+    { label: 'Figma · Compare — Scenario comparison', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=85-55947' },
+    { label: 'Figma · Approve — Executive gate', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=84-108440' },
+  ],
+  steps: [
+    { hash: '#plan?persona=cpm&demo=final', target: '.page', advance: 'next', title: 'Every cycle at a glance',
+      body: 'Kenji Mori, Director of Capital Planning, opens Plan home: the portfolio tree on the left, the cycle’s progress and the forecast against budget. The Portfolio Owner has chosen a final scenario.' },
+    { target: { text: 'Are we on track against strategy?' }, title: 'Ask Cooper', body: 'Cooper answers from the plan’s real results.' },
+    { target: '.rec-evidence', advance: 'next', title: 'Cooper’s answer', body: 'Value and CAPEX against the requested plan, retained risk, and what the deferrals cost.' },
+    { target: { text: 'Open the comparison' }, title: 'Check the sensitivities', body: 'Open Compare to see the scenarios side by side.' },
+    { target: '.plan-cards', advance: 'next', title: 'Reduced vs full funding',
+      body: 'CAPEX −5% and Min CAPEX against Optimized and Add. CAPEX: the sensitivities the enterprise plan rests on. New scenario (J15) or Re-optimize (J17) add more.' },
+    { target: '[aria-label="Send for approval"]', title: 'Move to governance', body: 'Send the plan through the approval gates (J21).' },
+    { target: '.page', advance: 'next', title: 'In approval',
+      body: 'The plan is in the Executive gate. Cooper-drafted regulator narratives (Results › Result Pack) are specified but not designed yet.' },
+  ],
+});

@@ -64,8 +64,8 @@ The prototype is public and used for marketing, so every person, the company and
 - Mara Delgado (Asset Manager)
 - Owen Fitch (Portfolio Owner)
 - Ravi Banerjee
-- Kenji Mori
-- Theo Marsh
+- Kenji Mori (Director of Capital Planning; persona `cpm`, J20 / J23)
+- Theo Marsh (CFO; persona `cfo`, J22)
 - Priyanka Iyer
 - Luca Ferri
 - Noah Lindgren

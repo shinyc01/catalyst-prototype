@@ -33,7 +33,7 @@ All paths are inside `context/` unless they start with `app/`, `shared/` or `scr
 ## The other files
 - `product.md`: what Catalyst is, its stages, and Cooper.
 - `glossary.md`: the terms (asset, cluster, lens, tolerance, scenario…).
-- `flows/`: one file per mini flow, with the original journey document saved word for word at the end. `command-explore-build.md` (J03 + J06), `asset-data-validation.md` (J02), `condition-risk-study.md` (J03), `results-review.md` (J05), `planning-group-setup.md` (J15), `in-cycle-reoptimization.md` (J17), `dashboard-handoff.md` (J19), `plan-constraint-readiness.md` (J16), and `plan-portfolio-manager-userflow.md` (the Plan user-flow diagrams).
+- `flows/`: one file per mini flow, with the original journey document saved word for word at the end. `command-explore-build.md` (J03 + J06), `asset-data-validation.md` (J02), `condition-risk-study.md` (J03), `results-review.md` (J05), `planning-group-setup.md` (J15), `in-cycle-reoptimization.md` (J17), `dashboard-handoff.md` (J19), `plan-consolidation.md` (J20), `executive-approval.md` (J22), `filing-baseline.md` (J23), `plan-constraint-readiness.md` (J16), and `plan-portfolio-manager-userflow.md` (the Plan user-flow diagrams).
 - `decisions.md`: everything settled, newest first, with who decided it.
 - `open-questions.md`: everything not settled yet, numbered. Answer one by saying "Answer open question 10: …".
 - `data/whistler.md`: where the demo data comes from (Alder Ridge Energy, the real CLTDEMO demo records) and what was added.

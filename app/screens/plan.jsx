@@ -565,7 +565,8 @@ function planConfidenceCounts(saved) {
   const q = issues.filter(i => i.kind === 'question'), w = issues.filter(i => i.kind === 'warning');
   return { q: [q.filter(i => done(i.id)).length, q.length], w: [w.filter(i => done(i.id)).length, w.length] };
 }
-function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, onCompare, onApproval, onApprove, showRun, setShowRun }) {
+function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, onCompare, onApproval, onApprove, showRun, setShowRun, gates }) {
+  const [answer, setAnswer] = useState(null);                 // J20: Cooper's answer to a prompt
   const phase = planPhase({ stage, run, done, final }), ph = PHASE[phase];
   const cc = planConfidenceCounts(saved);
   const frac = ([a, b]) => `${a}/${b} (${Math.round(a / b * 100)}%)`;
@@ -586,7 +587,8 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
     <AppShell navBar={navBar} header={header}
       sideNav={<SideNavTree title="Plan" defaultValue="dp" defaultExpanded={['ar', 'dp']} tree={[{ id: 'ar', label: COMPANY.name, children: [{ id: 'dp', label: PLAN_PORTFOLIO.name, children: PLAN_PORTFOLIO.children.map(c => ({ id: c, label: c })) }] }]}
         sections={[{ label: 'Ad hoc plans', items: [{ id: 'mine', label: 'My investments' }] }]} onSelect={id => id !== 'dp' && toast({ title: 'Only the Demo Portfolio is part of this flow' })} />}
-      bottom={<BottomSheet prompts={['What needs my attention?', 'Are we on track against strategy?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
+      bottom={<BottomSheet prompts={['What needs my attention?', 'Are we on track against strategy?']} onPrompt={p => setAnswer(planCooperAnswer(/strategy/.test(p) ? 'strategy' : 'attention', { final, gates: stage === 'approval' || ['approved', 'scheduled', 'published'].includes(stage) ? gates : null }))} />}>
+      {answer && <div className="rec-evidence"><AgentWindow text={answer} onClose={() => setAnswer(null)} onAsk={() => {}} secondaryAction={{ label: 'Open the comparison', onClick: () => { setAnswer(null); onCompare(); } }} /></div>}
       {run && !done && showRun && <RunProgress run={run} onClose={() => setShowRun(false)} />}
       <div className="page">
         <span className="t-body-m-regular sec">The Demo Portfolio capital plan: {PLAN_INVESTMENTS.length} investments across the {PLAN_PORTFOLIO.children.join(' and ')} regions, optimized against the portfolio’s CAPEX, OPEX, resource and risk constraints.</span>
