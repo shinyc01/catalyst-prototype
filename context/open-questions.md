@@ -77,4 +77,5 @@ Answer these with the product designer, then move each answer into the right con
 73. **J15: "MID" scenario.** Figma's chat says "Start from MID"; this plan has no MID scenario, so Cooper offers the real Optimized scenario. Which scenario should be the default source?
 74. **J17: re-optimization results.** The prototype shows the real "05_Re-Optimized Plan" (Whistler's re-run with the latest actuals) whatever the Portfolio Owner asks Cooper. Should each request (lower budget, lower risk, more funding) produce its own mock result?
 75. **J17: who is told, and where?** Cooper notifies the owners of moved investments in a Plan notification only. Should Build show the revised schedule per investment ("Cooper revised the schedule")?
+76. **J19 / Results: living dashboards and the Result Pack** have no Figma (Results has no handover). The J19 tour hands over through Send for approval, as today's designs do. Is a separate recommendation package still needed? When will Results be designed?
 
