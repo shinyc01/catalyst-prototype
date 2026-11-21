@@ -23,9 +23,9 @@ function relevance(alt) {
 const Sec = ({ title, extra, actions, children, style, cooper }) => (
   <ContentCard style={style} className={cooper ? 'build-sec--cooper' : undefined} top={
     <div className="row" style={{ width: '100%', justifyContent: 'space-between', padding: 'var(--space-100) var(--space-150) 0' }}>
-      <div className="row" style={{ gap: 'var(--space-400)' }}><span className="t-heading-h4-semibold">{title}</span>{extra}</div>
-      <div className="row" style={{ gap: 'var(--space-100)' }}>{actions}
-      <IconButton icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: ${title}` })} /></div>
+      <Inline gap="400" align="center"><span className="t-heading-h4-semibold">{title}</span>{extra}</Inline>
+      <Inline gap="100" align="center">{actions}
+      <IconButton icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label="Ask Cooper" onClick={() => toast({ title: `Cooper: ${title}` })} /></Inline>
     </div>} bottom={<div style={{ width: '100%' }}>{children}</div>} />
 );
 const SubHead = ({ children }) => <span className="t-label-m-medium" style={{ display: 'block', padding: 'var(--space-100) 0 var(--space-200)' }}>{children}</span>;
@@ -85,21 +85,21 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
     status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={IDEA_STATUS[status].type}>{IDEA_STATUS[status].label}</Indicator>{status === 'review' && <IFS.Counter>{reviewCount(rows)}</IFS.Counter>}</span>}
     center={reviewer ? <Stepper current={0} steps={[{ label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />
       : <Stepper current={ownerChain ? (status === 'refining' ? 2 : 1) : 0} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
-    actions={reviewer ? <div className="row" style={{ gap: 'var(--space-200)' }}>
+    actions={reviewer ? <Inline gap="200" align="center">
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       {myRow.status === 'success' ? <Button type="secondary" size="s" iconLeft="system-check" disabled>Proceed</Button>
         : <SplitButton size="s" onClick={() => setDecide('proceed')} menuLabel="More decisions" items={Object.entries(DECIDE).map(([k, d]) => ({ label: d.label, description: d.description, onClick: () => setDecide(k) }))}>Decide</SplitButton>}
-    </div> : ownerChain ? <div className="row" style={{ gap: 'var(--space-200)' }}>
+    </Inline> : ownerChain ? <Inline gap="200" align="center">
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <Button type="secondary" size="s" onClick={() => setDismiss('')}>Dismiss</Button>
       {status === 'refining' ? <Button type="primary" size="s" onClick={onOpenRefine}>Refine</Button>
         : <Tooltip content="Opens once every reviewer approves the idea"><span><Button type="primary" size="s" disabled>Refine</Button></span></Tooltip>}
-    </div> : <div className="row" style={{ gap: 'var(--space-200)' }}>
+    </Inline> : <Inline gap="200" align="center">
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
       <Button type="secondary" size="s" onClick={() => setDismiss('')}>Dismiss</Button>
       <Button type="primary" size="s" disabled={status === 'review'} onClick={() => onSendForReview ? onSendForReview() : toast({ title: 'Sent for review', description: 'Reviewers will be notified' })}>{status === 'review' ? 'Sent for review' : 'Send for review'}</Button>
-    </div>} />;
+    </Inline>} />;
   return (
     <AppShell navBar={navBar} header={header}
       bottom={<BottomSheet type="documents" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
@@ -114,10 +114,10 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
       </div> : <div className="page-row">
         <div className="page">
           <Sec title="Idea Overview">
-            <div className="col" style={{ gap: 'var(--space-150)', padding: '0 var(--space-150) var(--space-150)' }}>
+            <Stack gap="150" style={{ padding: '0 var(--space-150) var(--space-150)' }}>
               <span className="t-label-m-medium">{INV.name}</span>
               <span className="t-body-m-regular sec">{INV.description}</span>
-            </div>
+            </Stack>
           </Sec>
 
           <div className="ifs-grid is-halves">
@@ -125,28 +125,28 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
               <Sec title="The Need" cooper={askNeed}
                 actions={editNeed !== null ? <Button type="cooper" size="s" iconLeft="cooper-system-icon" onClick={() => { setEditNeed(null); setAskNeed(true); }}>Edit with Cooper</Button>
                   : <IconButton icon="system-edit-rename" type="tertiary" size="s" label="Edit The Need" onClick={() => setEditNeed(need)} />}>
-                {editNeed !== null ? <div className="col" style={{ gap: 'var(--space-200)', padding: '0 var(--space-150) var(--space-150)' }}>
+                {editNeed !== null ? <Stack gap="200" style={{ padding: '0 var(--space-150) var(--space-150)' }}>
                     <IFS.TextArea size="l" value={editNeed} onChange={e => setEditNeed(e.target ? e.target.value : e)} aria-label="The Need" />
-                    <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'flex-end' }}>
+                    <Inline gap="200" justify="end" align="center">
                       <Button type="tertiary" size="s" onClick={() => setEditNeed(null)}>Cancel</Button>
                       <Button type="primary" size="s" onClick={() => { setNeed(editNeed.trim() || need); setEditNeed(null); toast({ title: 'The Need updated' }); }}>Save</Button>
-                    </div></div>
+                    </Inline></Stack>
                   : <p className="t-body-m-regular" style={{ margin: 0, padding: 'var(--space-100) var(--space-150) var(--space-150)', whiteSpace: 'pre-line' }}>{need}</p>}
               </Sec>
               <Sec title="Aligned Enterprise Goals">
-                <div className="row" style={{ gap: 'var(--space-150)', flexWrap: 'wrap', padding: '0 var(--space-150) var(--space-150)' }}>
+                <Inline gap="150" wrap align="center" style={{ padding: '0 var(--space-150) var(--space-150)' }}>
                   {ENTERPRISE_GOALS.map(g => <Badge key={g} size="s" color="white">{g}</Badge>)}
-                </div>
+                </Inline>
               </Sec>
               <Sec title="Strategic Relevance">
-                <div className="col" style={{ gap: 'var(--space-400)', padding: '0 var(--space-150) var(--space-150)' }}>
-                  <div className="row" style={{ gap: 'var(--space-50)' }}>
+                <Stack gap="400" style={{ padding: '0 var(--space-150) var(--space-150)' }}>
+                  <Inline gap="50" align="center">
                     {relevance(rec).map(([l, v], i) => v > 0 && <BarChartItem key={l} fill={`var(--data-viz-data-${[4, 5, 3, 6, 6][i]})`} style={{ flex: v }}>{v}%</BarChartItem>)}
-                  </div>
-                  <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  </Inline>
+                  <Inline gap="400" wrap justify="center" align="center">
                     {[['Reliability', 4], ['Financial', 5], ['Environment', 3], ['Social', 6], ['Governance', 6]].map(([l, c]) => <LegendSwatch key={l} label={l} color={`var(--data-viz-data-${c})`} />)}
-                  </div>
-                </div>
+                  </Inline>
+                </Stack>
               </Sec>
             </div>
             <Sec title="Affected Assets & Area" style={{ height: '100%' }}>
@@ -159,7 +159,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
           </div>
 
           <Sec title="Recommended Alternative">
-            <div className="col" style={{ gap: 'var(--space-300)' }}>
+            <Stack gap="300">
               <ContentCard title={rec.name} description={rec.desc}
                 bottom={<div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-250)' }}>
                   <StatCard size="s" title="BCR" value={String(rec.bcr ?? "—")} /><StatCard size="s" title="Cost range" value={rec.cost} />
@@ -172,22 +172,22 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
                     bottom={<StatCard size="s" title="Cost range" value={o.cost} description={o.time} />} />)}
                 </div>
               </div>
-            </div>
+            </Stack>
           </Sec>
 
           <Sec title="Compare to Other Investments" extra={<Select size="s" options={['Portfolio level', 'Region level', 'Asset class']} defaultValue="Portfolio level" clearable={false} onChange={v => toast({ title: `${v}`, description: 'Comparison scope is illustrative' })} />}>
-            <div className="col" style={{ gap: 'var(--space-400)' }}>
+            <Stack gap="400">
               <div className="ifs-grid">{[['Rate', `#${rank}`, `of ${all.length} investments`], ['Percentile', `${pct}th`], ['Standing', standing], ['Alternative', rec.name]]
                 .map(([t, v, d]) => <div key={t} className="ifs-span-3"><StatCard size="s" title={t} value={v} description={d} /></div>)}</div>
               <DataVizCard title="Investment position" header={{ segments: [{ value: 'bcr', label: 'Value vs Cost' }, { value: 'eff', label: 'Efficiency' }], segmentValue: metric, onSegmentChange: setMetric }} onCooper={() => toast({ title: 'Cooper: Investment position' })}>
                 <NDS label="Histogram (VerticalBarChartItem + axes)" className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-300)' }}>
-                  <div className="row" style={{ alignItems: 'flex-end', gap: 'var(--space-150)', height: 'var(--proto-bars-h)' }}>
+                  <Inline align="end" gap="150" style={{ height: 'var(--proto-bars-h)' }}>
                     {counts.map((c, i) => (
                       <div key={i} style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                         <VerticalBarChartItem width="100%" height={180} max={maxC} value={Math.max(c, 0.15)} segments={[{ value: 1, fill: i === myBin ? 'var(--data-viz-muted-purple-data-5)' : 'var(--background-elevation-1-tertiary)' }]} style={{ width: '100%' }} />
                       </div>))}
-                  </div>
-                  <div className="row" style={{ gap: 'var(--space-150)' }}>{BINS[key].map(b => <span key={b[2]} className="t-body-s-regular sec" style={{ flex: 1, textAlign: 'center' }}>{b[2]}</span>)}</div>
+                  </Inline>
+                  <Inline gap="150" align="center">{BINS[key].map(b => <span key={b[2]} className="t-body-s-regular sec" style={{ flex: 1, textAlign: 'center' }}>{b[2]}</span>)}</Inline>
                   <span className="t-body-s-regular sec" style={{ textAlign: 'center' }}>{metric === 'bcr' ? 'Value / Benefit (BCR)' : 'Value score'}</span>
                 </NDS>
               </DataVizCard>
@@ -207,15 +207,15 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
                   </NDS>
                 </div>
               </div>
-            </div>
+            </Stack>
           </Sec>
         </div>
         <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
           {reviewer ? (() => { const ev = readinessEvaluation(rows.filter(r => r.note && r.note.text).map(r => ({ name: r.name, text: r.note.text })));
             return <Panel title="Readiness evaluation" style={{ height: '100%' }}>
               <IFS.ReadinessEvaluation summary={ev.summary} defaultOpenSections={['notes']} sections={ev.sections.map(x => ({ id: x.id, title: x.title, badge: x.badge, count: x.count,
-                content: x.rows ? <IFS.ReadinessFacts rows={x.rows} /> : <div className="col" style={{ gap: 'var(--space-200)' }}>{x.notes.length ? x.notes.map((n, k) => <div key={k} className="col rf-note" style={{ gap: 'var(--space-50)' }}><span className="t-label-m-medium">{n.name}</span><span className="t-body-m-regular sec">{`“${n.text}”`}</span></div>)
-                  : <span className="t-body-m-regular muted">No notes from the owner.</span>}</div> }))} />
+                content: x.rows ? <IFS.ReadinessFacts rows={x.rows} /> : <Stack gap="200">{x.notes.length ? x.notes.map((n, k) => <div key={k} className="col rf-note" style={{ gap: 'var(--space-50)' }}><span className="t-label-m-medium">{n.name}</span><span className="t-body-m-regular sec">{`“${n.text}”`}</span></div>)
+                  : <span className="t-body-m-regular muted">No notes from the owner.</span>}</Stack> }))} />
             </Panel>; })() :
           <Panel title="System confidence" expanded={panel} onExpandedChange={setPanel} dot={c.dot || undefined} onEvidence={() => toast({ title: 'Evidence chain' })}
             className={panel ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
@@ -231,19 +231,19 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
         secondaryAction={{ label: 'Cancel', onClick: () => setDecide(null) }}
         primaryAction={{ label: decide === 'proceed' ? 'Approve investment' : decide === 'request' ? 'Request info' : decide === 'park' ? 'Park idea' : 'Stop idea',
           onClick: () => { if (!decideNote.trim()) { setDecideTried(true); return; } const k = decide, n = decideNote.trim(); setDecide(null); setDecideNote(''); setDecideTried(false); onDecide && onDecide(k, n); } }}>
-        <div className="col" style={{ gap: 'var(--space-stack)' }}>
+        <Stack gap="stack">
           <span className="t-body-m-regular sec">{decide === 'proceed' ? 'This idea will leave Shape and become an investment. Its context, history, and approvals stay attached.'
             : decide === 'request' ? 'The idea goes back to Shape. Say what the owner needs to add.' : decide === 'park' ? 'The idea is deferred. Say why and when to revisit it.' : 'The idea is closed. Say why.'}</span>
           <IFS.TextArea size="m" label={decide === 'proceed' ? 'Note' : 'Comment'} error={decideTried && !decideNote.trim() ? (decide === 'proceed' ? 'Note is required' : 'Comment is required') : undefined} placeholder={decide === 'proceed' ? 'Add a short approval note for the investment record.' : 'What does the owner need to know?'} value={decideNote} onChange={e => setDecideNote(e.target ? e.target.value : e)} />
-        </div>
+        </Stack>
       </Modal>
       <Modal open={dismiss !== null} onOpenChange={o => !o && setDismiss(null)} title="Dismiss This Idea?"
         secondaryAction={{ label: 'Cancel', onClick: () => setDismiss(null) }}
         primaryAction={{ label: 'Dismiss idea', onClick: () => { const n = dismiss; setDismiss(null); onDismiss ? onDismiss(n) : toast({ title: 'Idea dismissed' }); } }}>
-        <div className="col" style={{ gap: 'var(--space-stack)' }}>
+        <Stack gap="stack">
           <span className="t-body-m-regular sec">The idea closes and leaves the Idea Pad. Reviewers are told no approval is needed.</span>
           <IFS.TextArea size="m" label="Note" placeholder="Add a note explaining why this idea should not move forward." value={dismiss || ''} onChange={e => setDismiss(e.target ? e.target.value : e)} />
-        </div>
+        </Stack>
       </Modal>
       {askNeed && <div className="build-askbar">
         {cooperSaid && <AgentWindow text={cooperSaid} onClose={() => { setCooperSaid(null); setAskNeed(false); }} onAsk={() => setCooperSaid(null)} />}

@@ -6,6 +6,7 @@ const {
   ContentCard, Panel, NavItem, NavSubtitle, Switch, Select, LineChart, BarChartItem, LegendSwatch, ChatCompactPanel,
   UserMessage, CooperMessage, CooperProgress, PageHeader, Stepper, Indicator, Slider, EmptyState, SplitButton, DataVizCard, VerticalBarChartItem,
   Icon, Tooltip, Menu, Modal, Drawer, Chip, Avatar, TextField, DatePicker,
+  Stack, Inline,   // rule 1.5: layout spacing in screens
 } = IFS;
 const { useState, useEffect, useRef, useMemo } = React;
 const toast = IFS.toast;

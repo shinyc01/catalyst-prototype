@@ -20,13 +20,13 @@ function useColumnFilters(rows, status) {
   const set = (k, v) => setF(x => ({ ...x, [k]: v }));
   const menu = open && <div className="proto-colfilter" style={{ top: open.top, left: open.left }}>{/* runtime anchor geometry from the header button */}
     <IFS.Popover inline title={`Filter ${open.title}`} width="var(--overlay-width-s)">
-      <div className="col" style={{ gap: 'var(--space-200)' }}>
+      <Stack gap="200">
         {open.key === 'name'
           ? <TextField size="m" autoFocus label="Name contains" value={f.name || ''} onChange={v => set('name', v && v.target ? v.target.value : v)} />
           : values.map(v => { const cur = f[open.key] || new Set();
               return <IFS.Checkbox key={v} checked={cur.has(v)} onChange={() => { const n = new Set(cur); n.has(v) ? n.delete(v) : n.add(v); set(open.key, n); }}>{`${v} (${rows.filter(r => colValue(open.key, r, status) === v).length})`}</IFS.Checkbox>; })}
         <div className="row" style={{ justifyContent: 'flex-end' }}><Button type="tertiary" size="s" onClick={() => set(open.key, open.key === 'name' ? '' : new Set())}>Clear</Button></div>
-      </div>
+      </Stack>
     </IFS.Popover></div>;
   const any = Object.values(f).some(v => typeof v === 'string' ? v : v.size);
   return { match, withFilter, menu, any, clear: () => setF({}) };
@@ -91,11 +91,11 @@ function BuildLibrary({ navBar, ideas, setIdeas, refine, refineOther, reviews, o
 function NewChooser({ open, onClose, onIdeas }) {
   return (
     <Modal open={open} onOpenChange={o => !o && onClose()} title="How Would You Like to Start the New Investment?">
-      <div className="col" style={{ gap: 'var(--space-200)' }}>
+      <Stack gap="200">
         <ContentCard title="Start with Ideas" description="Describe your idea or upload documents. Cooper builds the investment for you." iconRight="arrow-right" onClick={onIdeas} />
         <ContentCard title="Duplicate Investment" description="Search any investment. Duplicate it and enhance the copy with new documents and context." iconRight="arrow-right"
           onClick={() => toast({ title: 'Duplicate Investment isn’t part of this flow', description: 'Start with Ideas to create one with Cooper' })} />
-      </div>
+      </Stack>
     </Modal>
   );
 }

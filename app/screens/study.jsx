@@ -90,16 +90,16 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
         {libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={st => { setLibOpen(false); onOpenStudy(st); }} onClose={() => setLibOpen(false)} />}
         <div className="ifs-slot-top"><FloatingBar inline category={scope ? name : CLUSTER.name} categoryIcon="map-location" item={`Selected ${scoped.length}`}
           badge={<Badge color="red" size="s">{s.now.over}</Badge>}
-          actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
+          actions={<Inline gap="200" align="center">
             <Button type="tertiary" size="m" onClick={() => { setChat(null); setAsset(null); setDetails(true); }}>View details</Button>
             <SplitButton size="m" onClick={() => openChat('idea')} menuLabel="More create options"
               items={[{ label: 'Save study', onClick: saveStudy }]}>Create idea</SplitButton>
-          </div>}
+          </Inline>}
           onClose={onClose} /></div>
 
         {!libOpen && <div className="ifs-slot-left">
           <Panel title={`${name} Study`} onEvidence={() => toast({ title: 'Evidence chain' })} actions={<PanelClose onClose={onClose} label="Close study" />} expanded={studyOpen} onExpandedChange={v => v ? showStudy() : setStudyOpen(false)} className="proto-fill" style={{ height: '100%' }}>
-            <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
+            <Stack gap="300" style={{ height: '100%', minHeight: 0 }}>
               <SegmentedControl size="s" fullWidth value={view} onChange={setView} options={[{ value: 'lenses', label: 'Lenses' }, { value: 'conf', label: 'System confidence' }]} />
               {view === 'conf' ? <StudyConfidence c={conf} value={studyConfidence(ids, { ...trace, ...conf.status })} /> : (
                 <div style={{ display: 'flex', gap: 'var(--space-300)', minHeight: 0, flex: 1 }}>
@@ -115,14 +115,14 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
                       </div>
                     ))}
                   </NDS>
-                  <div className="col scroll" style={{ flex: 1, gap: 'var(--space-300)', paddingRight: 'var(--space-100)' }}>
+                  <Stack gap="300" className="scroll" style={{ flex: 1, paddingRight: 'var(--space-100)' }}>
                     {sel === 'overview' && <Overview s={s} lenses={lenses} year={year} onAsset={showAsset} />}
                     {sel === 'base' && <BaseView year={year} ids={ids} onAsset={showAsset} />}
                     {selected && <LensView lens={selected} lenses={lenses} year={year} ids={ids} onToggle={() => toggle(selected.id)} onSource={v => setSrc(selected.id, v)} onAsset={showAsset} />}
-                  </div>
+                  </Stack>
                 </div>
               )}
-            </div>
+            </Stack>
           </Panel>
         </div>}
 
@@ -130,10 +130,10 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
           <IconButton icon={playing ? 'player-pause-filled' : 'arrow-caret-right-filled'} type="secondary" shape="circle" size="m" label={playing ? 'Pause' : 'Play horizon'} onClick={play} />
           <span className="t-label-m-medium muted">Horizon</span>
           <Badge size="s" color="white">{year}</Badge>
-          <div className="col" style={{ flex: 1, gap: 'var(--space-50)' }}>
+          <Stack gap="50" style={{ flex: 1 }}>
             <Slider min={NOW} max={END} step={1} value={year} onChange={v => { setPlaying(false); setYear(v); }} showValue={false} />
             <div className="horizon-ticks t-body-s-regular muted">{[NOW, NOW + 5, END].map(y => <span key={y}>{y}</span>)}</div>
-          </div>
+          </Stack>
         </NDS></div>
 
         {details && (
@@ -193,14 +193,14 @@ function Overview({ s, lenses, year, onAsset }) {
     <span className="t-label-m-medium muted">Change summary</span>
     <p className="t-body-m-regular sec" style={{ margin: 0 }}>{overviewText(s, year)}</p>
     <div className="box col" style={{ gap: 'var(--space-250)' }}>
-      <div className="row" style={{ gap: 'var(--space-200)' }}>
+      <Inline gap="200" align="center">
         <span className="t-label-m-medium">Risk score</span>
-        <div className="row" style={{ flex: 1, gap: 'var(--space-50)' }}>
+        <Inline gap="50" align="center" style={{ flex: 1 }}>
           <BarChartItem number={false} fill="var(--border-grey)" style={{ flex: Math.max(1, s.base.score) }} />
           {pos.map(c => <BarChartItem key={c.id} number={false} fill={LENS_INFO[c.id].color} style={{ flex: c.delta }} />)}
-        </div>
+        </Inline>
         <span className="t-label-m-medium">{s.now.score}</span>
-      </div>
+      </Inline>
       <LegendSwatch layout="row" label="Base condition" color="var(--border-grey)" value={String(s.base.score)} />
       {s.contrib.map(c => <LegendSwatch layout="row" key={c.id} label={LENS_INFO[c.id].label} color={LENS_INFO[c.id].color} value={`+${c.delta}`} />)}
       {lenses.filter(l => !l.on).map(l => <LegendSwatch layout="row" key={l.id} label={`${l.label} (off)`} neutral value="—" />)}
@@ -245,10 +245,10 @@ function LensView({ lens, lenses, year, ids, onToggle, onSource, onAsset }) {
 function StudyConfidence({ c, value }) {
   const { IssueKindSwitch: Kinds, IssueNavigator: Nav, EvidenceStrength: Strength } = IFS;
   return (
-    <div className="col scroll" style={{ gap: 'var(--space-300)', flex: 1, minHeight: 0 }}>
+    <Stack gap="300" className="scroll" style={{ flex: 1, minHeight: 0 }}>
       <Strength value={value} title="" labels={[value < 70 ? `${value}% Reject` : '<70% Reject', value >= 70 && value <= 90 ? `${value}% Review` : 'Review', value > 90 ? `${value}% Approve` : '>90% Approve']} />
       {c.issues.length ? <>{c.present.length > 1 && <Kinds controller={c} />}<Nav controller={c} /></>
         : <EmptyState cause="empty-container" size="section" heading="No Open Questions" body="Cooper found nothing to check in this study’s data." />}
-    </div>
+    </Stack>
   );
 }
