@@ -152,7 +152,7 @@ const MapLegend = ({ style, grid = true }) => (
     <span className="t-body-s-regular muted">Glowing = over intervention tolerance</span>
   </NDS>
 );
-const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen, onStudy, grid = true }) => {
+const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen, onStudy, grid = true, rail }) => {   // rail: a screen's own top cluster (New investment's selection tools)
   const [layers, setLayers] = useState(false);
   // rule 6.9 / 9.6: Layers closes on Esc or an outside click (the inline Popover doesn't do it itself)
   useEffect(() => { if (!layers) return;
@@ -163,11 +163,11 @@ const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen
   return <>
   <div className="ifs-slot-tools">
     {/* Figma Explore rail (29:191921 / 29:101050): 1 = asset structure, 2 = studies library, 3 = study */}
-    <MapToolbar><MapToolCluster label="Map views">
+    {rail ? <MapToolbar>{rail}</MapToolbar> : <MapToolbar><MapToolCluster label="Map views">
       <MapToolButton icon="asset-structure" label="Asset structure" active={!!assetsOpen} onClick={() => onAssets ? onAssets() : toast({ title: 'Asset structure isn’t part of this flow' })} />
       <MapToolButton icon="system-library" label="Studies library" active={!!libraryOpen} onClick={() => onLibrary ? onLibrary() : toast({ title: 'Studies library isn’t part of this flow' })} />
       <MapToolButton icon="system-book" label="Study" active={!!studyOpen} onClick={() => onStudy ? onStudy() : api.current?.fit()} />
-    </MapToolCluster></MapToolbar>
+    </MapToolCluster></MapToolbar>}
   </div>
   <div className="ifs-slot-tools-bottom">
     <MapToolbar onAction={id => id === 'zoom-in' ? api.current?.zoomIn() : id === 'zoom-out' ? api.current?.zoomOut() : id === 'layers' ? setLayers(o => !o) : toast({ title: `${id} isn’t part of this flow` })} />

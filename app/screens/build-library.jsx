@@ -108,6 +108,7 @@ function NewInvestment({ navBar, onBack, onShape }) {
   const [ctx, setCtx] = useState(0);
   const [docs, setDocs] = useState(0);
   const [focus, setFocus] = useState(null);
+  const [hidden, setHidden] = useState(false);   // eye: dim every asset ([Assumed]: the Figma eye hides the asset layer)
   const [tool, setTool] = useState(null);           // 'box' while selecting
   const [drag, setDrag] = useState(null);           // { x0, y0, x1, y1 } in map px
   const [needs, setNeeds] = useState(0);
@@ -157,20 +158,21 @@ function NewInvestment({ navBar, onBack, onShape }) {
         </div>
         <div className="bi-map">
           <Panel title="Area Overview" className="proto-fill" style={{ height: '100%' }}>
-            <div ref={mapEl} className="bi-map__view">
+            <div ref={mapEl} className="bi-map__view ifs-slots">
               <NDS label="3D map (MapLibre + OpenFreeMap)" className="fill">
-                <MapView lenses={INITIAL_LENSES} year={END} focus={focus} onSelect={() => {}} apiRef={api} pad={{ tl: [80, 60], br: [60, 60] }} />
+                <MapView lenses={INITIAL_LENSES} year={END} focus={hidden ? [] : focus} onSelect={() => {}} apiRef={api} pad={{ tl: [80, 60], br: [60, 60] }} />
               </NDS>
-              <div className="bi-map__tools">
-                <MapToolbar><MapToolCluster label="Selection">
-                  <MapToolButton icon="map-tool-bar-lasso" label="Lasso select" onClick={() => toast({ title: 'Lasso isn’t part of this flow', description: 'Use Box select' })} />
-                  <MapToolButton icon="map-tool-bar-select-area" label="Box select" active={tool === 'box'} onClick={() => { setTool(t => t === 'box' ? null : 'box'); toast({ title: 'Start selecting', description: 'Drag a box over the assets' }); }} />
-                  <MapToolButton icon="map-layers" label="Layers" onClick={() => toast({ title: 'Layers aren’t part of this flow' })} />
-                </MapToolCluster></MapToolbar>
-              </div>
               {tool === 'box' && <NDS label="Box selection overlay" className="bi-map__catch" onMouseDown={down} onMouseMove={move} onMouseUp={up}>
                 {box && <div className="bi-map__box" style={box} />}
               </NDS>}
+              {/* Figma 73:116169 rail (lasso, box, show/hide, map settings) in the kit's map slots; zoom and Layers (with the map key, rule 6.9) on the bottom bar */}
+              <MapTools api={api} grid={false} rail={<><MapToolCluster label="Selection">
+                  <MapToolButton icon="map-tool-bar-lasso" label="Lasso select" onClick={() => toast({ title: 'Lasso isn’t part of this flow', description: 'Use Box select' })} />
+                  <MapToolButton icon="map-tool-bar-select-area" label="Box select" active={tool === 'box'} onClick={() => { setTool(t => t === 'box' ? null : 'box'); toast({ title: 'Start selecting', description: 'Drag a box over the assets' }); }} />
+                </MapToolCluster><MapToolCluster label="View">
+                  <MapToolButton icon={hidden ? 'eye-closed' : 'eye-opened'} label={hidden ? 'Show assets' : 'Hide assets'} active={hidden} onClick={() => setHidden(h => !h)} />
+                  <MapToolButton icon="map-settings-tool" label="Map settings" onClick={() => toast({ title: 'Map settings aren’t part of this flow' })} />
+                </MapToolCluster></>} />
             </div>
           </Panel>
         </div>
