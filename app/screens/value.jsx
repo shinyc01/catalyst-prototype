@@ -180,20 +180,28 @@ function VfLibrary({ page, setPage, draft, onNew }) {
 
 /* ---------------------------------------------------------------- Active framework · Overview (Figma 2029:7675) */
 function VfOverview() {
+  const [mix, setMix] = useState('weight'), [split, setSplit] = useState('budget');   // Figma header toggles: By weight | By budget · By budget | By investment
   const cap = vfCapitalBy(), bcr = bcrOf(VF_TOTAL_VALUE, VF_TOTAL_CAPITAL), scored = PLAN_INVESTMENTS.filter(i => i.value > 0).length / PLAN_INVESTMENTS.length;
   const peer = { reliability: 35, financial: 25, environment: 16, social: 8, governance: 16 }, best = { reliability: 38, financial: 28, environment: 19, social: 4, governance: 11 };   // [Added] Figma peer figures
   const bar = (label, w) => <div key={label} className="row" style={{ gap: 'var(--space-300)' }}><span className="t-body-m-regular sec" style={{ width: 'var(--proto-detail-nav-w)' }}>{label}</span>
     <div className="row" style={{ gap: 'var(--space-50)', flex: 1 }}>{VF_OBJECTIVES.map(o => <BarChartItem key={o.id} fill={`var(--data-viz-data-${o.color})`} style={{ flex: w[o.id] }} title={`${o.short} ${w[o.id]}%`}>{`${Math.round(w[o.id])}%`}</BarChartItem>)}</div></div>;
+  const capShare = Object.fromEntries(VF_OBJECTIVES.map(o => [o.id, cap[o.id] / VF_TOTAL_CAPITAL * 100]));
+  // [Assumed] what the 100% columns split each objective by: investment size (capital bands), as a share of its budget or of its investments
+  const BANDS = [{ key: 's', label: 'Under $10M', max: 1e7 }, { key: 'm', label: '$10M–$50M', max: 5e7 }, { key: 'l', label: '$50M and over', max: Infinity }];
+  const band = i => BANDS.find(b => i.capex < b.max).key;
+  const breakdown = VF_OBJECTIVES.map(o => { const t = { s: 0, m: 0, l: 0 };
+    PLAN_INVESTMENTS.forEach(i => { const sh = vfProfile(i)[o.id] || 0; t[band(i)] += split === 'budget' ? i.capex * sh : sh; });
+    const sum = t.s + t.m + t.l || 1; return { label: o.short, s: t.s / sum * 100, m: t.m / sum * 100, l: t.l / sum * 100 }; });
   const byType = Object.entries(VF_MEASURES.reduce((t, m) => ({ ...t, [m.type]: (t[m.type] || 0) + 1 }), {})).map(([label, value]) => ({ label, value }));
   const top = [...PLAN_INVESTMENTS].sort((a, b) => b.capex - a.capex).slice(0, 8);
   return <div className="page">
-    <div className="ifs-grid">{[['Portfolio Benefit-Cost Ratio', bcr ?? '—', 'value per $1M ÷ 2,000'], ['Total capital', fmtMoney(VF_TOTAL_CAPITAL), `${PLAN_INVESTMENTS.length} investments`], ['Risk coverage', `${Math.round(scored * 100)}%`, 'of investments scored'], ['Industry position', '62nd', 'percentile among peer utilities']]
-      .map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat size="m" title={t} value={String(v)} description={d} /></div>)}</div>
-    <DataVizCard title="Portfolio Under This Framework"><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>{bar(COMPANY.name, VF_WEIGHTS)}{bar('Peer avg', peer)}{bar('Best in class', best)}
+    <div className="ifs-grid">{[['Portfolio Benefit-Cost Ratio', bcr ?? '—', 'value per $1M ÷ 2,000'], ['Total capital', fmtMoney(VF_TOTAL_CAPITAL), `${PLAN_INVESTMENTS.length} investments`], ['Risk coverage', `${Math.round(scored * 100)}%`, 'of investments scored'], ['Industry position', '62nd', 'percentile among peer utilities 31 / 50']]
+      .map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat size="m" title={t} value={String(v)} description={d} badge={t === 'Industry position' ? { size: 's', color: 'white', children: '2nd Quartile' } : undefined} /></div>)}</div>
+    <DataVizCard title="Portfolio Under This Framework" header={{ segments: [{ value: 'weight', label: 'By weight' }, { value: 'budget', label: 'By budget' }], segmentValue: mix, onSegmentChange: setMix }}><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>{bar(COMPANY.name, mix === 'weight' ? VF_WEIGHTS : capShare)}{bar('Peer avg', peer)}{bar('Best in class', best)}
       <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>{VF_OBJECTIVES.map(o => <LegendSwatch key={o.id} label={o.short} color={`var(--data-viz-data-${o.color})`} />)}</div></div></DataVizCard>
     <div className="ifs-grid">
-      <div className="ifs-span-8"><DataVizCard title="Strategic Objectives Breakdown"><div style={{ height: 'var(--proto-chart-l)', width: '100%' }}><ColumnChart data={VF_OBJECTIVES.map(o => ({ label: o.short, value: Math.round(cap[o.id]) }))} valueLabel="Capital" format={v => fmtMoney(v)} /></div></DataVizCard></div>
-      <div className="ifs-span-4"><DataVizCard title="Framework Coverage by Measure Type"><VfBarChart data={byType} valueLabel="Measures" /></DataVizCard></div>
+      <div className="ifs-span-8"><DataVizCard title="Strategic Objectives Breakdown" header={{ segments: [{ value: 'budget', label: 'By budget' }, { value: 'investment', label: 'By investment' }], segmentValue: split, onSegmentChange: setSplit }}><div style={{ width: '100%' }}><IFS.StackedColumnChart data={breakdown} series={BANDS.map(b => ({ key: b.key, label: b.label }))} format={v => `${Math.round(v)}%`} onEditWithCooper={false} /></div></DataVizCard></div>
+      <div className="ifs-span-4"><DataVizCard title="Framework Coverage by Measure Type"><div style={{ width: '100%' }}><IFS.DonutChart onEditWithCooper={false} data={byType} valueLabel="Measures" centerValue={String(VF_MEASURES.length)} centerLabel="measures" /></div></DataVizCard></div>
     </div>
     <DataVizCard title="Investments by Strategic Objective"><div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>{top.map(i => { const p = vfProfile(i); return <div key={i.id} className="row" style={{ gap: 'var(--space-300)' }}>
       <span className="t-body-m-regular plan-ellipsis" style={{ width: 'var(--proto-plan-side-w)' }}>{i.name}</span>
