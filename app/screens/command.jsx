@@ -111,19 +111,19 @@ function Command({ navBar, lenses, persona, onOpen }) {
         <div className="page-col ifs-span-rest">
           <PageTop eyebrow title={`Welcome back, ${P.first}.`} description="2.8M simulations completed while you were away. Here are the items that require your input and attention right now."
             style={{ gap: 'var(--space-300)' }} tabs={{ items: tabs, value: tab, onChange: setTab }} search={{ placeholder: 'Ask anything about your work', suggestions: ['Why is Alpine Meadows #1?', 'What changed since Friday?'] }} />
-          <div className="col" style={{ gap: 'var(--space-400)' }}>
-            <div className="row" style={{ justifyContent: 'space-between', minHeight: 'var(--size-28)', gap: 'var(--space-300)' }}>
+          <Stack gap="400">
+            <Inline justify="between" gap="300" align="center" style={{ minHeight: 'var(--size-28)' }}>
               <Upper>{section}</Upper>
-              {tab === 'decisions' && <div className="row" style={{ gap: 'var(--space-300)' }}>
+              {tab === 'decisions' && <Inline gap="300" align="center">
                 {chipRow}
                 {sort === 'date' && chip.date === 'custom' && <div style={{ width: 'var(--proto-picker-w)' }}><DatePicker size="s" range showApply value={range} onChange={setRange} defaultOpen={!range} placeholder="Select a date range"
                   today={STORY_DATE} format={d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} /></div>}
                 <span className="cmd-divider" aria-hidden="true" />
                 {filterMenu}
-              </div>}
-            </div>
+              </Inline>}
+            </Inline>
 
-            {tab === 'decisions' && <div className="col" style={{ gap: 'var(--space-200)' }}>
+            {tab === 'decisions' && <Stack gap="200">
               {list.map((d, i) => decisionCard(d, i))}
               {!list.length && <EmptyState cause="no-results" size="section" heading="No Decisions Match Your Filters" body="Try a different filter, or open Archived to see hidden items." />}
               {archived.length > 0 && <>
@@ -136,9 +136,9 @@ function Command({ navBar, lenses, persona, onOpen }) {
                 </NDS>
                 {archOpen && archived.map(d => decisionCard(d, 1, { archived: true }))}
               </>}
-            </div>}
+            </Stack>}
 
-            {tab === 'works' && <div className="col" style={{ gap: 'var(--space-200)' }}>
+            {tab === 'works' && <Stack gap="200">
               {C.works.map((w, i) => (
                 <RowShell key={w.id} id={w.id}>
                   <HomeRowCard type={w.featured ? 'primary' : 'secondary'} rank={i + 1} title={w.title} badge={w.badge} onOpen={() => onOpen(w)}
@@ -147,9 +147,9 @@ function Command({ navBar, lenses, persona, onOpen }) {
                     metrics={w.featured ? [{ value: <span className="row" style={{ gap: 'var(--space-200)' }}>{w.status === 'Updated' ? <Indicator type="blue">Updated</Indicator> : <span>Draft</span>}<span className="t-body-m-regular">{w.note}</span></span>, label: '' }]
                       : [{ value: w.status === 'Updated' ? <Indicator type="blue">Updated</Indicator> : 'Draft', label: '' }, { value: <span className="t-body-m-regular cmd-note">{w.note}</span>, label: '' }]} />
                 </RowShell>))}
-            </div>}
+            </Stack>}
 
-            {tab === 'conversations' && <div className="col" style={{ gap: 'var(--space-200)' }}>
+            {tab === 'conversations' && <Stack gap="200">
               {C.convos.map((c, i) => { const p = PEOPLE[c.person], n = notified[c.id]; return (
                 <RowShell key={c.id} id={c.id} menu={c.status === 'Wait for reply' ? [n ? { label: `Reminded ${n}`, disabled: true } : { label: `Remind ${p.name}`, icon: 'system-notification', onClick: () => { setNotified(x => ({ ...x, [c.id]: fmtDay(STORY_DATE) })); toast({ title: `Reminder sent to ${p.name}`, description: 'Added to their Conversations list', duration: 5000 }); } }] : undefined}>
                   {/* Figma response card = the kit HomeRowCard (secondary): rank, person, title, their message, status tag; the arrow opens where it was said.
@@ -158,16 +158,16 @@ function Command({ navBar, lenses, persona, onOpen }) {
                     description={`${p.role} · ${c.message}${n ? ` · Last notified ${n}` : ''}`} badge={c.status === 'mention' ? '@ mention' : c.status}
                     onOpen={() => onOpen(c)} openLabel="Open where the comment was made" />
                 </RowShell>); })}
-            </div>}
+            </Stack>}
 
-            {tab === 'following' && <div className="col" style={{ gap: 'var(--space-200)' }}>
+            {tab === 'following' && <Stack gap="200">
               {C.following.map((f, i) => (
                 <RowShell key={f.id} id={f.id}>
                   <HomeRowCard type="secondary" rank={i + 1} title={f.title} description={<Trunc text={f.full || f.description} />}
                     metrics={f.metrics.map(([value, label]) => ({ value, label: tipLabel(label) }))} onOpen={() => onOpen(f)} />
                 </RowShell>))}
-            </div>}
-          </div>
+            </Stack>}
+          </Stack>
         </div>
 
         <div className="page-col cmd-right ifs-span-panel">
@@ -183,7 +183,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
               <div className="t-heading-h2-medium">1 Year</div><div className="t-body-m-regular muted">Time horizon</div>
             </div>
           </NDS>
-          <ContentCard title="Milestone" description="9 days left" bottom={<div className="col" style={{ gap: 'var(--space-300)', width: '100%' }}>
+          <ContentCard title="Milestone" description="9 days left" bottom={<Stack gap="300" style={{ width: '100%' }}>
             <ProgressBar value={8} label="Milestone progress" />
             <div className="t-body-m-regular sec row" style={{ justifyContent: 'space-between' }}><span>Drafts</span><span>Re-submit</span><span>SG2 window</span><span>Gate</span></div>
             <Calendar defaultMonth={STORY_DATE} today={STORY_DATE} events={evByDay} value={day} onChange={setDay} />
@@ -191,7 +191,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
             <NDS label="Calendar legend" className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>
               {Object.values(EVENT_TYPES).map(t => <LegendSwatch key={t.label} label={t.label} color={TONE_COLOR[t.tone]} />)}
             </NDS>
-          </div>} />
+          </Stack>} />
         </div>
       </div></div>
 
@@ -199,18 +199,18 @@ function Command({ navBar, lenses, persona, onOpen }) {
         setEvents(ev => [...ev, e]); setAddOpen(false);
         toast({ title: 'Event created', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e))) }, duration: 5000 }); }} />
       <Drawer open={!!day} onOpenChange={o => !o && setDay(null)} title={day ? day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''} collapsible={false} overlay="none">{/* DS 2.0 bug: scrim above drawer */}
-        <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
+        <Stack gap="stack" style={{ padding: '0 var(--space-inset) var(--space-inset)' }}>
           {!dayEvents.length && <EmptyState cause="empty-container" size="section" heading="No Events on This Day" body="Add a private event for this day." />}
           {dayEvents.map((e, k) => (
             <ContentCard key={k} size="s" title={e.name || EVENT_TYPES[e.type].label} description={`${EVENT_TYPES[e.type].label} · ${e.time} · ${e.lasts}`}
-              bottom={<div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
+              bottom={<Stack gap="200" style={{ width: '100%' }}>
                 <span className="row t-body-m-regular sec" style={{ gap: 'var(--space-150)' }}>Created by <Avatar initials={PEOPLE[e.by].initials} type={PEOPLE[e.by].type} size="xs" /> {short(e.by)}</span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
                   {e.type === 'private' && <Button type="secondary" size="s" iconLeft="system-trash-delete" onClick={() => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e)))}>Remove</Button>}
                   {e.type === 'private' && <Button type="tertiary" size="s" iconLeft="system-edit-rename" onClick={() => toast({ title: 'Edit event isn’t part of this flow' })}>Edit</Button>}
                 </div>
-              </div>} />))}
-        </div>
+              </Stack>} />))}
+        </Stack>
       </Drawer>
     </AppShell>
   );
@@ -226,18 +226,18 @@ function AddEventModal({ by, open, onClose, onAdd }) {
     <Modal open={open} onOpenChange={o => !o && onClose()} title="New Private Event" width="var(--overlay-width-m)"
       secondaryAction={{ label: 'Cancel', onClick: onClose }}
       primaryAction={{ label: 'Add event', onClick: () => ok ? onAdd({ date: iso(date), type: 'private', time, lasts, by, name }) : setTried(true) }}>
-      <div className="col" style={{ gap: 'var(--space-300)' }}>
+      <Stack gap="300">
         <TextField size="m" label="Event name" placeholder="Enter a name" value={name} onChange={setName} error={tried && !name.trim() ? 'Name is required' : undefined} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
-          <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium">Date</span>
-            <DatePicker size="m" placeholder="Select a date" value={date} onChange={setDate} today={STORY_DATE} format={d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} /></div>
-          <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium">Time</span>
-            <TextField size="m" type="time" iconLeft="system-clock-time" placeholder="Select a time" value={time} onChange={setTime} error={tried && !time ? 'Select a time' : undefined} /></div>
+          <Stack gap="150"><span className="t-label-m-medium">Date</span>
+            <DatePicker size="m" placeholder="Select a date" value={date} onChange={setDate} today={STORY_DATE} format={d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} /></Stack>
+          <Stack gap="150"><span className="t-label-m-medium">Time</span>
+            <TextField size="m" type="time" iconLeft="system-clock-time" placeholder="Select a time" value={time} onChange={setTime} error={tried && !time ? 'Select a time' : undefined} /></Stack>
         </div>
         <span className="t-label-m-medium">Lasts</span>
-        <div className="row" style={{ gap: 'var(--space-150)' }}>{['1 day', '2 days', '3 days', 'Custom'].map(l => <Chip key={l} selected={lasts === l} onChange={() => setLasts(l)}>{l}</Chip>)}</div>
+        <Inline gap="150" align="center">{['1 day', '2 days', '3 days', 'Custom'].map(l => <Chip key={l} selected={lasts === l} onChange={() => setLasts(l)}>{l}</Chip>)}</Inline>
         <span className="t-body-m-regular muted">Only you see this event. The team timeline is set by your admin and shown to everyone.</span>
-      </div>
+      </Stack>
     </Modal>
   );
 }

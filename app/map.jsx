@@ -148,7 +148,7 @@ const MapLegend = ({ style, grid = true }) => (
       <span className="t-body-s-regular muted">Click a square to see what adds up</span>
     </>}
     <span className="t-label-m-medium muted" style={grid ? { marginTop: 'var(--space-100)' } : undefined}>Asset risk</span>
-    <div className="row" style={{ gap: 'var(--space-250)', flexWrap: 'wrap' }}>{BANDS.map(b => <LegendSwatch key={b.id} label={b.label} color={b.color} />)}</div>
+    <Inline gap="250" wrap align="center">{BANDS.map(b => <LegendSwatch key={b.id} label={b.label} color={b.color} />)}</Inline>
     <span className="t-body-s-regular muted">Glowing = over intervention tolerance</span>
   </NDS>
 );

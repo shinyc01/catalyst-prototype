@@ -48,7 +48,7 @@ function VfNodePanel({ node, onClose }) {
   if (!node) return null;
   const m = node.model;
   return <div className="vf-panel"><Panel title={node.title} actions={<PanelClose onClose={onClose} />} className="proto-fill">
-    <div className="col" style={{ gap: 'var(--space-stack)' }}>
+    <Stack gap="stack">
       {m ? <>
         <span className="t-label-m-medium">Description</span>
         <span className="t-body-m-regular sec">{`${m.name} scores ${m.measures.length} of the framework’s measures for the ${VF_OBJECTIVES.find(o => o.id === m.objective).name} objective, across ${m.investments} investments.`}</span>
@@ -57,13 +57,13 @@ function VfNodePanel({ node, onClose }) {
           <span className="t-code-m-regular">{`${m.measures[0] ? m.measures[0].name : 'Risk'} = Risk consequence × Risk likelihood`}</span>
           <span className="t-code-m-regular muted">Value = Baseline − Outcome</span></NDS>
         <span className="t-label-m-medium">Measures</span>
-        <div className="row" style={{ gap: 'var(--space-100)', flexWrap: 'wrap' }}>{m.measures.map(x => <Badge key={x.id} size="s" color="white">{x.name}</Badge>)}</div>
+        <Inline gap="100" wrap align="center">{m.measures.map(x => <Badge key={x.id} size="s" color="white">{x.name}</Badge>)}</Inline>
       </> : node.obj ? <>
         <span className="t-body-m-regular sec">{`${node.obj.name}: ${node.obj.weight != null ? `${node.obj.weight}% of the framework’s weight` : 'no weight yet'}. Its models: ${VF_MODEL_ROWS.filter(x => x.objective === node.obj.id).map(x => x.name).join(', ') || 'none yet'}.`}</span>
       </> : <span className="t-body-m-regular sec">{node.type === 'measure' ? `${node.title} is a ${node.caption.toLowerCase()} measure in the demo data.` : `${node.title}.`}</span>}
       <span className="t-label-m-medium">Evidence chain</span>
       <span className="t-body-m-regular sec">Activity: approved in the Q1 2026 cycle. Usage: scored on every investment in the Demo Portfolio.</span>
-    </div>
+    </Stack>
   </Panel></div>;
 }
 
@@ -95,11 +95,11 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
       actions={model.status === 'active' ? <Button type="secondary" size="s" iconLeft="system-edit-rename" onClick={() => editModel(model)}>Edit</Button> : undefined} />
     : draftStage ? <PageHeader title={draft.name} onBack={() => setPage('library')} onTitleMenu={onTitleMenu} status={<Indicator type={VF_STATUS[draft.status].type}>{draft.stage === 'input' ? 'Draft' : VF_STATUS[draft.status].label}</Indicator>}
       center={<Stepper current={['input', 'shape', 'review', 'approval'].indexOf(page)} steps={[{ label: 'Input' }, { label: 'Shape' }, { label: 'Review' }, { label: 'Approve' }]} />}
-      actions={<div className="row" style={{ gap: 'var(--space-200)' }}><Button type="tertiary" size="s" iconLeft="users-group">1/1</Button>
+      actions={<Inline gap="200" align="center"><Button type="tertiary" size="s" iconLeft="users-group">1/1</Button>
         {page === 'input' && (draft.ctx < 100 ? <Tooltip content="Cooper needs full context first: answer its questions or add documents"><span><Button type="primary" size="s" disabled>Shape</Button></span></Tooltip> : <Button type="primary" size="s" onClick={() => { setDraft(d => ({ ...d, stage: 'shape' })); setPage('shape'); }}>Shape</Button>)}
         {page === 'shape' && ((draft.trace || []).some(t => t.kind === 'error' && !(draft.traceDone || {})[t.id]) ? <Tooltip content="Fix the errors in the Trace Report first"><span><Button type="primary" size="s" disabled>Review</Button></span></Tooltip> : <Button type="primary" size="s" onClick={() => { setDraft(d => ({ ...d, stage: 'review' })); setPage('review'); }}>Review</Button>)}
         {page === 'review' && (!draft.checksPassed ? <Tooltip content="Resolve the automated checks first"><span><Button type="primary" size="s" disabled>Send for approval</Button></span></Tooltip> : <Button type="primary" size="s" onClick={() => { setDraft(d => ({ ...d, stage: 'approval' })); setPage('approval'); }}>Send for approval</Button>)}
-      </div>} />
+      </Inline>} />
     : undefined;
   const prompts = libraryPage ? ['Walk me through this framework', 'What hasn’t been updated in a while?'] : page === 'flow' ? ['Which goals are underserved?', 'Explain this framework to me']
     : page === 'overview' ? ['Compare to peer', 'Compare to best practice'] : ['review', 'approval'].includes(page) ? ['Explain me the value impact', 'Evaluate publish risk'] : ['Walk me through this framework', 'What hasn’t been updated in a while?'];
@@ -189,7 +189,7 @@ function VfOverview() {
   const cap = vfCapitalBy(), bcr = bcrOf(VF_TOTAL_VALUE, VF_TOTAL_CAPITAL), scored = PLAN_INVESTMENTS.filter(i => i.value > 0).length / PLAN_INVESTMENTS.length;
   const peer = { reliability: 35, financial: 25, environment: 16, social: 8, governance: 16 }, best = { reliability: 38, financial: 28, environment: 19, social: 4, governance: 11 };   // [Added] Figma peer figures
   const bar = (label, w) => <div key={label} className="row" style={{ gap: 'var(--space-300)' }}><span className="t-body-m-regular sec" style={{ width: 'var(--proto-detail-nav-w)' }}>{label}</span>
-    <div className="row" style={{ gap: 'var(--space-50)', flex: 1 }}>{VF_OBJECTIVES.map(o => <BarChartItem key={o.id} fill={`var(--data-viz-data-${o.color})`} style={{ flex: w[o.id] }} title={`${o.short} ${w[o.id]}%`}>{`${Math.round(w[o.id])}%`}</BarChartItem>)}</div></div>;
+    <Inline gap="50" align="center" style={{ flex: 1 }}>{VF_OBJECTIVES.map(o => <BarChartItem key={o.id} fill={`var(--data-viz-data-${o.color})`} style={{ flex: w[o.id] }} title={`${o.short} ${w[o.id]}%`}>{`${Math.round(w[o.id])}%`}</BarChartItem>)}</Inline></div>;
   const capShare = Object.fromEntries(VF_OBJECTIVES.map(o => [o.id, cap[o.id] / VF_TOTAL_CAPITAL * 100]));
   // [Assumed] what the 100% columns split each objective by: investment size (capital bands), as a share of its budget or of its investments
   const BANDS = [{ key: 's', label: 'Under $10M', max: 1e7 }, { key: 'm', label: '$10M–$50M', max: 5e7 }, { key: 'l', label: '$50M and over', max: Infinity }];
@@ -202,16 +202,16 @@ function VfOverview() {
   return <div className="page">
     <div className="ifs-grid">{[['Portfolio Benefit-Cost Ratio', bcr ?? '—', 'value per $1M ÷ 2,000'], ['Total capital', fmtMoney(VF_TOTAL_CAPITAL), `${PLAN_INVESTMENTS.length} investments`], ['Risk coverage', `${Math.round(scored * 100)}%`, 'of investments scored'], ['Industry position', '62nd', 'percentile among peer utilities 31 / 50']]
       .map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat size="m" title={t} value={String(v)} description={d} badge={t === 'Industry position' ? { size: 's', color: 'white', children: '2nd Quartile' } : undefined} /></div>)}</div>
-    <DataVizCard title="Portfolio Under This Framework" header={{ segments: [{ value: 'weight', label: 'By weight' }, { value: 'budget', label: 'By budget' }], segmentValue: mix, onSegmentChange: setMix }}><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>{bar(COMPANY.name, mix === 'weight' ? VF_WEIGHTS : capShare)}{bar('Peer avg', peer)}{bar('Best in class', best)}
-      <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>{VF_OBJECTIVES.map(o => <LegendSwatch key={o.id} label={o.short} color={`var(--data-viz-data-${o.color})`} />)}</div></div></DataVizCard>
+    <DataVizCard title="Portfolio Under This Framework" header={{ segments: [{ value: 'weight', label: 'By weight' }, { value: 'budget', label: 'By budget' }], segmentValue: mix, onSegmentChange: setMix }}><Stack gap="stack" style={{ width: '100%' }}>{bar(COMPANY.name, mix === 'weight' ? VF_WEIGHTS : capShare)}{bar('Peer avg', peer)}{bar('Best in class', best)}
+      <Inline gap="400" wrap align="center">{VF_OBJECTIVES.map(o => <LegendSwatch key={o.id} label={o.short} color={`var(--data-viz-data-${o.color})`} />)}</Inline></Stack></DataVizCard>
     <div className="ifs-grid">
       <div className="ifs-span-8"><DataVizCard title="Strategic Objectives Breakdown" header={{ segments: [{ value: 'budget', label: 'By budget' }, { value: 'investment', label: 'By investment' }], segmentValue: split, onSegmentChange: setSplit }}><div style={{ width: '100%' }}><IFS.StackedColumnChart data={breakdown} series={BANDS.map(b => ({ key: b.key, label: b.label }))} format={v => `${Math.round(v)}%`} onEditWithCooper={false} /></div></DataVizCard></div>
       <div className="ifs-span-4"><DataVizCard title="Framework Coverage by Measure Type"><div style={{ width: '100%' }}><IFS.DonutChart onEditWithCooper={false} data={byType} valueLabel="Measures" centerValue={String(VF_MEASURES.length)} centerLabel="measures" /></div></DataVizCard></div>
     </div>
-    <DataVizCard title="Investments by Strategic Objective"><div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>{top.map(i => { const p = vfProfile(i); return <div key={i.id} className="row" style={{ gap: 'var(--space-300)' }}>
+    <DataVizCard title="Investments by Strategic Objective"><Stack gap="200" style={{ width: '100%' }}>{top.map(i => { const p = vfProfile(i); return <div key={i.id} className="row" style={{ gap: 'var(--space-300)' }}>
       <span className="t-body-m-regular plan-ellipsis" style={{ width: 'var(--proto-plan-side-w)' }}>{i.name}</span>
-      <div className="row" style={{ gap: 'var(--space-50)', flex: 1 }}>{VF_OBJECTIVES.map(o => <BarChartItem key={o.id} fill={`var(--data-viz-data-${o.color})`} number={p[o.id] > 0.12} style={{ flex: p[o.id] }} title={`${o.short} ${Math.round(p[o.id] * 100)}%`}>{`${Math.round(p[o.id] * 100)}%`}</BarChartItem>)}</div>
-      <span className="t-label-m-medium t-numeric">{fmtMoney(i.capex)}</span></div>; })}</div></DataVizCard>
+      <Inline gap="50" align="center" style={{ flex: 1 }}>{VF_OBJECTIVES.map(o => <BarChartItem key={o.id} fill={`var(--data-viz-data-${o.color})`} number={p[o.id] > 0.12} style={{ flex: p[o.id] }} title={`${o.short} ${Math.round(p[o.id] * 100)}%`}>{`${Math.round(p[o.id] * 100)}%`}</BarChartItem>)}</Inline>
+      <span className="t-label-m-medium t-numeric">{fmtMoney(i.capex)}</span></div>; })}</Stack></DataVizCard>
   </div>;
 }
 
@@ -256,13 +256,13 @@ function VfInput({ draft, setDraft }) {
   return <div className="vf-input">
     <VfColumns columns={['Input', 'Enterprise goals']} />
     <div className="vf-input__body">
-      <div className="col" style={{ gap: 'var(--space-200)' }}>{draft.inputs.map(i => <VfNode key={i.id} type="measure" title={i.title} caption={i.caption} stackIcons={false} />)}
-        {!draft.inputs.length && <span className="t-body-m-regular muted">Speak, type or upload what Cooper should know.</span>}</div>
-      <div className="col" style={{ gap: 'var(--space-200)' }}>{goals.map(g => <VfNode key={g} type="enterprise-goal" title={g} stackIcons={false} />)}</div>
+      <Stack gap="200">{draft.inputs.map(i => <VfNode key={i.id} type="measure" title={i.title} caption={i.caption} stackIcons={false} />)}
+        {!draft.inputs.length && <span className="t-body-m-regular muted">Speak, type or upload what Cooper should know.</span>}</Stack>
+      <Stack gap="200">{goals.map(g => <VfNode key={g} type="enterprise-goal" title={g} stackIcons={false} />)}</Stack>
     </div>
     <div className="rf-cooper"><AgentWindow title="Create Enterprise Goals" text={draft.inputs.length ? `I added ${goals.length} enterprise goal${goals.length === 1 ? '' : 's'} from what you told me. To make these goals accurate, answer one of these — you don’t have to answer all three.` : 'Tell me about the organisation’s goals for the next cycle: speak, type, or drop in documents.'} onClose={() => {}} onAsk={() => {}}>
-      {draft.inputs.length > 0 && draft.ctx < 100 && <div className="col" style={{ gap: 'var(--space-200)' }}>{VF_PROMPTS.filter(p => !(draft.answered || []).includes(p.id)).map(p => <ContentCard key={p.id} size="s" title={p.title} description={p.q}
-        onClick={() => setDraft(d => ({ ...vfAddInput(d, 'answer', p.title), answered: [...(d.answered || []), p.id] }))} />)}</div>}
+      {draft.inputs.length > 0 && draft.ctx < 100 && <Stack gap="200">{VF_PROMPTS.filter(p => !(draft.answered || []).includes(p.id)).map(p => <ContentCard key={p.id} size="s" title={p.title} description={p.q}
+        onClick={() => setDraft(d => ({ ...vfAddInput(d, 'answer', p.title), answered: [...(d.answered || []), p.id] }))} />)}</Stack>}
       {draft.ctx >= 100 && <span className="t-label-m-medium">Cooper has enough context. Move to Shape when you’re ready.</span>}
     </AgentWindow></div>
     <div className="vf-composer"><NDS label="Cooper's context progress (Ready badge not in DocumentsContext)" className="row" style={{ gap: 'var(--space-200)' }}>
@@ -303,10 +303,10 @@ function VfShape({ draft, setDraft }) {
     </div>
     <NDS label="Weights total (no weight control in Figma)" className="vf-total row"><span className="t-body-m-regular sec">Objective weights</span><span className={`t-label-m-medium t-numeric ${Math.round(total) > 100 ? 'plan-down' : ''}`}>{`${Math.round(total * 10) / 10}%`}</span></NDS>
     {picker && draft.kind !== 'model' && <div className="vf-picker"><Panel title="Strategic Objectives" actions={<PanelClose onClose={() => setPicker(false)} />} className="proto-fill">
-      <div className="col" style={{ gap: 'var(--space-200)' }}><IFS.SmartSearch placeholder="Ask anything about strategic objectives" />
+      <Stack gap="200"><IFS.SmartSearch placeholder="Ask anything about strategic objectives" />
         {VF_OBJECTIVE_LIBRARY.filter(o => !draft.objectives.some(x => x.id === o.id)).map(o => <div key={o.id} className="row" style={{ gap: 'var(--space-200)' }}>
           <div style={{ flex: 1, minWidth: 0 }}><VfPick title={o.name} description={o.text} dragData={o.id} /></div>
-          <IconButton icon="system-plus" type="tertiary" size="s" label={`Add ${o.name}`} onClick={() => add(o.id)} /></div>)}</div>
+          <IconButton icon="system-plus" type="tertiary" size="s" label={`Add ${o.name}`} onClick={() => add(o.id)} /></div>)}</Stack>
     </Panel></div>}
     {issues.length > 0 && Object.keys(draft.traceDone || {}).length < 1 && <div className="vf-trace"><IFS.TraceReport controller={c} type="drawer" title={draft.kind === 'model' ? 'Recalibration' : 'Trace Report'} onUndo={draft.kind === 'model' ? undefined : () => setDraft(d => ({ ...d, objectives: d.objectives.slice(0, -1), trace: [], traceDone: {} }))} /></div>}
     <VfNodePanel node={node} onClose={() => setNode(null)} />
@@ -332,9 +332,9 @@ function VfReview({ draft, setDraft }) {
       ['Investments re-scored', String(imp.rows.length), `${imp.gained} gained · ${imp.lost} lost · ${imp.unchanged} unchanged`], ['Funding tier changes', String(imp.tierIn + imp.tierOut), `${imp.tierIn} gained · ${imp.tierOut} lost`],
       ['Governance flags', String(imp.executing), 'executing investment affected']].map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat title={t} value={v} description={d} /></div>)}</div>
     <RfTabs value="impact" onChange={v => v !== 'impact' && toast({ title: 'Strategic Alignment isn’t part of this flow' })} items={[{ value: 'impact', label: 'Portfolio Impact' }, { value: 'align', label: 'Strategic Alignment' }]} />
-    <DataVizCard title="Investment Value Impact"><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>
+    <DataVizCard title="Investment Value Impact"><Stack gap="stack" style={{ width: '100%' }}>
       <span className="t-body-m-regular sec">{`Re-scored ${imp.rows.length} · net value change ${pctCh >= 0 ? '+' : ''}${Math.round(pctCh * 1000) / 10}% · materially impacted ${imp.material}. Value change is measured as % of each investment’s value under the proposed framework vs. current.`}</span>
-      <ColumnChart data={imp.buckets} valueLabel="Investments" /></div></DataVizCard>
+      <ColumnChart data={imp.buckets} valueLabel="Investments" /></Stack></DataVizCard>
     <ContentCard bottom={<div style={{ width: '100%' }}><VfTable groupBy="grp" defaultCollapsed={['Unchanged']} rows={rows} columns={[
       { key: 'name', title: 'Investment', width: '2fr', primary: true }, { key: 'type', title: 'Type', width: '1fr', render: r => <Badge size="s" color="white">{VF_TYPE_LABEL[r.type]}</Badge> },
       { key: 'after', title: 'Total value', type: 'number', width: '1.2fr', render: r => `${fmtValue(r.before)} → ${fmtValue(r.after)}` },
@@ -387,13 +387,13 @@ function VfModel({ id, onEdit, onExit }) {
   return <div className="page-row"><div className="page">
     <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={onExit}>Exit isolation</Button></div>
     <ContentCard bottom={<div className="vf-model-flow">
-      <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Input</span>{inputs.map(x => <VfNode key={x} type="value-model" title={x} stackIcons={false} />)}</div>
-      <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Measure calculation</span><VfNode type="strategic-objective" title="Risk consequence" stackIcons={false} /><VfNode type="strategic-objective" title="Risk likelihood" stackIcons={false} /></div>
-      <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Output</span>{m.measures.slice(0, 4).map(x => <VfNode key={x.id} type="measure" title={x.name} caption={x.type} stackIcons={false} />)}</div>
+      <Stack gap="200"><span className="t-label-m-medium sec">Input</span>{inputs.map(x => <VfNode key={x} type="value-model" title={x} stackIcons={false} />)}</Stack>
+      <Stack gap="200"><span className="t-label-m-medium sec">Measure calculation</span><VfNode type="strategic-objective" title="Risk consequence" stackIcons={false} /><VfNode type="strategic-objective" title="Risk likelihood" stackIcons={false} /></Stack>
+      <Stack gap="200"><span className="t-label-m-medium sec">Output</span>{m.measures.slice(0, 4).map(x => <VfNode key={x.id} type="measure" title={x.name} caption={x.type} stackIcons={false} />)}</Stack>
     </div>} />
   </div>
   <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}><Panel title={out ? out.name : m.name} showEvidence={false} expanded={open} onExpandedChange={setOpen} className={open ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
-    <div className="col" style={{ gap: 'var(--space-stack)' }}>
+    <Stack gap="stack">
       <DSec title="Description"><span className="t-body-m-regular sec">{`${m.name} scores ${m.measures.length} measure${m.measures.length === 1 ? '' : 's'} for ${m.investments.toLocaleString('en-US')} investments. Version ${m.version}.`}</span></DSec>
       <DSec title="Measure Calculation">
         <NDS label="Formula tokens" className="rf-formula col" style={{ alignItems: 'flex-start', padding: 'var(--space-200) var(--space-300)' }}>
@@ -401,6 +401,6 @@ function VfModel({ id, onEdit, onExit }) {
           <span className="t-code-m-regular">Risk likelihood = Probability of failure × Weather adjustment factor</span>
           <span className="t-code-m-regular muted">Risk value = Baseline − Outcome</span></NDS></DSec>
       <DSec title="Measure Explanation"><span className="t-body-m-regular sec">This measure is converted to value units by applying a 1:1000 ratio.</span></DSec>
-    </div>
+    </Stack>
   </Panel></div></div>;
 }

@@ -63,10 +63,10 @@ function Tour({ flow, step, setStep, onExit }) {
         <span className="t-label-l-medium">{s.title}</span>
         {s.body && <span className="t-body-m-regular sec">{s.body}</span>}
         {s.target && !rect && <span className="t-body-s-regular muted">Looking for the highlighted item… if it doesn’t appear, press Next.</span>}
-        <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'flex-end', marginTop: 'var(--space-100)' }}>
+        <Inline gap="200" justify="end" align="center" style={{ marginTop: 'var(--space-100)' }}>
           {step > 0 && <Button type="tertiary" size="s" onClick={() => setStep(step - 1)}>Back</Button>}
           <Button type="primary" size="s" onClick={() => (last ? onExit(true) : setStep(step + 1))}>{last ? 'Finish' : (s.target && s.advance !== 'next' ? 'Skip' : 'Next')}</Button>
-        </div>
+        </Inline>
       </NDS>
     </div>
   );
@@ -77,7 +77,7 @@ function Tour({ flow, step, setStep, onExit }) {
 const SettingsSection = ({ title, children }) => (
   <section className="col" style={{ gap: 'var(--space-200)' }}>
     <span className="t-label-m-medium muted">{title}</span>
-    <div className="col" style={{ gap: 'var(--space-100)' }}>{children}</div>
+    <Stack gap="100">{children}</Stack>
   </section>
 );
 function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, onStart, searchNetwork, setSearchNetwork, density, setDensity }) {
@@ -85,7 +85,7 @@ function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, on
   const reset = () => { Store.reset(); location.hash = '#command'; location.reload(); };
   return (
     <Drawer open={open} onOpenChange={o => !o && onClose()} title="Prototype settings" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim (z 500) sits above the drawer (z 200) */}
-      <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
+      <Stack gap="stack" style={{ padding: '0 var(--space-inset) var(--space-inset)' }}>
         <span className="t-body-m-regular sec">Tools for testing and demos. They aren’t part of Catalyst.</span>
 
         <SettingsSection title="Signed in as">
@@ -118,7 +118,7 @@ function SettingsPanel({ open, onClose, persona, setPersona, flags, setFlags, on
         <SettingsSection title="Demo data">
           <ContentCard size="s" iconRight="arrow-back-up" onClick={reset} title="Reset demo" description="Undo everything changed in this browser" />
         </SettingsSection>
-      </div>
+      </Stack>
     </Drawer>
   );
 }

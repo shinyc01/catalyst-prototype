@@ -48,22 +48,22 @@ function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish,
   const [onTitleMenu, activityPanel] = useActivity('plan', planVersions(stage, true), PA_GATES.flatMap(g => gates[g.id] || []));
   const header = <PageHeader title={PLAN_PORTFOLIO.name} id={PLAN_CYCLE} onBack={onBack} onTitleMenu={onTitleMenu} status={stage === 'published' ? <Indicator type="green">Published</Indicator> : stage === 'scheduled' ? <Indicator type="blue">Scheduled</Indicator> : <Indicator type="blue">Planning</Indicator>}
     center={<Stepper current={all ? 3 : 2} steps={[{ label: 'Setup' }, { label: 'Compare' }, { label: 'Approve' }]} />}
-    actions={<div className="row" style={{ gap: 'var(--space-200)' }}><Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
+    actions={<Inline gap="200" align="center"><Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       {myRow && paOpen(myGate.id, gates) && (myRow.status === 'awaiting'
         ? <SplitButton size="s" onClick={() => setDecide('approve')} menuLabel="More decisions" items={[{ label: 'Approve', description: 'Approve the plan at this gate.', onClick: () => setDecide('approve') },
             { label: 'Request changes', description: 'Send it back with what needs to change.', onClick: () => setDecide('request') }]}>Decide</SplitButton>
         : <Button type="secondary" size="s" iconLeft={myRow.status === 'success' ? 'system-check' : undefined} disabled>{myRow.status === 'success' ? 'Approved' : 'Changes requested'}</Button>)}
-      <Button type="primary" size="s" disabled={!all || stage === 'published'} onClick={() => setPub(true)}>{stage === 'scheduled' ? 'Re-schedule' : stage === 'published' ? 'Published' : 'Publish'}</Button></div>} />;
+      <Button type="primary" size="s" disabled={!all || stage === 'published'} onClick={() => setPub(true)}>{stage === 'scheduled' ? 'Re-schedule' : stage === 'published' ? 'Published' : 'Publish'}</Button></Inline>} />;
   return (
     <AppShell navBar={navBar} header={header} bottom={<BottomSheet type="documents" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })} prompts={['Compare to peer', 'Compare to best practice']} onPrompt={p => setAnswer(planCooperAnswer(/peer/.test(p) ? 'peer' : 'best', { final }))} />}>
       <div className="page">
-        <div className="col" style={{ gap: 'var(--space-100)' }}>
-          <div className="row" style={{ gap: 'var(--space-200)' }}><h3 className="t-heading-h3-medium" style={{ margin: 0 }}>Approval</h3><Badge size="s" color="white">{c.short}</Badge>
-            <span style={{ flex: 1 }} />{onCompare && <Button type="tertiary" size="s" iconLeft="compare" onClick={onCompare}>Open the comparison</Button>}</div>
+        <Stack gap="100">
+          <Inline gap="200" align="center"><h3 className="t-heading-h3-medium" style={{ margin: 0 }}>Approval</h3><Badge size="s" color="white">{c.short}</Badge>
+            <span style={{ flex: 1 }} />{onCompare && <Button type="tertiary" size="s" iconLeft="compare" onClick={onCompare}>Open the comparison</Button>}</Inline>
           <span className="t-body-m-regular sec t-measure">{stage === 'published' ? `${PLAN_CYCLE} is the budget baseline. Translating it into spend authority per business unit isn’t designed yet (J21 gap).`
             : stage === 'scheduled' ? `${PLAN_CYCLE} publishes on ${gates.scheduledAt || 'the chosen date'} and becomes the budget baseline.`
             : 'Reviewers and approvers are preconfigured by your administrator based on your role and plan type.'}</span>
-        </div>
+        </Stack>
         <div className="ifs-grid">{[['Cost', fmtMoney(c.capex), `${c.name}`], ['Retained risk (2032)', c.risk2032 == null ? '—' : fmtCompact(c.risk2032), 'aggregate risk'], ['Investments funded', String(c.onSchedule), `of ${PLAN_INVESTMENTS.length} · ${c.deferred} deferred`]]
           .map(([t, v, d]) => <div key={t} className="ifs-span-4"><StatCard size="s" title={t} value={v} description={d} /></div>)}</div>
         {/* rule 7.9 / Approval chain rule 10: one ApprovalChainTable with a stage per gate (Executive opens first; Technical and Financial together after it).
@@ -98,9 +98,9 @@ function PaPublish({ open, onClose, onDone }) {
   return <Modal open={open} onOpenChange={o => !o && onClose()} title={date ? 'Scheduling' : 'Publish'} width="var(--overlay-width-m)"
     secondaryAction={{ label: 'Cancel', onClick: onClose }}
     primaryAction={date ? { label: 'Schedule', onClick: () => time ? onDone('schedule', when) : setTried(true) } : { label: 'Publish now', onClick: () => onDone('now') }}>
-    <div className="row" style={{ gap: 'var(--space-stack)', alignItems: 'flex-start' }}>
+    <Inline gap="stack" align="start">
       <div style={{ flex: 1 }}><DatePicker label="Date" placeholder="Select a date" value={date} onChange={setDate} showApply /></div>
       <NDS label="Time picker (no DS TimePicker)" style={{ flex: 1 }}><Select label="Time" placeholder="Select a time" value={time} onChange={setTime} options={PA_TIMES} error={tried && !time ? 'Select a time' : undefined} /></NDS>
-    </div>
+    </Inline>
   </Modal>;
 }

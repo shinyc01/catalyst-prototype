@@ -8,16 +8,16 @@ const { SideNav: RfSideNav, CommentsPanel: RfCommentsPanel, CommentCallout: RfCo
 
 // A Refine card: the Build card header (H4 title + actions + Cooper icon), as on Shape
 const RfCard = ({ title, actions, children, className }) => (
-  <ContentCard className={className} top={<div className="row" style={{ width: '100%', justifyContent: 'space-between', gap: 'var(--space-200)' }}>
+  <ContentCard className={className} top={<Inline justify="between" gap="200" align="center" style={{ width: '100%' }}>
     <span className="t-heading-h4-semibold">{title}</span>
-    <div className="row" style={{ gap: 'var(--space-100)' }}>{actions}<IconButton icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label={`Ask Cooper about ${title}`} onClick={() => toast({ title: `Cooper: ${title}` })} /></div>
-  </div>} bottom={<div style={{ width: '100%' }}>{children}</div>} />
+    <Inline gap="100" align="center">{actions}<IconButton icon="cooper-system-icon" type="tertiary" shape="circle" size="s" label={`Ask Cooper about ${title}`} onClick={() => toast({ title: `Cooper: ${title}` })} /></Inline>
+  </Inline>} bottom={<div style={{ width: '100%' }}>{children}</div>} />
 );
 const RfTitle = ({ title, text, right }) => (
-  <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--space-300)', alignItems: 'flex-end' }}>
-    <div className="col" style={{ gap: 'var(--space-100)' }}><h3 className="t-heading-h3-medium" style={{ margin: 0 }}>{title}</h3><span className="t-body-m-regular sec">{text}</span></div>
-    {right && <div className="row" style={{ gap: 'var(--space-200)' }}>{right}</div>}
-  </div>
+  <Inline justify="between" gap="300" align="end">
+    <Stack gap="100"><h3 className="t-heading-h3-medium" style={{ margin: 0 }}>{title}</h3><span className="t-body-m-regular sec">{text}</span></Stack>
+    {right && <Inline gap="200" align="center">{right}</Inline>}
+  </Inline>
 );
 
 function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApproval, onOpenPlan, onApproved, persona = 'owner', invId }) {
@@ -60,12 +60,12 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
   const header = <PageHeader title={R.inv.name} id={R.inv.code} onBack={onBack} onTitleMenu={() => setActivity(a => !a)}
     status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={refine.status === 'approval' ? 'orange' : refine.status === 'approved' ? 'green' : refine.status === 'executing' ? 'blue' : 'purple'}>{refine.status === 'approval' ? 'Under review' : refine.status === 'approved' ? 'Approved' : refine.status === 'executing' ? 'Executing' : 'Refining'}</Indicator>{refine.status === 'approval' && refine.approvers && <IFS.Counter>{reviewCount(refine.approvers)}</IFS.Counter>}</span>}
     center={<Stepper current={refine.status === 'executing' ? 4 : ['approval', 'approved'].includes(refine.status) ? 3 : 2} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
-    actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
+    actions={<Inline gap="200" align="center">
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IFS.CommentButton type={side === 'comments' ? 'secondary' : 'tertiary'} hasNew={openCount > 0} onClick={() => setSide(s => s === 'comments' ? 'confidence' : 'comments')} />
       <Button type="secondary" size="s" onClick={() => toast({ title: 'Dismiss is on Shape', description: 'An investment in Refine is withdrawn from Approve' })}>Dismiss</Button>
       <Button type="primary" size="s" disabled={['approval', 'approved', 'executing'].includes(refine.status)} onClick={onSendForApproval}>{refine.status === 'approved' ? 'Approved' : refine.status === 'approval' ? 'Sent for approval' : 'Send for approval'}</Button>
-    </div>} />;
+    </Inline>} />;
   const prompts = page === 'compare' || altPage?.tab === 'details' ? ['Explain gaps in confidence', 'Why this alternative?'] : wide ? ['Increase budget by 15%', 'Create new phase']
     : page === 'value' || altPage?.tab === 'value' ? ['Explain these value models', 'Explain the baseline value'] : page === 'details' ? ['Explain gaps in confidence', 'Draft value assessment']
     : ['Generate annualized outcome risk by risk type chart', 'Compare to best practice'];
@@ -131,7 +131,7 @@ function Refine({ navBar, page, setPage, refine, setRefine, onBack, onSendForApp
       {activity && <div className="rf-cooper"><IFS.ActivityPanel layout="static" title="Activity" recordLabel="investment" defaultVersions={rfVersions(R, refine)}
         approvals={refine.approvers} onOpenChange={o => !o && setActivity(false)} onOpenVersion={v => toast({ title: v.title || 'Version', description: 'Opening an older version isn’t part of this flow' })} /></div>}
       {refine.docsOpen && <div className="rf-docs"><RfPopover inline title="Documents" count={refine.docs.length} search onOpenChange={o => !o && setRefine(r => ({ ...r, docsOpen: false }))}>
-        <div className="col" style={{ gap: 'var(--space-100)' }}>{refine.docs.map(d => <div key={d.id} className="row rf-doc"><Icon name="system-file" size={16} /><span className="t-body-m-regular plan-ellipsis" style={{ flex: 1 }}>{d.name}</span><span className="t-body-m-regular muted">{d.date}</span></div>)}</div>
+        <Stack gap="100">{refine.docs.map(d => <div key={d.id} className="row rf-doc"><Icon name="system-file" size={16} /><span className="t-body-m-regular plan-ellipsis" style={{ flex: 1 }}>{d.name}</span><span className="t-body-m-regular muted">{d.date}</span></div>)}</Stack>
       </RfPopover></div>}
     </AppShell>
   );
@@ -165,15 +165,15 @@ function RfCompare({ R, refine, setRefine, toPlan, compared, onOpen, onEvaluate 
   const [open, setOpen] = useState({ Financial: true, Reliability: true, Delivery: true, 'Portfolio fit': true });
   const card = a => { const isRec = a.id === refine.recommended;
     return <ContentCard key={a.id} className={isRec ? 'rf-card--rec' : undefined} title={a.name} onClick={() => onOpen(a.id)}
-      bottom={<div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>
-        <div className="row" style={{ gap: 'var(--space-200)', alignItems: 'baseline', flexWrap: 'wrap' }}><span className="t-heading-h3-medium t-numeric">{fmtMoney(a.cost)}</span><span className="t-body-m-regular sec">{`~ ${a.years}`}{refine.refined[a.id] ? ' · refined' : ''}</span></div>
-        <div className="row" style={{ gap: 'var(--space-200)', flexWrap: 'wrap' }}>{a.added ? <Badge size="s" color="white">Suggested by Cooper</Badge> : a.scope ? <Badge size="s" color="white">{`${a.scope} of ${R.assets.length} ${R.unit}`}</Badge> : <Badge size="s" color="white">{a.type || 'Alternative'}</Badge>}
-          <span className="t-body-m-regular sec">{a.customers ? `${a.customers.toLocaleString()} customers protected` : `BCR ${a.bcr ?? '—'}`}</span></div>
+      bottom={<Stack gap="stack" style={{ width: '100%' }}>
+        <Inline gap="200" align="baseline" wrap><span className="t-heading-h3-medium t-numeric">{fmtMoney(a.cost)}</span><span className="t-body-m-regular sec">{`~ ${a.years}`}{refine.refined[a.id] ? ' · refined' : ''}</span></Inline>
+        <Inline gap="200" wrap align="center">{a.added ? <Badge size="s" color="white">Suggested by Cooper</Badge> : a.scope ? <Badge size="s" color="white">{`${a.scope} of ${R.assets.length} ${R.unit}`}</Badge> : <Badge size="s" color="white">{a.type || 'Alternative'}</Badge>}
+          <span className="t-body-m-regular sec">{a.customers ? `${a.customers.toLocaleString()} customers protected` : `BCR ${a.bcr ?? '—'}`}</span></Inline>
         <div className="box col" style={{ gap: 'var(--space-50)' }}><span className="t-body-m-regular sec">Risk reduced</span>
           <span className="row" style={{ gap: 'var(--space-150)', alignItems: 'baseline' }}><span className="t-heading-h3-medium t-numeric">{a.reduced == null ? '—' : rfPct(a.reduced)}</span><span className="t-body-m-regular muted">{a.reduced == null ? 'no risk profile in the demo data' : 'of scored risk'}</span></span></div>
         {isRec ? <Button type="secondary" size="m" iconLeft="system-check" disabled>Recommended</Button>
           : <Button type="tertiary" size="m" onClick={e => { e.stopPropagation(); setRec(a.id); }}>Set as recommended</Button>}
-      </div>} />; };
+      </Stack>} />; };
   // Chart view: the Figma radar has no DS chart, so the Comparison hub uses the kit's GroupedColumnChart (scores relative to the best alternative)
   const HUB = { financial: [['CAPEX', a => a.capex, true], ['OPEX impact', a => a.opex, true], ['Total cost', a => a.cost, true]],
     reliability: [['Failure reduction', a => a.reduced], ['Reliability', a => rfMeasureCut(R, a, /Reliab/)], ['Safety', a => rfMeasureCut(R, a, /Safety/)]],
@@ -236,10 +236,10 @@ function RfAltDetails({ R, alt, recId, toPlan }) {
         ['Creator', alt.added ? 'Cooper (suggested)' : 'Cooper'], ['Created date', rfDayLabel(R.inv.createdDate)]]} />
     </RfCard>
     <RfCard title="Dates"><RfPairs rows={[['End of alternative', rfDayLabel(alt.last)], ['Pause date', '—'], ['Resume date', '—']]} /></RfCard>
-    <RfCard title="Restrictions"><div className="col" style={{ gap: 'var(--space-stack)' }}>
+    <RfCard title="Restrictions"><Stack gap="stack">
       <RfToggle title="Allow alternative to be chosen as recommended" text="Allows this alternative to be selected as the recommended option for the investment." />
       <RfToggle title="Allow alternative to be shifted" text="Allows this alternative to be moved to a different year or planning period." />
-    </div></RfCard>
+    </Stack></RfCard>
     <RfCard title="Scope"><RfTable rowHeight={52} search={<IFS.SmartSearch placeholder="Ask anything about assets" />} columns={[{ key: 'asset', title: 'Asset', width: '1.4fr', primary: true }, { key: 'segment', title: 'Segment', width: '1fr' },
       { key: 'status', title: 'Status', width: '1fr', render: rfStatusCell }, { key: 'score', title: 'Risk score', type: 'number', width: 'var(--table-col-number-min)' }]} rows={scopeRows} defaultSort={{ key: 'score', dir: 'desc' }} />
       {!scopeRows.length && <EmptyState cause="empty-container" size="section" heading="No assets in scope" body="The demo data links no assets to this investment." />}</RfCard>
@@ -274,11 +274,11 @@ function RfCost({ R, alt, refine, setRefine }) {
     <RfTitle title="Alternative cost & schedule" text="Alternative details, scope, cost, risk reduction, and expected value"
       right={<SegmentedControl size="s" value={view} onChange={setView} options={[{ value: 'gantt', label: 'Gantt' }, { value: 'table', label: 'Table' }]} />} />
     <ContentCard top={<div className="row" style={{ width: '100%', justifyContent: 'space-between' }}>
-      <div className="row" style={{ gap: 'var(--space-200)' }}>
+      <Inline gap="200" align="center">
         {view === 'table' && <Button type="tertiary" size="s" iconRight="arrow-caret-down-filled" onClick={() => toast({ title: 'Columns aren’t part of this flow' })}>Columns</Button>}
-        <Button type="tertiary" size="s" iconRight="arrow-caret-down-filled" onClick={() => toast({ title: 'Views aren’t part of this flow' })}>View</Button></div>
-      <div className="row" style={{ gap: 'var(--space-200)' }}>{scaleCtl}{view === 'table' && <IconButton icon="system-settings" type="tertiary" size="s" label="Table settings" onClick={() => toast({ title: 'Table settings aren’t part of this flow' })} />}</div>
-    </div>} bottom={<div className="col" style={{ width: '100%', gap: 'var(--space-200)' }}>
+        <Button type="tertiary" size="s" iconRight="arrow-caret-down-filled" onClick={() => toast({ title: 'Views aren’t part of this flow' })}>View</Button></Inline>
+      <Inline gap="200" align="center">{scaleCtl}{view === 'table' && <IconButton icon="system-settings" type="tertiary" size="s" label="Table settings" onClick={() => toast({ title: 'Table settings aren’t part of this flow' })} />}</Inline>
+    </div>} bottom={<Stack gap="200" style={{ width: '100%' }}>
       {view === 'table' ? <>
         <NDS label="Formula bar" className="rf-formula row">
           <span className="t-code-m-regular muted">ƒx</span>
@@ -314,7 +314,7 @@ function RfCost({ R, alt, refine, setRefine }) {
             tasks: [...(s.id === 'design' ? rfSubPlan(s).map(x => ({ title: x.name, label: fmtMoney(x.total), start: slotOf(x.start), end: Math.max(slotOf(x.end), slotOf(x.start) + 0.2) })) : []),
               ...alt.milestones.filter(m => m.forecastDate >= s.start && m.forecastDate <= s.end).map(m => ({ title: m.name, label: rfDayLabel(m.forecastDate), start: slotOf(m.forecastDate), end: slotOf(m.forecastDate) + 0.2 }))] }))} /></NDS>}
       {view === 'gantt' && <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-m-medium">Total cost</span><span className="t-label-m-medium t-numeric">{fmtMoney(total)}</span></div>}
-    </div>} />
+    </Stack>} />
     <Modal open={adj !== null} onOpenChange={o => !o && setAdj(null)} title="Adjust by %" 
       secondaryAction={{ label: 'Cancel', onClick: () => setAdj(null) }}
       primaryAction={{ label: 'Apply', onClick: () => { const v = parseFloat(adj) || 0; setRefine(r => ({ ...r, adjust: { ...r.adjust, [alt.id]: { ...(r.adjust[alt.id] || {}), [st.id]: v } } })); setAdj(null); toast({ title: `${st.name} adjusted by ${v}%`, description: 'Every year of the stage changes' }); } }}>
@@ -342,10 +342,10 @@ function RfInvDetails({ R, refine, onCooper }) {
         <RfPairs rows={d.identity} full={['Name', 'Description', 'Alternatives created']} render={val} /></RfCard>
       <RfCard title="Ownership & Organization"><RfPairs rows={d.ownership} render={val} /></RfCard>
       <RfCard title="Dates"><RfPairs rows={d.dates} render={val} /></RfCard>
-      <RfCard title="Restrictions"><div className="col" style={{ gap: 'var(--space-stack)' }}>
+      <RfCard title="Restrictions"><Stack gap="stack">
         <RfToggle title="Lock forecast and value assessment" text="Prevents edits to the forecast and value assessment while under review." />
         <RfToggle title="Must-do with recommended alternative" text="Bypasses optimization — always funded, using the recommended alternative." def={false} />
-      </div></RfCard>
+      </Stack></RfCard>
     </> : tab === 'cost' ? <RfCard title="Cost & Schedule"><RfPairs rows={d.forecast} render={val} /></RfCard> : <>
       <RfCard title="Dependencies"><RfTable rowHeight={60} onRowClick={r => onCooper(`${r.name} (${r.code}). ${r.why} I linked it because of that, and I’m tracking its status and impact on this investment.`)}
         search={<IFS.SmartSearch placeholder="Ask anything about investments" />}
@@ -383,17 +383,17 @@ function RfValue({ R, refine, setRefine, alt: scoped }) {
         return { id: a.id, rank: k + 1, name: a.name, note: 'Change · avoided risk', byYear: Object.fromEntries(RF_RISK_YEARS.map(y => [y, Math.max(0, b[y] - ((r.riskResidualByMeasure[m.measure] || {})[y] || 0))])) }; })];
     const shown = RF_RISK_YEARS.slice(0, 6);
     return <>
-      <div className="row" style={{ gap: 'var(--space-200)' }}><IconButton icon="arrow-left" type="ghost" size="s" label="Back to value models" onClick={() => setOpen(null)} />
-        <span className="t-heading-h3-medium">{m.name}</span></div>
+      <Inline gap="200" align="center"><IconButton icon="arrow-left" type="ghost" size="s" label="Back to value models" onClick={() => setOpen(null)} />
+        <span className="t-heading-h3-medium">{m.name}</span></Inline>
       <span className="t-body-m-regular sec">{`Risk on the ${m.measure.toLowerCase()} measure, before and after each alternative. Change = baseline − outcome.`}</span>
       <RfTabs value={tab} onChange={setTab} items={[{ value: 'measures', label: 'Value measures' }, { value: 'q', label: 'Questionnaire answers', count: qs.filter(q => q.model === m.name).length }]} />
       {tab === 'measures' ? <>
         <RfCard title={`${m.measure}, by year`} actions={<Button type="cooper" size="s" iconLeft="cooper-system-icon" onClick={() => toast({ title: 'Value updated', description: 'Cooper recalculated the measure with the latest answers' })}>Edit with Cooper</Button>}>
-          <div className="col" style={{ gap: 'var(--space-200)' }}>
+          <Stack gap="200">
             <NDS label="Formula line" className="rf-formula row"><span className="t-code-m-regular muted">ƒx</span><span className="t-code-m-regular">Change = Baseline − Outcome, where Outcome = Risk likelihood × Risk consequence</span></NDS>
             <RfTable rowHeight={48} columns={[{ key: 'rank', title: 'Rank', width: 'var(--table-col-check)' }, { key: 'name', title: 'Value', width: '1.6fr', primary: true, render: r => <span className="col"><span className="t-label-m-medium">{r.name}</span><span className="t-body-m-regular muted">{r.note}</span></span> },
               ...shown.map(y => ({ key: y, title: fy(y), type: 'number', render: r => Math.round(r.byYear[y]).toLocaleString() })), { key: 'sum', title: 'Σ', type: 'number', render: r => <span className="t-label-m-medium">{Math.round(rfSum(r.byYear)).toLocaleString()}</span> }]} rows={rows} />
-          </div>
+          </Stack>
         </RfCard>
         <RfCard title="Residual Risk"><div style={{ width: '100%' }}><LineChart data={RF_RISK_YEARS.map(y => ({ label: fy(y), base: Math.round(base[y]), ...Object.fromEntries(R.alts.map(a => [a.id, Math.round(((R.raw.find(x => x.id === a.id).riskResidualByMeasure[m.measure]) || {})[y] || 0)])) }))}
           series={[{ key: 'base', label: 'Baseline', dashed: true }, ...R.alts.map(a => ({ key: String(a.id), label: a.name }))]} /></div></RfCard>
@@ -424,8 +424,8 @@ function RfValue({ R, refine, setRefine, alt: scoped }) {
             primaryAction: { label: 'Undo', onClick: () => setRefine(x => ({ ...x, models: [...(x.models || []), r.id] })) } }); }} /> }]} rows={models} />
     </RfCard>
     {lib && <div className="rf-cooper"><Panel title="Models" actions={<PanelClose onClose={() => setLib(false)} />} className="proto-fill">
-      <div className="col" style={{ gap: 'var(--space-stack)' }}>{RF_MODEL_LIBRARY.filter(l => !models.some(m => m.id === l.id)).map(l => <ContentCard key={l.id} size="s" title={l.name} description={l.text} iconRight="system-plus"
-        onClick={() => { setRefine(x => ({ ...x, added: [...(x.added || []), { id: l.id, name: l.name, measures: 1, output: [l.name] }], models: [...(x.models || R.models.map(mm => mm.id)), l.id] })); setLib(false); toast({ title: `${l.name} added`, description: 'Cooper will ask for its inputs' }); }} />)}</div>
+      <Stack gap="stack">{RF_MODEL_LIBRARY.filter(l => !models.some(m => m.id === l.id)).map(l => <ContentCard key={l.id} size="s" title={l.name} description={l.text} iconRight="system-plus"
+        onClick={() => { setRefine(x => ({ ...x, added: [...(x.added || []), { id: l.id, name: l.name, measures: 1, output: [l.name] }], models: [...(x.models || R.models.map(mm => mm.id)), l.id] })); setLib(false); toast({ title: `${l.name} added`, description: 'Cooper will ask for its inputs' }); }} />)}</Stack>
     </Panel></div>}
   </>;
 }
@@ -456,7 +456,7 @@ function RfOverview({ R, refine, setRefine }) {
         <LineChart data={RF_RISK_YEARS.map(y => ({ label: `FY${y.slice(2)}`, ...Object.fromEntries(R.measures.map(m => [m, Math.round((raw.riskResidualByMeasure[m] || {})[y] || 0)])) }))} series={R.measures.map(m => ({ key: m, label: m.replace(' Risk', '') }))} /></div></RfCard>}
     </div>
     <RfCard title="Compare to Other Investments" actions={<Select size="s" options={['Portfolio level', 'Region level', 'Asset class']} defaultValue="Portfolio level" clearable={false} onChange={v => toast({ title: v, description: 'Comparison scope is illustrative' })} />}>
-      <div className="col" style={{ gap: 'var(--space-400)' }}>
+      <Stack gap="400">
         <div className="ifs-grid">{[['Rate', `#${pos.rank}`, `of ${pos.total} investments`], ['Percentile', `${pos.pct}th`], ['Standing', pos.standing], ['Alternative', alt.name]]
           .map(([t, v, d]) => <div key={t} className="ifs-span-3"><StatCard size="s" title={t} value={v} description={d} descriptionPosition="inline" /></div>)}</div>
         <DataVizCard title="Investment Position" header={{ segments: [{ value: 'value', label: 'Value vs Cost' }, { value: 'eff', label: 'Efficiency' }], segmentValue: metric, onSegmentChange: setMetric }} onCooper={() => toast({ title: 'Cooper: Investment position' })}>
@@ -465,7 +465,7 @@ function RfOverview({ R, refine, setRefine }) {
             series={[{ key: 'all', label: 'Whistler investments' }, { key: 'me', label: R.inv.name }]} xFormat={v => fmtMoney(v)} yFormat={v => metric === 'value' ? fmtValue(v) : String(v)}
             xReference={pos.medCost} yReference={metric === 'value' ? pos.medValue : undefined} referenceLabel="Median" /></div>
         </DataVizCard>
-      </div>
+      </Stack>
     </RfCard>
     <div className="ifs-grid is-halves">
       <RfCard title="Why This Investment Matters"><p className="t-body-m-regular" style={{ margin: 0 }}>{why}</p></RfCard>

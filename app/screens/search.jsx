@@ -129,10 +129,10 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
   const cooperPanel = cooper && (
     <div className="gs-cooper">
       <AgentWindow title="Cooper" text={null} onClose={() => setCooper(null)} onAsk={() => toast({ title: 'Cooper chat isn’t part of this prototype yet' })}>
-        <div className="col" style={{ gap: 'var(--space-250)' }}>
+        <Stack gap="250">
           <UserMessage>{cooper.text}</UserMessage>
           <span className="row t-body-m-regular muted" style={{ gap: 'var(--space-150)' }}><Icon name="cooper-system-icon" size={16} />Cooper is working on it…</span>
-        </div>
+        </Stack>
       </AgentWindow>
     </div>
   );
@@ -171,7 +171,7 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
   const popover = (
     <IFS.Popover open={pop} onOpenChange={setPop} align="end" width="var(--overlay-width-s)" showClose={false}
       trigger={<span className="gs-filter-btn"><IconButton icon="system-filter" type={pop ? 'secondary' : 'tertiary'} size="s" label="Sort & filter" />{nFilters > 0 && <span className="gs-dot" />}</span>}>
-      <div className="col" style={{ gap: 'var(--space-300)', padding: 'var(--space-100)' }}>
+      <Stack gap="300" style={{ padding: 'var(--space-100)' }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <span className="row" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium muted">Sort & filter</span>{nFilters > 0 && <Counter>{nFilters}</Counter>}</span>
           <Button type="ghost" size="s" onClick={() => { setFilters({}); setOwners(null); setUpdated('any'); setFills([]); }}>Clear all</Button>
@@ -180,23 +180,23 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
         {groupsFor.map(g => (
           <div key={g} className="col" style={{ gap: 'var(--space-150)' }}>
             <span className="t-label-m-medium muted">{g}</span>
-            <div className="row" style={{ gap: 'var(--space-150)', flexWrap: 'wrap' }}>
+            <Inline gap="150" wrap align="center">
               <Chip selected={!filters[g]} onChange={() => setFilters(f => ({ ...f, [g]: null }))}>All</Chip>
               {filterValues(type, g).map(v => <Chip key={v} selected={filters[g] === v} onChange={() => setFilters(f => ({ ...f, [g]: f[g] === v ? null : v }))}>{v}</Chip>)}
-            </div>
+            </Inline>
           </div>
         ))}
-        {(type === 'all' || type === 'study') && <div className="col" style={{ gap: 'var(--space-150)' }}>
+        {(type === 'all' || type === 'study') && <Stack gap="150">
           <span className="t-label-m-medium muted">Updated</span>
-          <div className="row" style={{ gap: 'var(--space-150)', flexWrap: 'wrap' }}>{SEARCH_UPDATED.filter(u => type === 'all' || u[0] !== '365').map(([v, l]) => <Chip key={v} selected={updated === v} onChange={() => setUpdated(v)}>{l}</Chip>)}</div>
-        </div>}
-        {SEARCH_HAS_OWNER(type) && <div className="col" style={{ gap: 'var(--space-150)' }}>
+          <Inline gap="150" wrap align="center">{SEARCH_UPDATED.filter(u => type === 'all' || u[0] !== '365').map(([v, l]) => <Chip key={v} selected={updated === v} onChange={() => setUpdated(v)}>{l}</Chip>)}</Inline>
+        </Stack>}
+        {SEARCH_HAS_OWNER(type) && <Stack gap="150">
           <span className="t-label-m-medium muted">Owner</span>
           <IFS.MultiSelect size="m" value={owners || SEARCH_OWNERS} onChange={v => setOwners(!v.length || v.length === SEARCH_OWNERS.length ? null : v)} listTitle="Owners"
             placeholder="Anyone" options={SEARCH_OWNERS.map(o => ({ value: o, label: o }))} aria-label="Owner" />
           <span className="t-body-m-regular muted">{owners ? `${owners.length} collaborator${owners.length > 1 ? 's' : ''}` : 'Anyone'}</span>
-        </div>}
-      </div>
+        </Stack>}
+      </Stack>
     </IFS.Popover>
   );
   const searchedLine = () => {
@@ -240,7 +240,7 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
             {mode === 'results' && res.corrected && <div className="gs-note t-body-m-regular sec">No exact matches for “{cq}”. Showing results for <b>{res.corrected}</b>.</div>}
             {narrow.length > 0 && <div className="gs-narrow col">
               <span className="t-label-m-medium muted">Narrow with</span>
-              <div className="row" style={{ gap: 'var(--space-150)', flexWrap: 'wrap' }}>{narrow.map(x => <Chip key={x.c.group + x.c.value} counter={x.n} onChange={() => applyValue(x.word, x.c, 'Applied')}>{`${x.c.group}: ${x.c.value}`}</Chip>)}</div>
+              <Inline gap="150" wrap align="center">{narrow.map(x => <Chip key={x.c.group + x.c.value} counter={x.n} onChange={() => applyValue(x.word, x.c, 'Applied')}>{`${x.c.group}: ${x.c.value}`}</Chip>)}</Inline>
             </div>}
 
             {mode === 'recent' && (!recentRows.length && !searches.length
@@ -267,9 +267,9 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
             {mode === 'none' && <>
               <div className="gs-empty"><span className="t-label-m-medium">{`No Matches for “${cq}”`}</span>
                 <span className="t-body-m-regular sec">{widen.length ? searchedLine() : 'Check the spelling, try fewer words, or search by code.'}</span></div>
-              {widen.length > 0 && <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium gs-cap">Widen the search</span>
+              {widen.length > 0 && <Stack gap="150"><span className="t-label-m-medium gs-cap">Widen the search</span>
                 {widen.map(w => <button key={w.id} className="gs-option" onClick={() => { if (w.id === 'match') setMatch('any'); if (w.id === 'filters') { setFilters({}); setOwners(null); setUpdated('any'); } if (w.id === 'types') chooseType('all', true); }}>
-                  <span className="t-label-m-medium">{w.label}</span><span className="t-body-m-regular muted">{w.n} result{w.n > 1 ? 's' : ''}</span></button>)}</div>}
+                  <span className="t-label-m-medium">{w.label}</span><span className="t-body-m-regular muted">{w.n} result{w.n > 1 ? 's' : ''}</span></button>)}</Stack>}
             </>}
 
             {mode === 'results' && type === 'all' && groups.map(g => (

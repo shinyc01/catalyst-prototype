@@ -15,7 +15,7 @@ function DSec({ title, children, open: o = true }) {
     <div className="col ad-sec">
       <button className="ad-sec__head t-label-m-medium muted" onClick={() => setOpen(!open)} aria-expanded={open}>
         <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={16} />{title}</button>
-      {open && <div className="col" style={{ gap: 'var(--space-200)' }}>{children}</div>}
+      {open && <Stack gap="200">{children}</Stack>}
     </div>
   );
 }
@@ -51,7 +51,7 @@ function AssetDetails({ id, lenses, year, onClose, onAsk, warnings = [], group, 
     : SECTIONS[a.type].map(x => <button key={x} className={`ad-item${sec === x ? ' is-on' : ''}`} onClick={() => setSec(x)}>{x}</button>);
   return (
     <Panel title={a.label} showEvidence={false} actions={<PanelClose onClose={onClose} />} className="proto-fill" style={{ height: '100%' }}>
-      <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
+      <Stack gap="300" style={{ height: '100%', minHeight: 0 }}>
         <span className="t-body-m-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{a.code}</span>
         <SegmentedControl size="s" fullWidth value={tab} onChange={setTab} options={[{ value: 'details', label: 'Details' }, { value: 'docs', label: 'Documentation' }, { value: 'history', label: 'History' }]} />
         {tab !== 'details' ? <EmptyState cause="empty-container" size="section" heading={tab === 'docs' ? 'Documentation' : 'History'} body="Not part of this flow." /> :
@@ -85,7 +85,7 @@ function AssetDetails({ id, lenses, year, onClose, onAsk, warnings = [], group, 
             <div className="row"><Button type="cooper" size="s" iconLeft="cooper-system-icon" onClick={onAsk}>Ask Cooper about this asset</Button></div>
           </div>
         </NDS>}
-      </div>
+      </Stack>
     </Panel>
   );
 }
@@ -98,7 +98,7 @@ function GroupDetails({ group, lenses, year, onClose, onAsset }) {
   const anyOver = rows.some(x => x.over);
   return (
     <Panel title={group.label} onEvidence={() => toast({ title: 'Evidence chain' })} actions={<PanelClose onClose={onClose} />} className="proto-fill" style={{ height: '100%' }}>
-      <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
+      <Stack gap="300" style={{ height: '100%', minHeight: 0 }}>
         <span className="t-body-m-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{rows.length}/{rows.length} assets selected · {TYPE_LABEL[first.type]}</span>
         <SegmentedControl size="s" fullWidth value="details" onChange={() => toast({ title: 'Not part of this flow' })} options={[{ value: 'details', label: 'Details' }, { value: 'docs', label: 'Documentation' }, { value: 'history', label: 'History' }]} />
         <NDS label="Two-column asset details (hierarchy list + sections)" className="ad-cols">
@@ -127,7 +127,7 @@ function GroupDetails({ group, lenses, year, onClose, onAsset }) {
             </DSec>
           </div>
         </NDS>
-      </div>
+      </Stack>
     </Panel>
   );
 }
@@ -236,7 +236,7 @@ function Collapse({ title, count, open, onToggle, children }) {
     <div className="col rec-sec">
       <button className="ad-sec__head t-label-m-medium muted" onClick={onToggle} aria-expanded={open}>
         <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={16} />{title}{count != null && <Counter>{count}</Counter>}</button>
-      {open && <div className="col" style={{ gap: 'var(--space-200)' }}>{children}</div>}
+      {open && <Stack gap="200">{children}</Stack>}
     </div>
   );
 }
@@ -253,8 +253,8 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
   if (evid && evidence && (mode === 'signal' || mode === 'draft')) return evidence;   // rule 6.1: evidence chain takes the right slot; ✕ goes back to the window
   if (mode === 'signal' && r) return <>
     <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => setMode('draft') }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
-      <div className="col" style={{ gap: 'var(--space-300)' }}>
-        <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+      <Stack gap="300">
+        <Inline gap="200" justify="between" align="center"><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></Inline>
         <span className="t-body-m-regular sec">{r.signal.text}</span>
         <Collapse title="Risk drivers" open={sec === 'drivers'} onToggle={() => setSec(sec === 'drivers' ? null : 'drivers')}>
           <ContentCard size="s" title={r.signal.driver.title} description={r.signal.driver.text} bottom={<div style={{ width: '100%' }}>
@@ -268,16 +268,16 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
         <Collapse title="Recent outages" count={r.signal.outages.length} open={sec === 'outages'} onToggle={() => setSec(sec === 'outages' ? null : 'outages')}>
           {r.signal.outages.map((o, i) => <ContentCard key={o} size="s" iconLeft="arrow-caret-right-filled" title={`${i + 1}. ${o}`} onClick={() => toast({ title: o, description: 'Outage records aren’t part of this prototype yet' })} />)}
         </Collapse>
-      </div>
+      </Stack>
     </AgentWindow>
   </>;
   if (mode === 'draft' && r) { const rec = r.interventions[0], alts = r.interventions.slice(1);
     const rows = x => [{ label: 'Cost', value: `~${fmtMoney(x.cost)}` }, { label: 'Value', value: `${fmtValue(x.value)} value score` }, { label: 'Timeline', value: x.timeline }, { label: 'Risk reduced', value: `${pctTxt(x.reduced)} of the group’s risk` }];
     return <>
       <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => onCreate(r) }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
-        <div className="col" style={{ gap: 'var(--space-300)' }}>
+        <Stack gap="300">
           <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => setMode('signal')}>Back</Button></div>
-          <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+          <Inline gap="200" justify="between" align="center"><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></Inline>
           <Collapse title="Recommended intervention" open onToggle={() => {}}>
             <ContentCard size="s" title={rec.name} description={`Cooper’s pick for ${r.inv.name}: the recommended alternative in the investment.`}
               control={<Badge size="s" color="white">{`${r.assets.length} assets`}</Badge>} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={rows(rec)} /></div>} />
@@ -285,13 +285,13 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
           <Collapse title="Other interventions" count={alts.length} open={others} onToggle={() => setOthers(!others)}>
             {alts.map(x => <ContentCard key={x.id} size="s" title={x.name} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={rows(x)} /></div>} />)}
           </Collapse>
-        </div>
+        </Stack>
       </AgentWindow>
     </>; }
   return (
     <AgentWindow onClose={onClose} onAsk={() => toast({ title: 'Cooper chat isn’t part of this flow' })}
       text={`I’ve surfaced ${n} recommendation${n === 1 ? '' : 's'} that need your attention — grouped by risk, value and impact.`}>
-      <div className="col" style={{ gap: 'var(--space-300)' }}>
+      <Stack gap="300">
         {groups.map(g => (
           <RecommendationGroup key={g.title} title={g.title} count={g.items.length}>
             {g.items.map(x => (
@@ -308,7 +308,7 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
           </RecommendationGroup>
         ))}
         {!groups.length && <EmptyState cause="empty-container" size="section" heading="Nothing Needs Your Attention" body="Every recommendation has been sent to Build." />}
-      </div>
+      </Stack>
     </AgentWindow>
   );
 }
@@ -347,11 +347,11 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
     r.assets.forEach((id, i) => i === 0 && api.current?.flyTo(id)); setTimeout(() => setRecMode('signal'), 1600); };
   const recR = recId && RECOMMENDATIONS.find(x => x.id === recId);
   const header = <ExploreHeader search={{ placeholder: 'Search for…', ...(fromSearch ? { value: `${assetById(asset).label} details`, onClear: () => setSearchCtx(null) } : {}) }}
-    actions={am ? <div className="row" style={{ gap: 'var(--space-200)' }}>
+    actions={am ? <Inline gap="200" align="center">
       {recs && recMode !== 'list' ? null : <CooperChip selected={recs} onClick={() => { setRecs(!recs); setRecMode('list'); setRecFocus(null); }}>{`${recsOpenIds.length} risk${recsOpenIds.length === 1 ? '' : 's'} surfaced`}</CooperChip>}
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
-    </div> : undefined}>
+    </Inline> : undefined}>
     {!am && <Button type="ghost" size="s" iconLeft="arrow-left" onClick={onBack}>{CLUSTER.name}</Button>}
     {am && recs && recMode !== 'list' && recR && <Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => { setRecMode('list'); setRecFocus(null); }}>{recR.area}</Button>}
   </ExploreHeader>;
@@ -378,11 +378,11 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
         {am && treeOpen && !libOpen && !recs && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
         {am ? <>
           {fromSearch && <div className="ifs-slot-top"><FloatingBar inline open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
-              actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
+              actions={<Inline gap="200" align="center">
                 <Button type="tertiary" size="s" iconLeft="layout-list" onClick={() => setTreeOpen(true)}>All risk</Button>
                 <IconButton icon="arrow-left" type="secondary" size="s" label="Previous result" onClick={() => stepResult(-1)} />
                 <IconButton icon="arrow-right" type="secondary" size="s" label="Next result" onClick={() => stepResult(1)} />
-                <Button type="primary" size="s" onClick={() => onStudy(groupOfAsset(asset))}>Study area</Button></div>}
+                <Button type="primary" size="s" onClick={() => onStudy(groupOfAsset(asset))}>Study area</Button></Inline>}
               onClose={() => { setSearchCtx(null); setAsset(null); }} /></div>}
           {!fromSearch && g && !groupOpen && !asset && barOpen && <div className="ifs-slot-top"><FloatingBar inline open category={g.label} categoryIcon="map-location" item={`Selected ${g.assets.length}`}
               badge={<Badge color="red" size="s" indicator="error">{overOf(g.assets)}</Badge>}
@@ -435,7 +435,7 @@ function ClusterDetails({ s }) {
   const alt = IDEA_ALTS.find(a => a.isRecommended) || IDEA_ALTS[0];
   const overNowRows = s.now.rows.filter(r => overNow.includes(r.a.id));
   return (
-    <div className="col" style={{ gap: 'var(--space-300)' }}>
+    <Stack gap="300">
       <span className="t-label-m-medium muted">Recommended intervention</span>
       <ContentCard size="s" title={`${IDEA_INV.name} · ${alt.name}`} description={ALT_DESC[alt.name]} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
@@ -445,11 +445,11 @@ function ClusterDetails({ s }) {
         <StatCard size="s" title="At-risk assets" value={`${s.now.over}/${ASSETS.length}`} description={`by ${END}`} />
       </div>
       <span className="t-label-m-medium muted">If no action is taken</span>
-      <div className="col t-body-m-regular sec" style={{ gap: 'var(--space-100)' }}>
+      <Stack gap="100" className="t-body-m-regular sec">
         <span>{overNowRows.map(r => r.a.label).join(' and ')} are already past tolerance</span>
         <span>Outage risk for ~{CLUSTER.customers.toLocaleString()} Alpine Meadows customers keeps rising</span>
         <span>Pine Ridge corridor wildfire exposure grows every year</span>
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
