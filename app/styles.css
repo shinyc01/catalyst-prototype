@@ -172,7 +172,7 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .gs-keys b { color: var(--text-disabled); font-weight: var(--font-weight-font-weight-regular); margin-right: var(--space-100); }
 .explore-trace { flex: none; display: flex; border-left: var(--border-widths-border-100) solid var(--border-base); }
 /* Explore for the Asset Manager (J02): ASSETS panel (Figma 9:64506) and two-column asset details (9:64904 / 9:65804) */
-.assets-panel { position: absolute; left: calc(var(--page-margin) + var(--slot-tools) + var(--page-gap)); top: var(--space-300); bottom: var(--space-300); width: var(--region-panel); z-index: var(--proto-z-map-panel); display: flex; flex-direction: column;
+.assets-panel { display: flex; flex-direction: column; min-height: 0;
   background: var(--surface-primary-alpha); border: var(--border-widths-border-100) solid var(--border-base); border-radius: var(--radius-radius-200); backdrop-filter: blur(var(--blur-strong)); }
 .assets-panel__head { gap: var(--space-200); padding: var(--space-inset); border-bottom: var(--border-widths-border-100) solid var(--border-base); }
 .assets-panel__body { flex: 1; min-height: 0; padding: var(--space-150) var(--space-100); gap: 0; }   /* full-bleed list: side padding left to the rows (DS exception) */
@@ -184,7 +184,9 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .ad-dot { width: var(--size-6); height: var(--size-6); border-radius: 50%; flex: none; margin-left: auto; }
 .ad-dot--red { background: var(--icon-danger); }
 .ad-dot--orange { background: var(--icon-warning); }
-.ad-wrap { position: absolute; right: var(--page-margin); top: var(--space-300); bottom: var(--space-300); width: var(--region-panel-l); max-width: calc(100% - 2 * var(--page-margin)); z-index: var(--proto-z-map-panel); display: flex; }
+/* the right slot is 380 (rule 6.1): the asset hierarchy list stacks above the sections */
+.ifs-slot-right .ad-cols { flex-direction: column; }
+.ifs-slot-right .ad-left { width: auto; max-height: var(--proto-chart-m); padding: 0 0 var(--space-200); border-right: none; border-bottom: var(--border-widths-border-100) solid var(--border-base); }
 .ad-cols { display: flex; gap: var(--space-300); flex: 1; min-height: 0; }
 .ad-left { width: var(--proto-detail-nav-w); flex: none; gap: var(--space-50); padding-right: var(--space-300); border-right: var(--border-widths-border-100) solid var(--border-base); overflow: auto; }
 .ad-item { padding: var(--space-200); border: var(--border-widths-border-100) solid transparent; border-radius: var(--radius-radius-100); color: var(--text-secondary); }
@@ -223,9 +225,6 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .study-row.is-click:hover .study-time { display: none; }
 .study-alert { position: absolute; top: var(--space-300); right: var(--page-margin); width: var(--overlay-width-s); z-index: var(--proto-z-alert); }
 /* J05: Cooper recommendations window, evidence drawer, send-to-Build snackbar */
-.recs-wrap { position: absolute; right: var(--page-margin); top: var(--space-300); bottom: var(--space-300); width: var(--region-panel); z-index: var(--proto-z-map-window); display: flex; flex-direction: column; }
-.recs-wrap > * { max-height: 100%; }
-.rec-evidence { position: absolute; right: calc(var(--page-margin) + var(--region-panel) + var(--page-gap)); top: var(--space-300); width: var(--region-panel); z-index: var(--proto-z-map-drawer); }
 .rec-sec { gap: var(--space-200); padding-top: var(--space-stack); border-top: var(--border-widths-border-100) solid var(--border-base); }
 .rec-extra { gap: var(--space-100); }
 .build-snack { position: fixed; left: 50%; bottom: var(--space-1000); transform: translateX(-50%); width: var(--proto-snack-w); z-index: var(--proto-z-snack); }
@@ -233,6 +232,7 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .bi-split { display: flex; height: 100%; min-height: var(--proto-page-min-h); }
 .bi-chat { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: var(--page-gap) var(--page-margin); }
 .bi-chat > * { max-width: var(--region-panel-l); max-height: calc(100% - 2 * var(--space-1000)); }
+.rec-evidence { position: absolute; right: calc(var(--page-margin) + var(--region-panel) + var(--page-gap)); top: var(--space-300); width: var(--region-panel); z-index: var(--proto-z-map-drawer); }   /* Plan pages: Cooper answer beside the page panel */
 .bi-map { flex: 1; min-width: 0; padding: var(--space-300) var(--page-margin) var(--space-300) 0; display: flex; }
 .bi-map > * { flex: 1; }
 .bi-map__view { position: relative; height: 100%; min-height: var(--proto-map-h); border-radius: var(--radius-radius-200); overflow: hidden; }
@@ -304,6 +304,10 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
    wrappers' inline widths (Study's slot width follows its view). */
 .proto-fill { width: 100%; }
 .ifs-panel--collapsed.proto-fill { width: var(--region-rail); flex: none; }
-:where(.ifs-slot-left, .ifs-slot-right, .ad-wrap, .vf-panel, .vf-picker, .rf-cooper):has(> .ifs-panel--collapsed) { width: auto !important; }
+:where(.vf-panel, .vf-picker, .rf-cooper):has(> .ifs-panel--collapsed) { width: auto !important; }
+.ifs-slots.proto-left-rail { --slot-left-w: var(--region-rail); }   /* a folded start panel is its rail; bars place against it */
+.ifs-slot-right:has(> .ifs-panel--collapsed) { width: var(--region-rail); }
+.ifs-slot-right > *, .ifs-slot-left > * { max-height: 100%; }
+.ifs-slot-right > .ifs-panel--collapsed, .ifs-slot-left > .ifs-panel--collapsed { align-self: stretch; }
 .bi-map:has(> .ifs-panel--collapsed) { flex: none; }
-.map-layers { position: absolute; left: calc(var(--page-margin) + var(--slot-tools) + var(--page-gap)); bottom: var(--space-300); z-index: var(--proto-z-map-window); }   /* rule 4.8: a popover sits above panels */
+.map-layers > * { max-height: 100%; overflow: auto; }   /* Layers sits in .ifs-slot-popover (rule 6.1) */

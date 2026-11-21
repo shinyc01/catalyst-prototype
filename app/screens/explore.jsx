@@ -154,7 +154,7 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
   };
   const listRows = ASSETS.filter(a => risk === 'all' || (risk === 'high' ? riskDot(a) === 'red' : risk === 'moderate' ? riskDot(a) === 'orange' : !riskDot(a)));
   return (
-    <div className="assets-panel">
+    <div className="ifs-slot-left"><div className="assets-panel">
       <div className="row assets-panel__head">
         <span className="t-heading-h4-semibold">Assets</span><Counter>{ASSETS.length}</Counter>
         <span style={{ flex: 1 }} />
@@ -176,7 +176,7 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
           </div> : null; })}
         </>}
       </NDS>
-    </div>
+    </div></div>
   );
 }
 
@@ -202,7 +202,7 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
   const remove = st => { const before = studies; setStudies(l => l.filter(x => x.id !== st.id));   // rule 8.24: undoable, so no confirmation; the snackbar offers Undo
     toast({ title: 'Study removed', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setStudies(before) }, duration: 5000 }); };
   return (
-    <div className="assets-panel">
+    <div className="ifs-slot-left"><div className="assets-panel">
       <div className="row assets-panel__head">
         <span className="t-heading-h4-semibold">Studies</span><Counter>{studies.length}</Counter><span style={{ flex: 1 }} />
         <IconButton icon="system-close" type="ghost" size="s" label="Close studies" onClick={onClose} />
@@ -224,7 +224,7 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
               </span>
             </div>)}
       </NDS>
-    </div>
+    </div></div>
   );
 }
 
@@ -248,10 +248,10 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
   const [evid, setEvid] = useState(false);
   const groups = recGroups(openIds), n = openIds.length;
   if (mode === 'loading') return <AgentWindow text="Taking you there: Bringing the assets into view…" onClose={onClose} />;
-  const evidence = r && <div className="rec-evidence"><EvidenceChainDrawer open={evid} onOpenChange={setEvid} value={Math.round(70 + r.pof * 25)} rationale={r.evidence}
-    benchmark={{ empty: true }} /></div>;
+  const evidence = r && <EvidenceChainDrawer open={evid} onOpenChange={setEvid} value={Math.round(70 + r.pof * 25)} rationale={r.evidence}
+    benchmark={{ empty: true }} />;
+  if (evid && evidence && (mode === 'signal' || mode === 'draft')) return evidence;   // rule 6.1: evidence chain takes the right slot; ✕ goes back to the window
   if (mode === 'signal' && r) return <>
-    {evid && evidence}
     <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => setMode('draft') }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
       <div className="col" style={{ gap: 'var(--space-300)' }}>
         <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
@@ -274,7 +274,6 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
   if (mode === 'draft' && r) { const rec = r.interventions[0], alts = r.interventions.slice(1);
     const rows = x => [{ label: 'Cost', value: `~${fmtMoney(x.cost)}` }, { label: 'Value', value: `${fmtValue(x.value)} value score` }, { label: 'Timeline', value: x.timeline }, { label: 'Risk reduced', value: `${pctTxt(x.reduced)} of the group’s risk` }];
     return <>
-      {evid && evidence}
       <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => onCreate(r) }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
         <div className="col" style={{ gap: 'var(--space-300)' }}>
           <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => setMode('signal')}>Back</Button></div>
@@ -357,12 +356,14 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
     {am && recs && recMode !== 'list' && recR && <Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => { setRecMode('list'); setRecFocus(null); }}>{recR.area}</Button>}
   </ExploreHeader>;
   const right = !!(details || asset || (am && groupOpen));
+  const leftOpen = am && (libOpen || (treeOpen && !recs && !(traceOpen && right)));
+  const rightOpen = right || (am && recs);
   const ri = fromSearch ? searchCtx.ids.indexOf(asset) : -1;
   const stepResult = d => { const n = searchCtx.ids[(ri + d + searchCtx.ids.length) % searchCtx.ids.length]; setAsset(n); setGroup(groupOfAsset(n).id); api.current?.flyTo(n); };
   return (
     <AppShell navBar={navBar} header={header}>
       <div style={{ display: 'flex', height: '100%', minHeight: 'var(--proto-page-min-h)' }}>
-      <div className="ifs-slots" style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+      <div className={`ifs-slots${leftOpen ? ' has-left' : ''}${rightOpen ? ' has-right' : ''}`} style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}>
         <NDS label="3D map (MapLibre + OpenFreeMap)" className="fill">
           <MapView lenses={lenses} year={END} selected={asset} focus={recs ? recFocus : null} onSelect={id => { if (am && id) pick(id); else { setAsset(id); if (id) setDetails(false); } }} apiRef={api}
             pad={{ tl: [am && treeOpen ? 460 : 80, 120], br: [right ? 640 : 240, 60] }} />{/* map camera padding: MapLibre takes px (exception, context/decisions.md) */}
@@ -370,27 +371,27 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
         <MapTools grid={false} api={api} assetsOpen={am && treeOpen && !libOpen} onAssets={am ? () => { setLibOpen(false); setTreeOpen(o => !o); } : undefined}
           libraryOpen={libOpen} onLibrary={am ? () => { setLibOpen(o => !o); } : undefined} onStudy={() => onStudy(am && g ? g : null)} />
         {am && libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={onOpenStudy} onClose={() => setLibOpen(false)} />}
-        {am && recs && <div className="recs-wrap"><RecsWindow open={recsOpenIds} mode={recMode} recId={recId} setMode={setRecMode} onFocus={setRecFocus} onFly={flyTo}
+        {am && recs && <div className="ifs-slot-right"><RecsWindow open={recsOpenIds} mode={recMode} recId={recId} setMode={setRecMode} onFocus={setRecFocus} onFly={flyTo}
           onClose={() => { setRecs(false); setRecMode('list'); setRecFocus(null); }}
           onStudy={r => onStudy({ id: r.id, label: r.area === 'Alpine Meadows Station' && r.assets.length === 1 ? r.inv.name : r.area, assets: r.assets })}
           onCreate={r => { onSendToBuild(r); setRecs(false); setRecMode('list'); setRecFocus(null); }} /></div>}
         {am && treeOpen && !libOpen && !recs && !(traceOpen && right) && <AssetsPanel value={asset} group={group} onSelect={pick} onClose={() => setTreeOpen(false)} />}
         {am ? <>
-          {fromSearch && <FloatingBar style={{ top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }} open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
+          {fromSearch && <div className="ifs-slot-top"><FloatingBar inline open category={`${ri + 1} / ${searchCtx.ids.length} results`} item={assetById(asset).label}
               actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
                 <Button type="tertiary" size="s" iconLeft="layout-list" onClick={() => setTreeOpen(true)}>All risk</Button>
                 <IconButton icon="arrow-left" type="secondary" size="s" label="Previous result" onClick={() => stepResult(-1)} />
                 <IconButton icon="arrow-right" type="secondary" size="s" label="Next result" onClick={() => stepResult(1)} />
                 <Button type="primary" size="s" onClick={() => onStudy(groupOfAsset(asset))}>Study area</Button></div>}
-              onClose={() => { setSearchCtx(null); setAsset(null); }} />}
-          {!fromSearch && g && !groupOpen && !asset && <FloatingBar style={{ top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }} open={barOpen} category={g.label} categoryIcon="map-location" item={`Selected ${g.assets.length}`}
+              onClose={() => { setSearchCtx(null); setAsset(null); }} /></div>}
+          {!fromSearch && g && !groupOpen && !asset && barOpen && <div className="ifs-slot-top"><FloatingBar inline open category={g.label} categoryIcon="map-location" item={`Selected ${g.assets.length}`}
               badge={<Badge color="red" size="s" indicator="error">{overOf(g.assets)}</Badge>}
               secondaryAction={{ label: 'View details', onClick: () => { setAsset(null); setGroupOpen(true); } }} primaryAction={{ label: 'Study area', onClick: () => onStudy(g) }}
-              onClose={() => { setGroup(null); setGroupOpen(false); }} />}
-        </> : <FloatingBar style={{ top: 'var(--proto-under-header)', zIndex: 'var(--proto-z-map-ui)' }} open={barOpen} category="Cooper found" categoryIcon="cooper-system-icon" item={`${CLUSTER.name} · ${ASSETS.length} assets`}
+              onClose={() => { setGroup(null); setGroupOpen(false); }} /></div>}
+        </> : barOpen && <div className="ifs-slot-top"><FloatingBar inline open category="Cooper found" categoryIcon="cooper-system-icon" item={`${CLUSTER.name} · ${ASSETS.length} assets`}
           badge={<Badge color="red" size="s">{s.now.over} over tolerance by {END}</Badge>}
           secondaryAction={{ label: 'View details', onClick: () => setDetails(true) }} primaryAction={{ label: 'Study area', onClick: () => onStudy(null) }}
-          onClose={() => { setBarOpen(false); toast({ title: 'Selection cleared', primaryAction: { label: 'Undo', onClick: () => setBarOpen(true) } }); }} />}
+          onClose={() => { setBarOpen(false); toast({ title: 'Selection cleared', primaryAction: { label: 'Undo', onClick: () => setBarOpen(true) } }); }} /></div>}
         {details && (
           <div className="ifs-slot-right" style={{ width: 'auto' }}>
             <AgentWindow style={{ maxHeight: '100%' }} text={`${CLUSTER.name} — ${CLUSTER.station}, its 12 pad-mount transformers, the Pine Ridge lines and Nesters substation, serving ~${CLUSTER.customers.toLocaleString()} customers. With today’s lenses, ${s.now.over} of ${ASSETS.length} assets are over their intervention tolerance by ${END}. Start with the pad-mount program, which is ready to shape.`}
@@ -401,16 +402,16 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
           </div>
         )}
         {am && g && groupOpen && !asset && (
-          <div className="ad-wrap"><GroupDetails group={g} lenses={lenses} year={END} onClose={() => setGroupOpen(false)} onAsset={id => { setAsset(id); api.current?.flyTo(id); }} /></div>
+          <div className="ifs-slot-right"><GroupDetails group={g} lenses={lenses} year={END} onClose={() => setGroupOpen(false)} onAsset={id => { setAsset(id); api.current?.flyTo(id); }} /></div>
         )}
         {asset && !details && (
-          <div className={am ? 'ad-wrap' : 'ifs-slot-right'} style={am ? {} : undefined}>
-            <AssetDetails id={asset} lenses={lenses} year={END} warnings={am ? warn(assetById(asset)) : []} group={am && groupOpen ? g : null}
+          <div className="ifs-slot-right">
+            <AssetDetails compact id={asset} lenses={lenses} year={END} warnings={am ? warn(assetById(asset)) : []} group={am && groupOpen ? g : null}
               onAsset={id => id ? setAsset(id) : setAsset(null)} onClose={() => { setAsset(null); setSearchCtx && setSearchCtx(null); }} onAsk={() => toast({ title: 'Cooper chat isn’t part of this step' })} />
           </div>
         )}
         {!right && <>
-          <div style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}><FtaButton onClick={() => toast({ title: 'Cooper' })} /></div>
+          <div className="ifs-slot-fab"><FtaButton onClick={() => toast({ title: 'Cooper' })} /></div>
         </>}
       </div>
       {am && <div className="explore-trace" style={{ height: '100%' }}>

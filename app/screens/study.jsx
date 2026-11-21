@@ -75,10 +75,11 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
   const [studyOpen, setStudyOpen] = useState(true);
   useEffect(() => { setStudyOpen(!right); }, [right]);
   const showStudy = () => { setChat(null); setAsset(null); setDetails(false); setLibOpen(false); setStudyOpen(true); };
-  const panelW = view === 'conf' ? 'var(--region-panel)' : 'var(--region-panel-l)';   // DS 2.0.2 fixed panel sizes (side 380, large 600)
+  // rule 6.1/6.2: Study is the start slot, large (600) for lenses, side (380) for System confidence; folded it's a rail
+  const slots = `ifs-slots${!libOpen ? ' has-left' : ''}${!libOpen && studyOpen && view !== 'conf' ? ' has-left-l' : ''}${!libOpen && !studyOpen ? ' proto-left-rail' : ''}${right ? ' has-right' : ''}`;
   return (
     <AppShell navBar={navBar} header={<ExploreHeader search={{ placeholder: 'Search for…' }}><Button type="ghost" size="s" iconLeft="arrow-left" onClick={onClose}>{scope ? name : CLUSTER.name}</Button></ExploreHeader>}>
-      <div className="ifs-slots" style={{ position: 'relative', height: '100%', minHeight: 'var(--proto-page-min-h)', overflow: 'hidden' }}>
+      <div className={slots} style={{ position: 'relative', height: '100%', minHeight: 'var(--proto-page-min-h)', overflow: 'hidden' }}>
         <NDS label="3D risk map (MapLibre + OpenFreeMap)" className="fill">
           <MapView grid lenses={lenses} year={year} selected={asset} onSelect={selectAsset} apiRef={api}
             focus={selected && selected.on ? scoped.filter(a => drivers(a, year, s.act).find(d => d.id === selected.id && d.delta >= 1)).map(a => a.id) : null}
@@ -87,16 +88,16 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
         <MapTools api={api} studyOpen={!libOpen} libraryOpen={libOpen} onLibrary={() => setLibOpen(o => !o)} onStudy={showStudy}
           onAssets={() => onClose()} />
         {libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={st => { setLibOpen(false); onOpenStudy(st); }} onClose={() => setLibOpen(false)} />}
-        <FloatingBar style={{ top: 'var(--proto-under-header)', zIndex: 'var(--proto-z-map-ui)', left: `calc((var(--slot-tools) + var(--page-gap) + ${panelW} + 100%) / 2)` }} category={scope ? name : CLUSTER.name} categoryIcon="map-location" item={`Selected ${scoped.length}`}
+        <div className="ifs-slot-top"><FloatingBar inline category={scope ? name : CLUSTER.name} categoryIcon="map-location" item={`Selected ${scoped.length}`}
           badge={<Badge color="red" size="s">{s.now.over}</Badge>}
           actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
             <Button type="tertiary" size="m" onClick={() => { setChat(null); setAsset(null); setDetails(true); }}>View details</Button>
             <SplitButton size="m" onClick={() => openChat('idea')} menuLabel="More create options"
               items={[{ label: 'Save study', onClick: saveStudy }]}>Create idea</SplitButton>
           </div>}
-          onClose={onClose} />
+          onClose={onClose} /></div>
 
-        <div className="ifs-slot-left" style={{ width: panelW, display: libOpen ? 'none' : 'flex' }}>
+        {!libOpen && <div className="ifs-slot-left">
           <Panel title={`${name} Study`} onEvidence={() => toast({ title: 'Evidence chain' })} actions={<PanelClose onClose={onClose} label="Close study" />} expanded={studyOpen} onExpandedChange={v => v ? showStudy() : setStudyOpen(false)} className="proto-fill" style={{ height: '100%' }}>
             <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
               <SegmentedControl size="s" fullWidth value={view} onChange={setView} options={[{ value: 'lenses', label: 'Lenses' }, { value: 'conf', label: 'System confidence' }]} />
@@ -123,9 +124,9 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
               )}
             </div>
           </Panel>
-        </div>
+        </div>}
 
-        <NDS label="Horizon player (IconButton + Slider + ticks)" className="row box glass" style={{ position: 'absolute', left: `calc(var(--page-margin) + var(--slot-tools) + var(--page-gap) + ${panelW} + var(--page-gap))`, right: right ? 'calc(var(--page-margin) + var(--region-panel) + var(--page-gap))' : 'calc(var(--page-margin) + var(--proto-legend-w) + var(--page-gap))', bottom: 'var(--space-300)', gap: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
+        <div className="ifs-slot-bottom"><NDS label="Horizon player (IconButton + Slider + ticks)" className="row box glass ifs-slot-fill" style={{ gap: 'var(--space-300)' }}>
           <IconButton icon={playing ? 'player-pause-filled' : 'arrow-caret-right-filled'} type="secondary" shape="circle" size="m" label={playing ? 'Pause' : 'Play horizon'} onClick={play} />
           <span className="t-label-m-medium muted">Horizon</span>
           <Badge size="s" color="white">{year}</Badge>
@@ -133,10 +134,10 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
             <Slider min={NOW} max={END} step={1} value={year} onChange={v => { setPlaying(false); setYear(v); }} showValue={false} />
             <div className="horizon-ticks t-body-s-regular muted">{[NOW, NOW + 5, END].map(y => <span key={y}>{y}</span>)}</div>
           </div>
-        </NDS>
+        </NDS></div>
 
         {details && (
-          <div className="ifs-slot-right" style={{ width: 'auto' }}>
+          <div className="ifs-slot-right">
             <AgentWindow style={{ maxHeight: '100%' }} text={`${scope ? name : CLUSTER.name} — with the ${s.act.length} lenses applied, ${s.now.over} of ${s.count} assets are over their intervention tolerance in ${year}.`}
               onAsk={() => openChat('idea')} onClose={() => setDetails(false)}
               tertiaryAction={{ label: 'Close', onClick: () => setDetails(false) }} secondaryAction={{ label: 'Create idea', onClick: () => openChat('idea') }}>
@@ -150,10 +151,10 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
           </div>
         )}
         {chat && (
-          <div style={{ position: 'absolute', right: 'var(--page-margin)', top: 'var(--space-1000)', zIndex: 'var(--proto-z-map-panel)' }}>
+          <div className="ifs-slot-right">
             <ChatCompactPanel type="text" title={chat.kind === 'idea' ? 'Create idea' : (chat.done ? 'EV load growth lens' : 'New chat')} newChat={!chat.done}
               inputValue={input} onInputChange={setInput} onSend={send} analyzing={chat.busy} onStop={() => {}}
-              onClose={() => setChat(null)} onNewChat={() => openChat(chat.kind)} style={{ height: 'calc(100vh - var(--proto-chat-offset))', maxHeight: 'var(--proto-chat-max-h)' }}>
+              onClose={() => setChat(null)} onNewChat={() => openChat(chat.kind)} style={{ height: '100%' }}>
               {chat.msgs.map((m, k) => m.role === 'user' ? <UserMessage key={k}>{m.text}</UserMessage>
                 : m.role === 'progress' ? <CooperProgress key={k} step={m.n} total={m.total} label={m.label} />
                 : <CooperMessage key={k} status="answered" text={m.text} metrics={m.metrics}
@@ -164,7 +165,7 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
             </ChatCompactPanel>
           </div>
         )}
-        {!right && <div style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}><FtaButton onClick={() => openChat('lens')} label="Cooper" /></div>}
+        {!right && <div className="ifs-slot-fab"><FtaButton onClick={() => openChat('lens')} label="Cooper" /></div>}
       </div>
     </AppShell>
   );
