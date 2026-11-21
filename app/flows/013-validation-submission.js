@@ -32,7 +32,7 @@
       body: 'Two approvers answer quickly; Luca Ferri hasn’t. Push him a reminder (once per 24 hours).' },
     { target: '[aria-label^="Notifications"]', title: 'Approved at every gate',
       body: 'The last approver signed off. News like this lands in your notifications. Open them.' },
-    { target: { text: 'Open in Plan', exact: true }, title: 'Open it in Plan',
+    { target: '[data-note="Open in Plan"]', title: 'Open it in Plan',
       body: 'It has belonged to its portfolio since it was created; approval is what makes it ready for the next planning cycle.' },
     { target: '.page .ifs-table', advance: 'next', title: 'Ready to be planned',
       body: 'Plan lists it under New to Scenario, next to the other investments new to this cycle, so the optimizer can consider it.' },

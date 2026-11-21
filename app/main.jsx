@@ -309,8 +309,8 @@ function App() {
       <GlobalSearch open={searchOpen} network={searchNetwork} onClose={() => setSearchOpen(false)} onOpen={openFromSearch} />
       {buildSnack && <div className="build-snack"><Snackbar title={buildSnack.text} showClose={false} secondaryAction={{ label: 'View in Build', onClick: () => {
         setBuildSnack(null); if (buildSnack.invId === CLUSTER.ideaInvestmentId) { setBuildInv(CLUSTER.ideaInvestmentId); setIdea(i => i || { answers: IDEA_ANSWERS }); go('build'); } else toast({ title: 'Build’s Idea Pad isn’t part of this prototype yet' }); } }} /></div>}
-      <Notifications open={notesOpen} notes={notes} onClose={() => { setNotesOpen(false); setNotes(l => l.map(n => ({ ...n, read: true }))); }}
-        onOpen={n => { setNotesOpen(false); if (!n.link) return; if (n.tab) setTab(n.tab); if (n.link.includes('?')) { location.hash = '#' + n.link; return; } if (n.link.startsWith('build')) setBuildInv(CLUSTER.ideaInvestmentId); go(n.link); }} />
+      <Notifications open={notesOpen} notes={notes} onClose={() => setNotesOpen(false)} onRead={() => setNotes(l => l.map(n => ({ ...n, read: true })))}
+        onOpen={n => { setNotes(l => l.map(x => x.id === n.id ? { ...x, read: true } : x)); if (!n.link) return; setNotesOpen(false); if (n.tab) setTab(n.tab); if (n.link.includes('?')) { location.hash = '#' + n.link; return; } if (n.link.startsWith('build')) setBuildInv(CLUSTER.ideaInvestmentId); go(n.link); }} />
       {screen === 'plan-setup' && <PlanSetup key={planEpoch} navBar={navBar} reopt={reopt} setReopt={setReopt}
         onReoptCancel={() => { setReopt(null); go('plan-compare'); }} onReoptRun={() => { setReopt(r => ({ ...r, status: 'running', startedAt: Date.now() })); go('plan-compare'); }} tab={tab} setTab={setTab} rows={planRows} setRows={setPlanRows} saved={planSaved} setSaved={setPlanSaved}
         setup={planSetup} setSetup={setPlanSetup} run={running} onHome={() => go('plan')}
