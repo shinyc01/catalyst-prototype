@@ -79,14 +79,20 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
   const navValue = ['overview', 'map', 'flow'].includes(page) ? 'overview' : page.startsWith('model-') ? 'library-models' : page;
   const draftStage = ['input', 'shape', 'review', 'approval'].includes(page);
   const activeHeader = ['overview', 'map', 'flow'].includes(page);
+  const model = page.startsWith('model-') && (VF_MODEL_ROWS.find(x => x.id === page.slice(6)) || VF_MODEL_ROWS[0]);   // Figma 2456:11636: a value model is an entity page
+  const editModel = m => { setDraft({ ...vfNewDraft(), name: `Copy of ${m.name}`, kind: 'model', modelId: m.id, started: true, stage: 'shape', ctx: 100, trace: vfRecalTrace(m), traceDone: {} }); setPage('shape'); };
   // Figma 2761:256320: an icon-only segmented control (overview · node-map · capital flow) in the header's views slot, after the status
   const views = <SegmentedControl size="s" value={page} onChange={setPage} options={[{ value: 'overview', iconLeft: 'overview', ariaLabel: 'Overview' }, { value: 'map', iconLeft: 'node-map', ariaLabel: 'Map' }, { value: 'flow', iconLeft: 'capital-flow', ariaLabel: 'Capital Flow' }]} />;
   // [Assumed] framework versions for the title menu ▾ (rule 5.1)
-  const [onTitleMenu, activityPanel] = useActivity('framework', activityVersions(draftStage
+  const [onTitleMenu, activityPanel] = useActivity(model ? 'model' : 'framework', activityVersions(model
+    ? [{ text: `${model.name} version 1 published.`, by: { name: ownerName('NL'), initials: 'NL' }, day: '2024-06-03' }, { text: `Version ${model.version} published.`, by: { name: ownerName('NL'), initials: 'NL' }, day: model.modified }]   // [Assumed]
+    : draftStage
     ? [{ text: `${draft.name} created with Cooper.`, by: 'cooper', day: STORY_DAY }]
     : [{ text: 'Q1 2026 Strategy Framework drafted.', by: { name: ownerName('NL'), initials: 'NL' }, day: '2026-01-08' }, { text: 'Approved and made active.', by: { name: ownerName('NL'), initials: 'NL' }, day: '2026-01-15' }]));
   const header = activeHeader ? <PageHeader title="Q1 2026 Strategy Framework" onTitleMenu={onTitleMenu} status={<Indicator type="green">Active</Indicator>} views={views}
       actions={openRecs.length ? <IFS.CooperChip onClick={() => setCooper({ kind: 'recs' })}>{`${openRecs.length} Recommendation${openRecs.length > 1 ? 's' : ''}`}</IFS.CooperChip> : undefined} />
+    : model ? <PageHeader title={model.name} id={`Version ${model.version}`} onBack={() => setPage('library-models')} onTitleMenu={onTitleMenu} status={<Indicator type={VF_STATUS[model.status].type}>{VF_STATUS[model.status].label}</Indicator>}
+      actions={model.status === 'active' ? <Button type="secondary" size="s" iconLeft="system-edit-rename" onClick={() => editModel(model)}>Edit</Button> : undefined} />
     : draftStage ? <PageHeader title={draft.name} onBack={() => setPage('library')} onTitleMenu={onTitleMenu} status={<Indicator type={VF_STATUS[draft.status].type}>{draft.stage === 'input' ? 'Draft' : VF_STATUS[draft.status].label}</Indicator>}
       center={<Stepper current={['input', 'shape', 'review', 'approval'].indexOf(page)} steps={[{ label: 'Input' }, { label: 'Shape' }, { label: 'Review' }, { label: 'Approve' }]} />}
       actions={<div className="row" style={{ gap: 'var(--space-200)' }}><Button type="tertiary" size="s" iconLeft="users-group">1/1</Button>
@@ -104,7 +110,7 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
       sideNav={draftStage ? undefined : <IFS.SideNav title="Value" items={nav} value={navValue} onSelect={id => id !== 'human' && setPage(id)} />}
       // rule 7.22: base Cooper bar on the libraries (PageTop); the documents bar inside a framework; an active framework is read-only (no upload)
       bottom={libraryPage ? <BottomSheet prompts={prompts} onPrompt={p => /^Walk me through/.test(p) ? walk() : toast({ title: `Cooper: ${p}` })} />
-        : <BottomSheet type="documents" documents={{ label: `${draftStage ? (draft.docs || 0) : 16} Documents` }} onUpload={activeHeader ? undefined : () => draftStage && page === 'input' ? setDraft(d => vfAddInput(d, 'doc')) : toast({ title: 'Upload' })}
+        : <BottomSheet type="documents" documents={{ label: `${draftStage ? (draft.docs || 0) : 16} Documents` }} onUpload={activeHeader || model ? undefined : () => draftStage && page === 'input' ? setDraft(d => vfAddInput(d, 'doc')) : toast({ title: 'Upload' })}
         prompts={prompts} onPrompt={p => /^Walk me through/.test(p) ? walk() : toast({ title: `Cooper: ${p}` })} />}>
       {libraryPage && <VfLibrary page={page} setPage={setPage} draft={draft} onNew={() => { setDraft(vfNewDraft()); setPage('input'); }} />}
       {page === 'overview' && <VfOverview />}
@@ -114,8 +120,7 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
       {page === 'shape' && <VfShape draft={draft} setDraft={setDraft} />}
       {page === 'review' && <VfReview draft={draft} setDraft={setDraft} />}
       {page === 'approval' && <VfApproval draft={draft} setDraft={setDraft} setPage={setPage} />}
-      {page.startsWith('model-') && <VfModel id={page.slice(6)} onEdit={m => { setDraft({ ...vfNewDraft(), name: `Copy of ${m.name}`, kind: 'model', modelId: m.id, started: true, stage: 'shape', ctx: 100,
-        trace: vfRecalTrace(m), traceDone: {} }); setPage('shape'); }} />}
+      {model && <VfModel id={model.id} onEdit={editModel} onExit={() => setPage('map')} />}
       {cooper && <div className="rf-cooper">
         {cooper.kind === 'text' && <AgentWindow text={cooper.text} onClose={() => setCooper(null)} onAsk={() => {}} />}
         {cooper.kind === 'recs' && <AgentWindow text={`I’ve found ${openRecs.length} recommendation${openRecs.length > 1 ? 's' : ''} that could improve how investments are evaluated, prioritized, and aligned with organizational goals.`} onClose={() => setCooper(null)} onAsk={() => {}}
@@ -373,25 +378,29 @@ function VfApproval({ draft, setDraft, setPage }) {
 }
 
 /* ---------------------------------------------------------------- Value Models · model detail (J14, Figma 2456:11636) */
-function VfModel({ id, onEdit }) {
+function VfModel({ id, onEdit, onExit }) {
   const m = VF_MODEL_ROWS.find(x => x.id === id) || VF_MODEL_ROWS[0];
+  const [open, setOpen] = useState(true);
   const inputs = ['Probability of failure', 'Consequence of failure', 'Weather adjustment factor', 'Currency to value units'];
-  return <div className="page">
-    <RfTitle title={m.name} text={`${VF_STATUS[m.status].label} · Version ${m.version} · ${m.investments} investments · scores ${m.measures.length} measure${m.measures.length === 1 ? '' : 's'}`}
-      right={<Button type="secondary" size="m" iconLeft="system-edit-rename" onClick={() => onEdit(m)}>Edit</Button>} />
-    <div className="ifs-grid">
-      <div className="ifs-span-8"><ContentCard bottom={<div className="vf-model-flow">
-        <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Input</span>{inputs.map(x => <VfNode key={x} type="value-model" title={x} stackIcons={false} />)}</div>
-        <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Measure calculation</span><VfNode type="strategic-objective" title="Risk consequence" stackIcons={false} /><VfNode type="strategic-objective" title="Risk likelihood" stackIcons={false} /></div>
-        <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Output</span>{m.measures.slice(0, 4).map(x => <VfNode key={x.id} type="measure" title={x.name} caption={x.type} stackIcons={false} />)}</div>
-      </div>} /></div>
-      <div className="ifs-span-4"><RfCard title="Measure Calculation"><div className="col" style={{ gap: 'var(--space-stack)' }}>
+  const out = m.measures[0];
+  // Figma 2456:11636: the model isolated on the canvas (Input | Measure calculation | Output) + the measure panel on the right (folds, rule 4.6); read-only while Active
+  return <div className="page-row"><div className="page">
+    <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={onExit}>Exit isolation</Button></div>
+    <ContentCard bottom={<div className="vf-model-flow">
+      <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Input</span>{inputs.map(x => <VfNode key={x} type="value-model" title={x} stackIcons={false} />)}</div>
+      <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Measure calculation</span><VfNode type="strategic-objective" title="Risk consequence" stackIcons={false} /><VfNode type="strategic-objective" title="Risk likelihood" stackIcons={false} /></div>
+      <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Output</span>{m.measures.slice(0, 4).map(x => <VfNode key={x.id} type="measure" title={x.name} caption={x.type} stackIcons={false} />)}</div>
+    </div>} />
+  </div>
+  <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}><Panel title={out ? out.name : m.name} showEvidence={false} expanded={open} onExpandedChange={setOpen} className={open ? 'ifs-trc-panel' : undefined} style={{ height: '100%' }}>
+    <div className="col" style={{ gap: 'var(--space-stack)' }}>
+      <DSec title="Description"><span className="t-body-m-regular sec">{`${m.name} scores ${m.measures.length} measure${m.measures.length === 1 ? '' : 's'} for ${m.investments.toLocaleString('en-US')} investments. Version ${m.version}.`}</span></DSec>
+      <DSec title="Measure Calculation">
         <NDS label="Formula tokens" className="rf-formula col" style={{ alignItems: 'flex-start', padding: 'var(--space-200) var(--space-300)' }}>
           <span className="t-code-m-regular">Risk = Risk consequence × Risk likelihood</span>
           <span className="t-code-m-regular">Risk likelihood = Probability of failure × Weather adjustment factor</span>
-          <span className="t-code-m-regular muted">Risk value = Baseline − Outcome</span></NDS>
-        <span className="t-body-m-regular sec">This measure is converted to value units by applying a 1:1000 ratio.</span>
-      </div></RfCard></div>
+          <span className="t-code-m-regular muted">Risk value = Baseline − Outcome</span></NDS></DSec>
+      <DSec title="Measure Explanation"><span className="t-body-m-regular sec">This measure is converted to value units by applying a 1:1000 ratio.</span></DSec>
     </div>
-  </div>;
+  </Panel></div></div>;
 }
