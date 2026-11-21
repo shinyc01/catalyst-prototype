@@ -43,7 +43,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
   const myRow = rows.find(r => r.id === 'NL') || {};
   const ownerChain = !reviewer && (['review', 'deferred', 'rejected', 'refining'].includes(status) || (status === 'shaping' && review && review.revisions && !review.reopened));
   const [decide, setDecide] = useState(null);       // 'proceed' | 'request' | 'park' | 'stop' while its dialog is open
-  const [decideNote, setDecideNote] = useState('');
+  const [decideNote, setDecideNote] = useState(''), [decideTried, setDecideTried] = useState(false);   // rule 7.4: every visible field is required, checked on submit
   const s = study(lenses, END);
   // J07: System confidence sidebar (Figma 43:76732): the kit's issue report, gates and open questions from shared/build-model.js
   const c = IFS.useIssueReport({ issues: useMemo(() => shapeIssuesFor(INV.id), [INV.id]), gates: SHAPE_GATES });
@@ -76,7 +76,12 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
 
   const DECIDE = { proceed: { label: 'Proceed', description: 'The idea becomes an investment.' }, request: { label: 'Request info', description: 'Send it back to Shape with what you need.' },
     park: { label: 'Park', description: 'Revisit it after a set time.' }, stop: { label: 'Stop', description: 'Close the idea.' } };
-  const header = <PageHeader title={INV.name} id={INV.code} onBack={onBack}
+  // [Assumed] the idea's versions for the title menu ▾ (rule 5.1)
+  const ownerP = { name: INV.owner || PERSONAS.owner.name, initials: (INV.owner || PERSONAS.owner.name).split(' ').map(w => w[0]).join('') };
+  const [onTitleMenu, activityPanel] = useActivity('idea', activityVersions([{ text: `Cooper drafted ${INV.name} from the study.`, by: 'cooper', day: STORY_DAY },
+    ...(status !== 'shaping' || (review && review.round) ? [{ text: 'Sent for review.', by: ownerP, day: STORY_DAY }] : []),
+    ...(status === 'refining' ? [{ text: 'Approved by every reviewer; it is now an investment.', by: ownerP, day: STORY_DAY }] : [])]), rows);
+  const header = <PageHeader title={INV.name} id={INV.code} onBack={onBack} onTitleMenu={onTitleMenu}
     status={<span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={IDEA_STATUS[status].type}>{IDEA_STATUS[status].label}</Indicator>{status === 'review' && <IFS.Counter>{reviewCount(rows)}</IFS.Counter>}</span>}
     center={reviewer ? <Stepper current={0} steps={[{ label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />
       : <Stepper current={ownerChain ? (status === 'refining' ? 2 : 1) : 0} steps={[{ label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
@@ -87,7 +92,8 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
     </div> : ownerChain ? <div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <Button type="secondary" size="s" onClick={() => setDismiss('')}>Dismiss</Button>
-      <Button type="primary" size="s" disabled={status !== 'refining'} onClick={onOpenRefine}>Refine</Button>
+      {status === 'refining' ? <Button type="primary" size="s" onClick={onOpenRefine}>Refine</Button>
+        : <Tooltip content="Opens once every reviewer approves the idea"><span><Button type="primary" size="s" disabled>Refine</Button></span></Tooltip>}
     </div> : <div className="row" style={{ gap: 'var(--space-200)' }}>
       <Button type="tertiary" size="s" iconLeft="users-group">3/5</Button>
       <IconButton icon="system-comment" type="tertiary" size="s" label="Comments" onClick={() => toast({ title: 'Comments aren’t part of this flow' })} />
@@ -96,11 +102,10 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
     </div>} />;
   return (
     <AppShell navBar={navBar} header={header}
-      bottom={<BottomSheet type="value" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
+      bottom={<BottomSheet type="documents" documents={{ label: '16 Documents', onClick: () => toast({ title: 'Cooper’s context: 16 documents' }) }} onUpload={() => toast({ title: 'Upload' })}
         prompts={['Find similar past ideas', 'What could block this idea?']} onPrompt={p => toast({ title: `Cooper: ${p}` })} />}>
       {ownerChain ? <div className="page">
         {status === 'shaping' && <IFS.Alert type="warning" title="Revisions required">{`${(rows.find(r => r.status === 'revisions') || {}).name || 'A reviewer'} asked for more information. Open Shape from their row, update the idea and send it for review again.`}</IFS.Alert>}
-        {status === 'refining' && <IFS.Alert type="success" title="Approved by all reviewers">The idea is now an investment. Continue in Refine.</IFS.Alert>}
         <IFS.ApprovalChainPanel mode="full" title="Approval chain"><IFS.ApprovalChainTable view="full" currentUserId="HG" ownerId="HG"
           approvers={rows.map(r => r.status === 'revisions' ? { ...r, action: { label: 'Shape', icon: 'flag', onClick: () => setReview(v => ({ ...v, reopened: true })) } }
             : r.status === 'rejected' && status === 'deferred' ? { ...r, action: { label: 'Set reminder', icon: 'calendar-time', onClick: () => toast({ title: 'Reminder set', description: 'The idea comes back to your Command in 90 days' }) } } : r)}
@@ -110,7 +115,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
         <div className="page">
           <Sec title="Idea Overview">
             <div className="col" style={{ gap: 'var(--space-150)', padding: '0 var(--space-150) var(--space-150)' }}>
-              <span className="t-label-l-medium">{INV.name}</span>
+              <span className="t-label-m-medium">{INV.name}</span>
               <span className="t-body-m-regular sec">{INV.description}</span>
             </div>
           </Sec>
@@ -118,7 +123,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
           <div className="ifs-grid is-halves">
             <div className="page-col">
               <Sec title="The Need" cooper={askNeed}
-                actions={editNeed !== null ? <Button type="secondary" size="s" iconLeft="cooper-system-icon" onClick={() => { setEditNeed(null); setAskNeed(true); }}>Edit with Cooper</Button>
+                actions={editNeed !== null ? <Button type="cooper" size="s" iconLeft="cooper-system-icon" onClick={() => { setEditNeed(null); setAskNeed(true); }}>Edit with Cooper</Button>
                   : <IconButton icon="system-edit-rename" type="tertiary" size="s" label="Edit The Need" onClick={() => setEditNeed(need)} />}>
                 {editNeed !== null ? <div className="col" style={{ gap: 'var(--space-200)', padding: '0 var(--space-150) var(--space-150)' }}>
                     <IFS.TextArea size="l" value={editNeed} onChange={e => setEditNeed(e.target ? e.target.value : e)} aria-label="The Need" />
@@ -144,7 +149,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
                 </div>
               </Sec>
             </div>
-            <Sec title="Affected Assets & area" style={{ height: '100%' }}>
+            <Sec title="Affected Assets & Area" style={{ height: '100%' }}>
               <NDS label="3D map (MapLibre)" style={{ height: 'var(--proto-map-h)', borderRadius: 'var(--radius-radius-200)', overflow: 'hidden' }}>
                 {main || myAssets.length ? <MapView labels={false} lenses={lenses} year={END} interactive={false} focus={main ? overRows.map(r => r.a.id) : myAssets.map(a => a.id)} />
                   : <EmptyState cause="empty-container" size="section" heading="No assets linked" body="The demo data links no assets to this idea, so there is nothing to map yet." />}
@@ -164,7 +169,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
                 <SubHead>Other options</SubHead>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-300)' }}>
                   {others.map(o => <ContentCard key={o.name} title={o.name} onClick={() => toast({ title: o.name, description: `BCR ${o.bcr} · ${o.cost} · ${o.time} · value ${o.valueLabel}` })}
-                    bottom={<div className="row" style={{ gap: 'var(--space-150)', alignItems: 'baseline' }}><span className="t-heading-h1-medium">{o.cost}</span><span className="t-body-s-regular sec">{o.time}</span></div>} />)}
+                    bottom={<StatCard size="s" title="Cost range" value={o.cost} description={o.time} />} />)}
                 </div>
               </div>
             </div>
@@ -172,12 +177,8 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
 
           <Sec title="Compare to Other Investments" extra={<Select size="s" options={['Portfolio level', 'Region level', 'Asset class']} defaultValue="Portfolio level" clearable={false} onChange={v => toast({ title: `${v}`, description: 'Comparison scope is illustrative' })} />}>
             <div className="col" style={{ gap: 'var(--space-400)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                {[['Rate', <><span className="t-heading-h2-medium">#{rank}</span> <span className="t-body-s-regular sec">of {all.length} investments</span></>], ['Percentile', `${pct}th`], ['Standing', standing], ['Alternative', rec.name]].map(([l, v], i) => (
-                  <div key={l} className="col" style={{ gap: 'var(--space-100)', padding: 'var(--space-100) var(--space-500)', borderLeft: i ? 'var(--border-widths-border-100) solid var(--border-base)' : 'none' }}>
-                    <span className="t-body-s-regular sec">{l}</span><span className="t-heading-h2-medium">{v}</span>
-                  </div>))}
-              </div>
+              <div className="ifs-grid">{[['Rate', `#${rank}`, `of ${all.length} investments`], ['Percentile', `${pct}th`], ['Standing', standing], ['Alternative', rec.name]]
+                .map(([t, v, d]) => <div key={t} className="ifs-span-3"><StatCard size="s" title={t} value={v} description={d} /></div>)}</div>
               <DataVizCard title="Investment position" header={{ segments: [{ value: 'bcr', label: 'Value vs Cost' }, { value: 'eff', label: 'Efficiency' }], segmentValue: metric, onSegmentChange: setMetric }} onCooper={() => toast({ title: 'Cooper: Investment position' })}>
                 <NDS label="Histogram (VerticalBarChartItem + axes)" className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-300)' }}>
                   <div className="row" style={{ alignItems: 'flex-end', gap: 'var(--space-150)', height: 'var(--proto-bars-h)' }}>
@@ -211,7 +212,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
         </div>
         <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}>
           {reviewer ? (() => { const ev = readinessEvaluation(rows.filter(r => r.note && r.note.text).map(r => ({ name: r.name, text: r.note.text })));
-            return <Panel title="Readiness evaluation" collapsible={false} style={{ height: '100%', width: 'var(--region-panel)' }}>
+            return <Panel title="Readiness evaluation" style={{ height: '100%' }}>
               <IFS.ReadinessEvaluation summary={ev.summary} defaultOpenSections={['notes']} sections={ev.sections.map(x => ({ id: x.id, title: x.title, badge: x.badge, count: x.count,
                 content: x.rows ? <IFS.ReadinessFacts rows={x.rows} /> : <div className="col" style={{ gap: 'var(--space-200)' }}>{x.notes.length ? x.notes.map((n, k) => <div key={k} className="col rf-note" style={{ gap: 'var(--space-50)' }}><span className="t-label-m-medium">{n.name}</span><span className="t-body-m-regular sec">{`“${n.text}”`}</span></div>)
                   : <span className="t-body-m-regular muted">No notes from the owner.</span>}</div> }))} />
@@ -226,22 +227,22 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
           </Panel>}
         </div>
       </div>}
-      <Modal open={decide !== null} onOpenChange={o => !o && setDecide(null)} title={decide === 'proceed' ? 'Proceed to Investment' : decide ? DECIDE[decide].label : ''}
+      <Modal open={decide !== null} onOpenChange={o => !o && setDecide(null)} title={decide === 'proceed' ? 'Proceed to Investment' : decide === 'request' ? 'Request Info' : decide === 'park' ? 'Park Idea' : decide ? 'Stop Idea' : ''}
         secondaryAction={{ label: 'Cancel', onClick: () => setDecide(null) }}
-        primaryAction={{ label: decide === 'proceed' ? 'Approve investment' : decide ? DECIDE[decide].label : '', disabled: decide && decide !== 'proceed' && !decideNote.trim(),
-          onClick: () => { const k = decide, n = decideNote.trim(); setDecide(null); setDecideNote(''); onDecide && onDecide(k, n); } }}>
+        primaryAction={{ label: decide === 'proceed' ? 'Approve investment' : decide === 'request' ? 'Request info' : decide === 'park' ? 'Park idea' : 'Stop idea',
+          onClick: () => { if (!decideNote.trim()) { setDecideTried(true); return; } const k = decide, n = decideNote.trim(); setDecide(null); setDecideNote(''); setDecideTried(false); onDecide && onDecide(k, n); } }}>
         <div className="col" style={{ gap: 'var(--space-stack)' }}>
           <span className="t-body-m-regular sec">{decide === 'proceed' ? 'This idea will leave Shape and become an investment. Its context, history, and approvals stay attached.'
             : decide === 'request' ? 'The idea goes back to Shape. Say what the owner needs to add.' : decide === 'park' ? 'The idea is deferred. Say why and when to revisit it.' : 'The idea is closed. Say why.'}</span>
-          <IFS.TextArea size="l" label={decide === 'proceed' ? 'Note' : 'Comment'} placeholder={decide === 'proceed' ? 'Add a short approval note for the investment record.' : 'Required'} value={decideNote} onChange={e => setDecideNote(e.target ? e.target.value : e)} />
+          <IFS.TextArea size="m" label={decide === 'proceed' ? 'Note' : 'Comment'} error={decideTried && !decideNote.trim() ? (decide === 'proceed' ? 'Note is required' : 'Comment is required') : undefined} placeholder={decide === 'proceed' ? 'Add a short approval note for the investment record.' : 'What does the owner need to know?'} value={decideNote} onChange={e => setDecideNote(e.target ? e.target.value : e)} />
         </div>
       </Modal>
-      <Modal open={dismiss !== null} onOpenChange={o => !o && setDismiss(null)} title="Dismiss Idea"
+      <Modal open={dismiss !== null} onOpenChange={o => !o && setDismiss(null)} title="Dismiss This Idea?"
         secondaryAction={{ label: 'Cancel', onClick: () => setDismiss(null) }}
-        primaryAction={{ label: 'Dismiss idea', onClick: () => { const n = dismiss; setDismiss(null); onDismiss ? onDismiss(n) : toast({ title: 'The idea has been stopped.' }); } }}>
+        primaryAction={{ label: 'Dismiss idea', onClick: () => { const n = dismiss; setDismiss(null); onDismiss ? onDismiss(n) : toast({ title: 'Idea dismissed' }); } }}>
         <div className="col" style={{ gap: 'var(--space-stack)' }}>
-          <span className="t-body-m-regular sec">Close this idea. No further work or approval is needed.</span>
-          <IFS.TextArea size="l" label="Note" placeholder="Add a note explaining why this idea should not move forward." value={dismiss || ''} onChange={e => setDismiss(e.target ? e.target.value : e)} />
+          <span className="t-body-m-regular sec">The idea closes and leaves the Idea Pad. Reviewers are told no approval is needed.</span>
+          <IFS.TextArea size="m" label="Note" placeholder="Add a note explaining why this idea should not move forward." value={dismiss || ''} onChange={e => setDismiss(e.target ? e.target.value : e)} />
         </div>
       </Modal>
       {askNeed && <div className="build-askbar">
@@ -251,6 +252,7 @@ function Build({ navBar, lenses, idea, onBack, status = 'shaping', onDismiss, on
             setNeed(n => n.includes('Cooper’s recommended response') ? n : `${n}\n\nCooper’s recommended response: ${rec.name}, ${rec.cost} over ${rec.time}, which brings the at-risk units back within tolerance.`);
             setCooperSaid(`Done — I updated The Need (“${t}”). I added the recommended response and its cost, so reviewers see the ask and the answer together.`); }} />}
       </div>}
+      {activityPanel}
     </AppShell>
   );
 }

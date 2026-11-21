@@ -110,3 +110,13 @@ const bcrOf = (value, spend) => spend > 0 && value > 0 ? +(value / (spend / 1e6)
 const MEASURE_CATEGORY = { 'Reliability Risk': 'Reliability', 'Electrical Delivery Capacity Risk': 'Reliability', 'Financial Risk': 'Financial',
   'Environmental Risk': 'Environment', 'Safety Risk': 'Social', 'Compliance Risk': 'Governance' };
 const ENTERPRISE_GOALS = ['Financial stewardship & efficiency', 'Reduce wildfire & emergency risk', 'Maintain public & worker safety', 'Decarbonize grid by 2045', 'Community & equity outcomes']; // [Added] (Figma copy)
+
+// [Assumed] Activity panel versions for an entity header's title menu ▾ (DS 2.0.4 rule 5.1: every entity header opens its
+// ActivityPanel). events: newest last, [{ title?, text, by: 'cooper' | {name, initials}, day }]; the last one is Current.
+function activityVersions(events) {
+  const day = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const v = events.map((e, k) => ({ id: `v${k + 1}`, title: e.title || `Version ${k + 1}`, description: e.text, time: day(e.day),
+    author: e.by === 'cooper' ? { name: 'Cooper', avatar: { type: 'cooper' } } : { name: e.by.name, avatar: { initials: e.by.initials, type: 'blue' } } }));
+  if (v.length) v[v.length - 1] = { ...v[v.length - 1], badge: 'Current' };
+  return v.reverse();
+}

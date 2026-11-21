@@ -15,7 +15,7 @@
 ## Design system rules
 - **Catalyst Design System 2.0 only**: `vendor/ds2/`. Its API is `vendor/ds2/api.md`, with examples in `examples.md`, and usage and placement rules in `rules.md` and `components.md`. Look a component up with `bash scripts/entry.sh Name1 Name2` rather than reading the whole file.
 - Use props as the handovers use them (the **In handovers** line in api.md).
-- Use **tokens only, for everything** (DS 2.0.3 foundations: `vendor/ds2/rules.md` §1–4: tokens, type, spacing, layout). `scripts/check.mjs` enforces it.
+- Use **tokens only, for everything** (DS 2.0.4 foundations: `vendor/ds2/rules.md` §1–4: tokens, type, spacing, layout). `scripts/check.mjs` enforces it.
   - Colours: `var(--…)`. Canvas and WebGL colours are read from tokens at runtime.
   - Spacing: `--space-*` (100 = 4px: 50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1100). Containers (cards, panels, drawers, modals, popovers) pad with `--space-inset` on all four sides, blocks inside them sit `--space-stack` apart, page sections `--space-section`. Cards on a page: `--page-gap`. Inside controls, rows and gaps of 8 or less use fixed steps.
   - Sizes: `--size-*` (ruler), `--control-h-s/m/l`, `--region-panel` (380), `--region-panel-l` (600), `--overlay-width-s/m/l` (320/440/600), `--table-col-*` for table columns (pass the token as the column `width` string).

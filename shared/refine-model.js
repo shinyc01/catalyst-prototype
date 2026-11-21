@@ -236,7 +236,7 @@ function rfAmount(st, scale, key) {
 // [Added]: creator (the owner, since Cooper drafts for them), group, maintenance category, location type, must do, disposition,
 // facility, funding org, operating unit, required-by and start window, the forecast settings, risk statuses.
 // Figma writes dates as "02 Jul 2026"
-const rfDayLabel = d => d ? rfDay(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const rfDayLabel = d => d ? rfDay(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';   // rule 8.29: Nov 12, 2026
 const rfShift = (d, days) => rfIso(rfDay(d).getTime() + days * 864e5);
 function rfInvDetails(R, refine) {
   const inv = R.inv, rec = R.alt(refine.recommended) || R.rec || R.alts[0], fac = R.assets[0] ? R.assets[0].parent : '—';

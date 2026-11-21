@@ -1,7 +1,7 @@
 /* Command (Home) — all personas.
    Loaded by index.html as text/babel, in order: ui → map → screens → flows → tour → main. Globals are shared across files. */
 /* ============================================================ Screen 1 — Command (Home) — Figma: Command handover, see context/screens/command-figma-spec.md */
-const Upper = ({ children }) => <span className="t-label-m-medium sec">{children}</span>;
+const Upper = ({ children }) => <h3 className="t-heading-h3-medium" style={{ margin: 0 }}>{children}</h3>;   // rule 2.4: page section title (was grey Label in Figma; rule wins)
 const TIP = {                                                                           // label tooltips (Figma dev notes)
   CPV: 'What the investment costs in today’s money.', 'V/C': 'Value generated per $1K of investment — higher means more value for the cost.',
   'Health index': 'How worn out the asset is, scored 0–10 (10 = like new).', Risk: 'Expected cost of failure, adjusted for how likely the asset is to fail.',
@@ -65,7 +65,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
   const hide = (d, how) => {
     setHidden(h => ({ ...h, [d.id]: how }));
     const undo = () => setHidden(h => { const n = { ...h }; delete n[d.id]; return n; });
-    toast({ title: how === 'snoozed' ? 'Snoozed for 7 days.' : 'Moved to Archived.', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: undo }, duration: 5000 });
+    toast({ title: how === 'snoozed' ? 'Decision snoozed for 7 days' : 'Decision archived', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: undo }, duration: 5000 });
   };
   const unhide = d => setHidden(h => { const n = { ...h }; delete n[d.id]; return n; });
 
@@ -90,7 +90,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
     { value: 'conversations', label: 'Conversations', count: C.convos.length },
     { value: 'following', label: 'Following', count: C.following.length },
   ].filter(Boolean);
-  const section = { works: 'Where you left off', decisions: 'Decisions to review', conversations: 'Responses to review', following: C.followTitle }[tab];
+  const section = { works: 'Where You Left Off', decisions: 'Decisions to Review', conversations: 'Responses to Review', following: C.followTitle }[tab];
 
   // ---- the chips next to the section title follow the chosen sort
   const chipRow = sort === 'urgency' ? <SegmentedControl size="s" value={prio} onChange={setPrio} options={[{ value: 'normal', label: 'Normal' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]} />
@@ -98,7 +98,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
     : sort === 'source' ? <SegmentedControl size="s" value={chip.source} onChange={v => setChip(c => ({ ...c, source: v }))} options={['Value', 'Results', 'Plan', 'Build', 'Explore'].map(v => ({ value: v, label: v }))} />
     : <SegmentedControl size="s" value={chipCol} onChange={v => setChip(c => ({ ...c, collaborator: v }))} options={collaborators.map(p => ({ value: p, label: short(p).replace('. ', '.') }))} />;
   const filterMenu = <Menu label="Sort" items={SORTS.map(s => ({ label: s.label, selected: sort === s.value, onClick: () => setSort(s.value) }))}
-    trigger={<IconButton icon="system-filter-settings" type="tertiary" size="s" label="Sort and filter" />} />;
+    trigger={<IconButton icon="system-filter-settings" type="ghost" size="s" label="Sort and filter" />} />;
 
   // ---- calendar
   const evByDay = events.reduce((m, e) => { (m[e.date] = m[e.date] || []).push(EVENT_TYPES[e.type].tone); return m; }, {});
@@ -117,7 +117,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
               {tab === 'decisions' && <div className="row" style={{ gap: 'var(--space-300)' }}>
                 {chipRow}
                 {sort === 'date' && chip.date === 'custom' && <div style={{ width: 'var(--proto-picker-w)' }}><DatePicker size="s" range showApply value={range} onChange={setRange} defaultOpen={!range} placeholder="Select a date range"
-                  today={STORY_DATE} format={d => d.toLocaleDateString('en-GB').replace(/\//g, '.')} /></div>}
+                  today={STORY_DATE} format={d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} /></div>}
                 <span className="cmd-divider" aria-hidden="true" />
                 {filterMenu}
               </div>}
@@ -125,12 +125,12 @@ function Command({ navBar, lenses, persona, onOpen }) {
 
             {tab === 'decisions' && <div className="col" style={{ gap: 'var(--space-200)' }}>
               {list.map((d, i) => decisionCard(d, i))}
-              {!list.length && <EmptyState cause="no-results" size="section" heading="Nothing to review here" body="Try another filter, or check the archived items." />}
+              {!list.length && <EmptyState cause="no-results" size="section" heading="No Decisions Match Your Filters" body="Try a different filter, or open Archived to see hidden items." />}
               {archived.length > 0 && <>
                 <NDS label="Archived section header" className="cmd-archived row click" style={{}}>
                   <div className="row" style={{ gap: 'var(--space-200)', flex: 1 }} onClick={() => setArchOpen(o => !o)} role="button" tabIndex={0} aria-expanded={archOpen}>
                     <Icon name={archOpen ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={16} />
-                    <Icon name="chat-archive" size={16} /><Upper>Archived</Upper>
+                    <Icon name="chat-archive" size={16} /><span className="t-label-m-medium">Archived</span>
                   </div>
                   <Badge size="s" color="white">{archived.length}</Badge>
                 </NDS>
@@ -167,12 +167,12 @@ function Command({ navBar, lenses, persona, onOpen }) {
                       {c.status === 'Confirm viability' && <Badge size="s" color="false" avatar={{ initials: p.initials, type: p.type }}>Confirm viability</Badge>}
                       {c.status === 'mention' && <Badge size="s" color="false" avatar={{ initials: p.initials, type: p.type }}>{c.message.slice(0, 26)}…</Badge>}
                       {c.status === 'Wait for reply' && <Badge size="s" color="white">Wait for reply</Badge>}
-                      {n && <span className="t-body-s-regular"><span className="muted">Last notified: </span>{n}</span>}
+                      {n && <span className="t-body-m-regular"><span className="muted">Last notified: </span>{n}</span>}
                     </div>
                     {c.status === 'Wait for reply'
-                      ? (n ? <Button type="tertiary" size="s" iconLeft="system-notification" disabled>Notified</Button>
-                          : <IconButton icon="system-notification" type="tertiary" size="s" label={`Remind ${p.name}`} onClick={() => { setNotified(x => ({ ...x, [c.id]: fmtDay(STORY_DATE) })); toast({ title: `Reminder sent to ${p.name}`, description: 'Added to their Conversations list', duration: 5000 }); }} />)
-                      : <IconButton icon="arrow-right" type="tertiary" size="s" label="Open where the comment was made" onClick={() => onOpen(c)} />}
+                      ? (n ? <Tooltip content="Reminder already sent"><span><Button type="tertiary" size="s" iconLeft="system-notification" disabled>Notified</Button></span></Tooltip>
+                          : <IconButton icon="system-notification" type="ghost" size="s" label={`Remind ${p.name}`} onClick={() => { setNotified(x => ({ ...x, [c.id]: fmtDay(STORY_DATE) })); toast({ title: `Reminder sent to ${p.name}`, description: 'Added to their Conversations list', duration: 5000 }); }} />)
+                      : <IconButton icon="arrow-right" type="ghost" size="s" label="Open where the comment was made" onClick={() => onOpen(c)} />}
                   </NDS>
                 </RowShell>); })}
             </div>}
@@ -197,7 +197,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
             {stat('24', 'Days saved', { left: 'var(--space-200)', top: 'calc(46 * var(--proto-unit))' })}
             {stat('$120K', 'Budget saved', { right: 'var(--space-200)', top: 'calc(46 * var(--proto-unit))' })}
             <div style={{ position: 'absolute', left: 0, right: 0, top: 'var(--proto-gauge-label)', textAlign: 'center' }}>
-              <div className="t-heading-h1-medium">1 Year</div><div className="t-body-m-regular muted">Time horizon</div>
+              <div className="t-heading-h2-medium">1 Year</div><div className="t-body-m-regular muted">Time horizon</div>
             </div>
           </NDS>
           <div className="box col" style={{ gap: 'var(--space-300)' }}>
@@ -205,7 +205,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
             <ProgressBar value={8} label="Milestone progress" />
             <div className="t-body-m-regular sec row" style={{ justifyContent: 'space-between' }}><span>Drafts</span><span>Re-submit</span><span>SG2 window</span><span>Gate</span></div>
             <Calendar defaultMonth={STORY_DATE} today={STORY_DATE} events={evByDay} value={day} onChange={setDay} />
-            <Button type="tertiary" size="m" iconLeft="system-plus" onClick={() => setAddOpen(true)}>Add event</Button>
+            <Button type="secondary" size="m" iconLeft="system-plus" onClick={() => setAddOpen(true)}>Add event</Button>
             <NDS label="Calendar legend" className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>
               {Object.values(EVENT_TYPES).map(t => <LegendSwatch key={t.label} label={t.label} color={TONE_COLOR[t.tone]} />)}
             </NDS>
@@ -218,14 +218,14 @@ function Command({ navBar, lenses, persona, onOpen }) {
         toast({ title: 'Event created', primaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e))) }, duration: 5000 }); }} />
       <Drawer open={!!day} onOpenChange={o => !o && setDay(null)} title={day ? day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''} collapsible={false} overlay="none">{/* DS 2.0 bug: scrim above drawer */}
         <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
-          {!dayEvents.length && <EmptyState cause="empty-container" size="section" heading="No events" body="Add a private event for this day." />}
+          {!dayEvents.length && <EmptyState cause="empty-container" size="section" heading="No Events on This Day" body="Add a private event for this day." />}
           {dayEvents.map((e, k) => (
             <ContentCard key={k} size="s" title={e.name || EVENT_TYPES[e.type].label} description={`${EVENT_TYPES[e.type].label} · ${e.time} · ${e.lasts}`}
               bottom={<div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>
-                <span className="row t-body-s-regular sec" style={{ gap: 'var(--space-150)' }}>Created by <Avatar initials={PEOPLE[e.by].initials} type={PEOPLE[e.by].type} size="xs" /> {short(e.by)}</span>
+                <span className="row t-body-m-regular sec" style={{ gap: 'var(--space-150)' }}>Created by <Avatar initials={PEOPLE[e.by].initials} type={PEOPLE[e.by].type} size="xs" /> {short(e.by)}</span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
-                  <Button type="secondary" size="s" iconLeft="system-trash-delete" disabled={e.type !== 'private'} onClick={() => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e)))}>Remove</Button>
-                  <Button type="tertiary" size="s" iconLeft="system-edit-rename" disabled={e.type !== 'private'} onClick={() => toast({ title: 'Edit event isn’t part of this flow' })}>Edit</Button>
+                  {e.type === 'private' && <Button type="secondary" size="s" iconLeft="system-trash-delete" onClick={() => setEvents(ev => ev.filter(x => JSON.stringify(x) !== JSON.stringify(e)))}>Remove</Button>}
+                  {e.type === 'private' && <Button type="tertiary" size="s" iconLeft="system-edit-rename" onClick={() => toast({ title: 'Edit event isn’t part of this flow' })}>Edit</Button>}
                 </div>
               </div>} />))}
         </div>
@@ -237,22 +237,24 @@ function Command({ navBar, lenses, persona, onOpen }) {
 function AddEventModal({ by, open, onClose, onAdd }) {
   const [name, setName] = useState(''), [date, setDate] = useState(null), [time, setTime] = useState(''), [lasts, setLasts] = useState('1 day');
   useEffect(() => { if (open) { setName(''); setDate(null); setTime(''); setLasts('1 day'); } }, [open]);
+  const [tried, setTried] = useState(false);
+  useEffect(() => { if (open) setTried(false); }, [open]);
   const ok = name.trim() && date && time;
   return (
-    <Modal open={open} onOpenChange={o => !o && onClose()} title="New private event" width="var(--overlay-width-m)"
+    <Modal open={open} onOpenChange={o => !o && onClose()} title="New Private Event" width="var(--overlay-width-m)"
       secondaryAction={{ label: 'Cancel', onClick: onClose }}
-      primaryAction={{ label: 'Add', disabled: !ok, onClick: () => onAdd({ date: iso(date), type: 'private', time, lasts, by, name }) }}>
+      primaryAction={{ label: 'Add event', onClick: () => ok ? onAdd({ date: iso(date), type: 'private', time, lasts, by, name }) : setTried(true) }}>
       <div className="col" style={{ gap: 'var(--space-300)' }}>
-        <TextField size="m" placeholder="Event name" value={name} onChange={setName} />
+        <TextField size="m" label="Event name" placeholder="Enter a name" value={name} onChange={setName} error={tried && !name.trim() ? 'Name is required' : undefined} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-200)' }}>
           <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium">Date</span>
-            <DatePicker size="m" placeholder="Select a date" value={date} onChange={setDate} today={STORY_DATE} format={d => d.toLocaleDateString('en-GB').replace(/\//g, '.')} /></div>
+            <DatePicker size="m" placeholder="Select a date" value={date} onChange={setDate} today={STORY_DATE} format={d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} /></div>
           <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium">Time</span>
-            <TextField size="m" type="time" iconLeft="system-clock-time" placeholder="Select a time" value={time} onChange={setTime} /></div>
+            <TextField size="m" type="time" iconLeft="system-clock-time" placeholder="Select a time" value={time} onChange={setTime} error={tried && !time ? 'Select a time' : undefined} /></div>
         </div>
         <span className="t-label-m-medium">Lasts</span>
         <div className="row" style={{ gap: 'var(--space-150)' }}>{['1 day', '2 days', '3 days', 'Custom'].map(l => <Chip key={l} selected={lasts === l} onChange={() => setLasts(l)}>{l}</Chip>)}</div>
-        <span className="t-body-s-regular muted">Only you see this event. The team timeline is set by your admin and shown to everyone.</span>
+        <span className="t-body-m-regular muted">Only you see this event. The team timeline is set by your admin and shown to everyone.</span>
       </div>
     </Modal>
   );

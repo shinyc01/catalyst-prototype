@@ -26,7 +26,7 @@
     { target: { text: 'Swap to First Street' }, title: 'Fix the flood data', body: 'Three of these pad-mounts share one coarse flood cell. Swap to the 30 m data: the confidence rises.' },
     { target: '[aria-label="More create options"]', title: 'Keep the study', body: 'Open the menu next to Create idea.' },
     { target: { text: 'Save study' }, title: 'Save study', body: 'It’s saved under the area’s name, with its lenses and sources.' },
-    { target: { text: 'View in Study Library' }, title: 'Find it again', body: 'The study is in the Study Library: rename it, delete it, or open it to carry on.' },
+    { target: '[aria-label="Studies library"]', title: 'Find it again', body: 'A snackbar confirms the save. The study is in the Studies library: rename it, remove it, or open it to carry on.' },
     { title: 'Done', advance: 'next',
       body: 'A named study for the group, with agreed lenses, a risk score against tolerance and a threshold year, is in the Study Library. Turning it into an investment is the next journey (J06).' },
   ],

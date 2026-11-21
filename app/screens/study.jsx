@@ -6,7 +6,6 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
   // The study's population (J03): a group entered from Explore / the library, or the whole cluster
   const ids = scope?.ids || null, name = scope?.name || CLUSTER.short, scoped = scope?.ids ? scopeAssets(scope.ids) : ASSETS;
   const [libOpen, setLibOpen] = useState(false);
-  const [saved, setSaved] = useState(null);                  // the Alert after Save study
   const conf = useIssueReport({ issues: useMemo(() => studyIssues(ids).map(i => ({ ...i, answer: false, upload: false, ...(trace[i.id] ? { status: trace[i.id] } : {}) })), [scope?.id]) });
   useEffect(() => { setTrace && setTrace(t => ({ ...t, ...conf.status })); }, [conf.status]);
   const saveStudy = () => {
@@ -14,7 +13,8 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
     const rec = { id: prev ? prev.id : `st-${Date.now()}`, name: prev ? prev.name : name, ids, lenses: lenses.map(l => ({ id: l.id, on: l.on, src: l.src })), year, savedAt: Date.now() };
     setStudies(l => [rec, ...l.filter(x => x.id !== rec.id)]);
     onSave && onSave(rec);
-    setSaved(prev ? 'resave' : 'first');
+    // rule 7.12: the user's own action is confirmed by a snackbar (was a success Alert)
+    toast(prev ? { title: 'Study saved' } : { title: 'Saved to Study Library', primaryAction: { label: 'View in Study Library', onClick: () => setLibOpen(true) } });
   };
   const [view, setView] = useState('lenses');
   const [input, setInput] = useState('');
@@ -71,6 +71,10 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
 
   const selected = lenses.find(l => l.id === sel);
   const right = !!(chat || asset || details);
+  // Rule 6.7 (DS 2.0.4): Study folds to its rail while a right panel is open and comes back when it closes; opening Study hides the right panel
+  const [studyOpen, setStudyOpen] = useState(true);
+  useEffect(() => { setStudyOpen(!right); }, [right]);
+  const showStudy = () => { setChat(null); setAsset(null); setDetails(false); setLibOpen(false); setStudyOpen(true); };
   const panelW = view === 'conf' ? 'var(--region-panel)' : 'var(--region-panel-l)';   // DS 2.0.2 fixed panel sizes (side 380, large 600)
   return (
     <AppShell navBar={navBar} header={<ExploreHeader search={{ placeholder: 'Search for…' }}><Button type="ghost" size="s" iconLeft="arrow-left" onClick={onClose}>{scope ? name : CLUSTER.name}</Button></ExploreHeader>}>
@@ -80,12 +84,9 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
             focus={selected && selected.on ? scoped.filter(a => drivers(a, year, s.act).find(d => d.id === selected.id && d.delta >= 1)).map(a => a.id) : null}
             pad={{ tl: [view === 'conf' ? 480 : 700, 80], br: [right ? 420 : 240, 90] }} />{/* map camera padding: MapLibre takes px (exception, context/decisions.md) */}
         </NDS>
-        <MapTools api={api} studyOpen={!libOpen} libraryOpen={libOpen} onLibrary={() => setLibOpen(o => !o)} onStudy={() => setLibOpen(false)}
+        <MapTools api={api} studyOpen={!libOpen} libraryOpen={libOpen} onLibrary={() => setLibOpen(o => !o)} onStudy={showStudy}
           onAssets={() => onClose()} />
         {libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={st => { setLibOpen(false); onOpenStudy(st); }} onClose={() => setLibOpen(false)} />}
-        {saved && <div className="study-alert"><IFS.Alert type="success" title={saved === 'first' ? 'Saved to Study Library' : 'Study saved to library'}
-          action={saved === 'first' ? 'View in Study Library' : undefined} onAction={() => { setSaved(null); setLibOpen(true); }} onClose={() => setSaved(null)}>
-          {saved === 'first' ? `${name} exploration is saved to Study Library` : `${name} exploration is saved`}</IFS.Alert></div>}
         <FloatingBar style={{ top: 'var(--proto-under-header)', zIndex: 'var(--proto-z-map-ui)', left: `calc((var(--slot-tools) + var(--page-gap) + ${panelW} + 100%) / 2)` }} category={scope ? name : CLUSTER.name} categoryIcon="map-location" item={`Selected ${scoped.length}`}
           badge={<Badge color="red" size="s">{s.now.over}</Badge>}
           actions={<div className="row" style={{ gap: 'var(--space-200)' }}>
@@ -96,9 +97,9 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
           onClose={onClose} />
 
         <div className="ifs-slot-left" style={{ width: panelW, display: libOpen ? 'none' : 'flex' }}>
-          <Panel title={`${name} Study`} onEvidence={() => toast({ title: 'Evidence chain' })} onClose={onClose} style={{ width: '100%', height: '100%' }}>
+          <Panel title={`${name} Study`} onEvidence={() => toast({ title: 'Evidence chain' })} actions={<PanelClose onClose={onClose} label="Close study" />} expanded={studyOpen} onExpandedChange={v => v ? showStudy() : setStudyOpen(false)} className="proto-fill" style={{ height: '100%' }}>
             <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
-              <SegmentedControl size="s" fullWidth value={view} onChange={setView} options={[{ value: 'lenses', label: 'Lenses' }, { value: 'conf', label: 'System Confidence' }]} />
+              <SegmentedControl size="s" fullWidth value={view} onChange={setView} options={[{ value: 'lenses', label: 'Lenses' }, { value: 'conf', label: 'System confidence' }]} />
               {view === 'conf' ? <StudyConfidence c={conf} value={studyConfidence(ids, { ...trace, ...conf.status })} /> : (
                 <div style={{ display: 'flex', gap: 'var(--space-300)', minHeight: 0, flex: 1 }}>
                   <NDS label="Map layer (lens) list" className="col" style={{ width: 'var(--proto-lens-list-w)', flex: 'none', gap: 'var(--space-50)' }}>
@@ -133,7 +134,6 @@ function Study({ navBar, sel, setSel, lenses, setLenses, chat, setChat, year, se
             <div className="horizon-ticks t-body-s-regular muted">{[NOW, NOW + 5, END].map(y => <span key={y}>{y}</span>)}</div>
           </div>
         </NDS>
-        {!right && <MapLegend style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-1000)', zIndex: 'var(--proto-z-map-ui)' }} />}
 
         {details && (
           <div className="ifs-slot-right" style={{ width: 'auto' }}>
@@ -186,7 +186,7 @@ function Overview({ s, lenses, year, onAsset }) {
   const pos = s.contrib.filter(c => c.delta > 0);
   const worst = [...s.now.rows].sort((x, y) => (y.risk / y.tol) - (x.risk / x.tol));
   return <>
-    <span className="t-label-l-medium">Overview</span>
+    <span className="t-label-m-medium">Overview</span>
     <span className="t-label-m-medium muted">Risk &amp; condition</span>
     <Stats {...s} year={year} />
     <span className="t-label-m-medium muted">Change summary</span>
@@ -209,7 +209,7 @@ function Overview({ s, lenses, year, onAsset }) {
 function BaseView({ year, ids, onAsset }) {
   const s = study([], year, ids);
   return <>
-    <span className="t-label-l-medium">Base Condition</span>
+    <span className="t-label-m-medium">Base Condition</span>
     <span className="t-label-m-medium muted">Risk &amp; condition</span>
     <Stats {...s} year={year} />
     <p className="t-body-m-regular sec" style={{ margin: 0 }}>Condition only — no external influences, straight from each asset’s Whistler outlook. Substation transformers by condition score, pad-mounts by normalized age ({ASSETS.find(a => a.type === 'padmount').outlook['Normalized Age'][year - NOW]}× design life in {year}), breakers by health score, and the Pine Ridge lines by transmission reliability risk. {overNow.length} assets are already past tolerance today.</p>
@@ -223,7 +223,7 @@ function LensView({ lens, lenses, year, ids, onToggle, onSource, onAsset }) {
   const affected = a.rows.map((r, i) => ({ ...r, delta: r.risk - b.rows[i].risk })).filter(r => r.delta >= 1).sort((x, y) => y.delta - x.delta);
   return <>
     <div className="row" style={{ justifyContent: 'space-between' }}>
-      <span className="t-label-l-medium">{lens.label}</span>
+      <span className="t-label-m-medium">{lens.label}</span>
       <Switch size="s" checked={lens.on} onChange={onToggle}>Include</Switch>
     </div>
     <span className="t-body-m-regular sec">{lens.how}</span>
@@ -247,7 +247,7 @@ function StudyConfidence({ c, value }) {
     <div className="col scroll" style={{ gap: 'var(--space-300)', flex: 1, minHeight: 0 }}>
       <Strength value={value} title="" labels={[value < 70 ? `${value}% Reject` : '<70% Reject', value >= 70 && value <= 90 ? `${value}% Review` : 'Review', value > 90 ? `${value}% Approve` : '>90% Approve']} />
       {c.issues.length ? <>{c.present.length > 1 && <Kinds controller={c} />}<Nav controller={c} /></>
-        : <EmptyState cause="empty-container" size="section" heading="No open questions" body="Cooper found nothing to check in this study’s data." />}
+        : <EmptyState cause="empty-container" size="section" heading="No Open Questions" body="Cooper found nothing to check in this study’s data." />}
     </div>
   );
 }

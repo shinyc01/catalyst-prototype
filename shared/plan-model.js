@@ -284,3 +284,14 @@ function planCooperAnswer(kind, { final, gates } = {}) {
   return `Best practice is to fund the lowest retained risk your budget allows. ${safest.short} retains ${fmtCompact(safest.risk2032)} in 2032 for ${fmtMoney(safest.capex)}; ${c.short} retains ${fmtCompact(c.risk2032)} for ${fmtMoney(c.capex)} (${d(c.capex, safest.capex)} CAPEX).`;
 }
 
+
+// [Assumed] The plan's Activity versions (title menu ▾, DS 2.0.4 rule 5.1), following the planning stage.
+function planVersions(stage, ran) {
+  const owner = { name: PERSONAS.portfolio.name, initials: PERSONAS.portfolio.initials };
+  const e = [{ text: `Cooper drafted the ${PLAN_CYCLE} setup from last cycle’s plan.`, by: 'cooper', day: '2026-11-10' },
+    { text: 'Planning groups and constraints confirmed.', by: owner, day: '2026-11-14' }];
+  if (ran || ['final', 'approval', 'approved', 'scheduled', 'published'].includes(stage)) e.push({ text: 'Optimization run: scenarios ready to compare.', by: 'cooper', day: STORY_DAY });
+  if (['approval', 'approved', 'scheduled', 'published'].includes(stage)) e.push({ text: 'Final plan chosen and sent for approval.', by: owner, day: STORY_DAY });
+  if (stage === 'published') e.push({ text: 'Published as the budget baseline.', by: owner, day: STORY_DAY });
+  return activityVersions(e);
+}

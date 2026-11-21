@@ -89,8 +89,8 @@ walk(path.join(ROOT, 'app')).filter(f => /\.(jsx|css|js)$/.test(f)).forEach(f =>
   });
 });
 
-// ---------- 3b. foundations only (DS 2.0.3: spacing, layout, typography) ----------
-// Every padding, gap, size, offset, text style and layer comes from a token: DS 2.0.3 (--space-*, --size-*, --region-*, --text-*, --z-index-*)
+// ---------- 3b. foundations only (DS 2.0.4: spacing, layout, typography) ----------
+// Every padding, gap, size, offset, text style and layer comes from a token: DS 2.0.4 (--space-*, --size-*, --region-*, --text-*, --z-index-*)
 // or a prototype token in the :root block of app/styles.css (built on the DS unit). Map/chart geometry drawn in WebGL or SVG is exempt.
 const RETIRED_TOKEN = /--(paddings-padding|gaps-gap|margins-layout-margin|gutters-gutter|size-ruler-master|spacing-(card|table|panel|modal|popover|form))\b/;
 const RETIRED_CLASS = /\bt-(label-m-upper|label-s-[a-z]+|label-l-upper|label-l-semibold|label-m-semibold|heading-h3-uppercase|heading-h4-upper|heading-h4-medium|body-m-medium|body-l-medium|caption-[a-z-]+|code-regular|code-medium)\b/;

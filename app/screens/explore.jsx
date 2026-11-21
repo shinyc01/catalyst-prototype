@@ -14,7 +14,7 @@ function DSec({ title, children, open: o = true }) {
   return (
     <div className="col ad-sec">
       <button className="ad-sec__head t-label-m-medium muted" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={12} />{title}</button>
+        <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={16} />{title}</button>
       {open && <div className="col" style={{ gap: 'var(--space-200)' }}>{children}</div>}
     </div>
   );
@@ -46,13 +46,13 @@ function AssetDetails({ id, lenses, year, onClose, onAsk, warnings = [], group, 
   const leftList = group
     ? <>{[{ id: null, label: `${group.label} group` }, ...group.assets.map(x => ({ id: x, label: shortLabel(assetById(x)) }))].map(x =>
         <button key={x.id || 'g'} className={`ad-item${x.id === id ? ' is-on' : ''}`} onClick={() => onAsset(x.id)}>
-          {!x.id && <Icon name="chat-folder" size={14} />}<span className="plan-ellipsis">{x.label}</span>
+          {!x.id && <Icon name="chat-folder" size={16} />}<span className="plan-ellipsis">{x.label}</span>
           {x.id && riskDot(assetById(x.id)) && <span className={`ad-dot ad-dot--${riskDot(assetById(x.id))}`} />}</button>)}</>
     : SECTIONS[a.type].map(x => <button key={x} className={`ad-item${sec === x ? ' is-on' : ''}`} onClick={() => setSec(x)}>{x}</button>);
   return (
-    <Panel title={a.label} showEvidence={false} onClose={onClose} style={{ height: '100%', width: '100%' }}>
+    <Panel title={a.label} showEvidence={false} actions={<PanelClose onClose={onClose} />} className="proto-fill" style={{ height: '100%' }}>
       <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
-        <span className="t-body-s-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{a.code}</span>
+        <span className="t-body-m-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{a.code}</span>
         <SegmentedControl size="s" fullWidth value={tab} onChange={setTab} options={[{ value: 'details', label: 'Details' }, { value: 'docs', label: 'Documentation' }, { value: 'history', label: 'History' }]} />
         {tab !== 'details' ? <EmptyState cause="empty-container" size="section" heading={tab === 'docs' ? 'Documentation' : 'History'} body="Not part of this flow." /> :
         <NDS label="Two-column asset details (hierarchy list + sections)" className="ad-cols">
@@ -97,14 +97,14 @@ function GroupDetails({ group, lenses, year, onClose, onAsset }) {
   const total = rows.reduce((t, x) => t + x.r.risk, 0), cond = 1 - avg('basePof'), first = rows[0].a;
   const anyOver = rows.some(x => x.over);
   return (
-    <Panel title={group.label} onEvidence={() => toast({ title: 'Evidence chain' })} onClose={onClose} style={{ height: '100%', width: '100%' }}>
+    <Panel title={group.label} onEvidence={() => toast({ title: 'Evidence chain' })} actions={<PanelClose onClose={onClose} />} className="proto-fill" style={{ height: '100%' }}>
       <div className="col" style={{ gap: 'var(--space-300)', height: '100%', minHeight: 0 }}>
-        <span className="t-body-s-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{rows.length}/{rows.length} assets selected · {TYPE_LABEL[first.type]}</span>
+        <span className="t-body-m-regular muted" style={{ marginTop: 'calc(-1 * var(--space-200))' }}>{rows.length}/{rows.length} assets selected · {TYPE_LABEL[first.type]}</span>
         <SegmentedControl size="s" fullWidth value="details" onChange={() => toast({ title: 'Not part of this flow' })} options={[{ value: 'details', label: 'Details' }, { value: 'docs', label: 'Documentation' }, { value: 'history', label: 'History' }]} />
         <NDS label="Two-column asset details (hierarchy list + sections)" className="ad-cols">
           <div className="col ad-left">
             <span className="t-label-m-medium muted">Asset hierarchy</span>
-            <button className="ad-item is-on"><Icon name="chat-folder" size={14} /><span className="plan-ellipsis">{group.label} group</span></button>
+            <button className="ad-item is-on"><Icon name="chat-folder" size={16} /><span className="plan-ellipsis">{group.label} group</span></button>
             {rows.map(x => <button key={x.a.id} className="ad-item" onClick={() => onAsset(x.a.id)}><span className="plan-ellipsis">{shortLabel(x.a)}</span>
               {riskDot(x.a) && <span className={`ad-dot ad-dot--${riskDot(x.a)}`} />}</button>)}
           </div>
@@ -144,7 +144,7 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
     return <>
       <div className={`tree-row${on ? ' is-on' : ''}`} style={{ paddingLeft: `calc(var(--space-200) + ${depth} * var(--proto-tree-indent))` }}>
         {!isAsset ? <button className="tree-caret" aria-label={exp ? `Collapse ${n.label}` : `Expand ${n.label}`} onClick={() => toggle(n.id)}>
-          <Icon name={exp ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={12} /></button> : <span style={{ width: 'var(--size-16)' }} />}
+          <Icon name={exp ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={16} /></button> : <span style={{ width: 'var(--size-16)' }} />}
         <button className="tree-name" onClick={() => { onSelect(n.id); if (!isAsset && !exp) toggle(n.id); }}>
           {!isAsset && <Icon name="chat-folder" size={16} />}<span className="plan-ellipsis">{n.label}</span></button>
         {dot && <span className={`ad-dot ad-dot--${dot}`} />}
@@ -164,14 +164,14 @@ function AssetsPanel({ value, group, onSelect, onClose }) {
       </div>
       <NDS label="Asset hierarchy rows" className="col scroll assets-panel__body">
         {view === 'tree' ? ASSET_TREE.map(n => <Node key={n.id} n={n} depth={0} />) : <>
-          <span className="t-body-s-regular muted" style={{ padding: '0 var(--space-200)' }}>{listRows.length} assets</span>
+          <span className="t-body-m-regular muted" style={{ padding: '0 var(--space-200)' }}>{listRows.length} assets</span>
           <div style={{ padding: '0 var(--space-200)' }}><SegmentedControl size="s" value={risk} onChange={setRisk} options={[{ value: 'all', label: 'All risk' },
             { value: 'high', label: 'High', counter: ASSETS.filter(a => riskDot(a) === 'red').length }, { value: 'moderate', label: 'Moderate', counter: ASSETS.filter(a => riskDot(a) === 'orange').length },
             { value: 'low', label: 'Low', counter: ASSETS.filter(a => !riskDot(a)).length }]} /></div>
           {ASSET_GROUPS.map(g => { const rs = listRows.filter(a => g.assets.includes(a.id)); return rs.length ? <div key={g.id} className="col">
             <span className="t-label-m-medium muted" style={{ padding: 'var(--space-200) var(--space-200) var(--space-50)' }}>{g.label} · {rs.length}</span>
             {rs.map(a => <div key={a.id} className={`tree-row${a.id === value ? ' is-on' : ''}`}><button className="tree-name" onClick={() => onSelect(a.id)}>
-              <span className="col" style={{ minWidth: 0 }}><span className="plan-ellipsis">{a.label}</span><span className="t-body-s-regular muted">{a.code}</span></span></button>
+              <span className="col" style={{ minWidth: 0 }}><span className="plan-ellipsis">{a.label}</span><span className="t-body-m-regular muted">{a.code}</span></span></button>
               {riskDot(a) && <span className={`ad-dot ad-dot--${riskDot(a)}`} />}</div>)}
           </div> : null; })}
         </>}
@@ -198,10 +198,9 @@ function Drivers({ id, lenses, year }) {
 // Studies library (Figma 29:101050): left panel from the map rail. Rows "name · N assets · time"; hover → rename / delete; click → open.
 function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
   const [edit, setEdit] = useState(null);                 // { id, text }
-  const [del, setDel] = useState(null);
   const list = [...studies].sort((a, b) => b.savedAt - a.savedAt);
-  const remove = st => { const before = studies; setStudies(l => l.filter(x => x.id !== st.id)); setDel(null);
-    toast({ title: 'The study has been removed', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setStudies(before) }, duration: 5000 }); };
+  const remove = st => { const before = studies; setStudies(l => l.filter(x => x.id !== st.id));   // rule 8.24: undoable, so no confirmation; the snackbar offers Undo
+    toast({ title: 'Study removed', secondaryAction: { label: 'Undo', iconLeft: 'arrow-back-up', onClick: () => setStudies(before) }, duration: 5000 }); };
   return (
     <div className="assets-panel">
       <div className="row assets-panel__head">
@@ -209,7 +208,7 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
         <IconButton icon="system-close" type="ghost" size="s" label="Close studies" onClick={onClose} />
       </div>
       <NDS label="Study library rows (hover actions, inline rename)" className="col scroll assets-panel__body">
-        {!list.length && <EmptyState cause="empty-container" size="section" heading="No saved studies yet" body="Open a study and use Create idea ▾ → Save study." />}
+        {!list.length && <EmptyState cause="empty-container" size="section" heading="No Saved Studies Yet" body="Open a study and use Create idea ▾ → Save study." />}
         {list.map(st => edit && edit.id === st.id
           ? <div key={st.id} className="study-row" onKeyDown={e => { if (e.key === 'Escape') setEdit(null); }}>
               <div style={{ flex: 1 }}><TextField size="m" autoFocus value={edit.text} onChange={v => setEdit({ ...edit, text: v })} aria-label="Study name" /></div>
@@ -218,22 +217,13 @@ function StudiesPanel({ studies, setStudies, onOpen, onClose }) {
             </div>
           : <div key={st.id} className="study-row is-click" role="button" tabIndex={0} aria-label={`Open ${st.name} study`} onClick={() => onOpen(st)} onKeyDown={e => e.key === 'Enter' && onOpen(st)}>
               <span className="plan-ellipsis" style={{ flex: 1 }}>{st.name} <span className="sec">· {studyCount(st)} assets</span></span>
-              <span className="t-body-s-regular muted study-time">{ago(st.savedAt)}</span>
+              <span className="t-body-m-regular muted study-time">{ago(st.savedAt)}</span>
               <span className="study-acts" onClick={e => e.stopPropagation()}>
                 <IconButton icon="system-edit-rename" type="ghost" size="s" label={`Rename ${st.name}`} onClick={() => setEdit({ id: st.id, text: st.name })} />
-                <IconButton icon="system-trash-delete" type="ghost" size="s" label={`Delete ${st.name}`} onClick={() => setDel(st)} />
+                <IconButton icon="system-trash-delete" type="ghost" size="s" label={`Remove ${st.name}`} onClick={() => remove(st)} />
               </span>
             </div>)}
       </NDS>
-      <Modal open={!!del} onOpenChange={o => !o && setDel(null)} title={del ? `Remove “${del.name}” study?` : ''} width="var(--overlay-width-m)">
-        <div className="col" style={{ gap: 'var(--space-400)' }}>
-          <span className="t-body-m-regular sec">This will remove the saved study from your library. You’ll be able to undo this for a few seconds after.</span>
-          <div className="row" style={{ gap: 'var(--space-200)' }}>
-            <div style={{ flex: 1 }}><Button type="secondary" size="m" style={{ width: '100%' }} onClick={() => setDel(null)}>Cancel</Button></div>
-            <div style={{ flex: 1 }}><Button type="primary" size="m" style={{ width: '100%' }} onClick={() => remove(del)}>Remove</Button></div>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
@@ -245,7 +235,7 @@ function Collapse({ title, count, open, onToggle, children }) {
   return (
     <div className="col rec-sec">
       <button className="ad-sec__head t-label-m-medium muted" onClick={onToggle} aria-expanded={open}>
-        <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={12} />{title}{count != null && <Counter>{count}</Counter>}</button>
+        <Icon name={open ? 'arrow-caret-up-filled' : 'arrow-caret-down-filled'} size={16} />{title}{count != null && <Counter>{count}</Counter>}</button>
       {open && <div className="col" style={{ gap: 'var(--space-200)' }}>{children}</div>}
     </div>
   );
@@ -264,7 +254,7 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
     {evid && evidence}
     <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => setMode('draft') }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
       <div className="col" style={{ gap: 'var(--space-300)' }}>
-        <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+        <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
         <span className="t-body-m-regular sec">{r.signal.text}</span>
         <Collapse title="Risk drivers" open={sec === 'drivers'} onToggle={() => setSec(sec === 'drivers' ? null : 'drivers')}>
           <ContentCard size="s" title={r.signal.driver.title} description={r.signal.driver.text} bottom={<div style={{ width: '100%' }}>
@@ -288,7 +278,7 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
       <AgentWindow onClose={onClose} secondaryAction={{ label: 'Create idea', onClick: () => onCreate(r) }} tertiaryAction={{ label: 'View in Study', onClick: () => onStudy(r) }}>
         <div className="col" style={{ gap: 'var(--space-300)' }}>
           <div><Button type="ghost" size="s" iconLeft="arrow-left" onClick={() => setMode('signal')}>Back</Button></div>
-          <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h2">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
+          <div className="row" style={{ gap: 'var(--space-200)', justifyContent: 'space-between' }}><span className="t-heading-h4-semibold">{r.signal.title}</span><EvidenceButton active={evid} onClick={() => setEvid(!evid)} /></div>
           <Collapse title="Recommended intervention" open onToggle={() => {}}>
             <ContentCard size="s" title={rec.name} description={`Cooper’s pick for ${r.inv.name}: the recommended alternative in the investment.`}
               control={<Badge size="s" color="white">{`${r.assets.length} assets`}</Badge>} bottom={<div style={{ width: '100%' }}><RecommendationImpact rows={rows(rec)} /></div>} />
@@ -318,7 +308,7 @@ function RecsWindow({ open: openIds, mode, recId, setMode, onClose, onFocus, onF
             ))}
           </RecommendationGroup>
         ))}
-        {!groups.length && <EmptyState cause="empty-container" size="section" heading="Nothing needs your attention" body="Every recommendation has been sent to Build." />}
+        {!groups.length && <EmptyState cause="empty-container" size="section" heading="Nothing Needs Your Attention" body="Every recommendation has been sent to Build." />}
       </div>
     </AgentWindow>
   );
@@ -351,7 +341,8 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
   const pick = id => {
     setSearchCtx && setSearchCtx(null);
     if (groupById(id)) { setGroup(id); setGroupOpen(false); setAsset(null); setBarOpen(true); return; }
-    if (assetById(id)) { setGroup(groupOfAsset(id).id); setAsset(id); setDetails(false); api.current?.flyTo(id); }
+    // rule 6.1: one panel per side; opening an asset's details replaces Cooper's recommendations
+    if (assetById(id)) { setGroup(groupOfAsset(id).id); setAsset(id); setDetails(false); setRecs(false); setRecMode('list'); setRecFocus(null); api.current?.flyTo(id); }
   };
   const flyTo = r => { setRecMode('loading'); setRecId(r.id); setRecFocus(r.assets); setTreeOpen(false); setAsset(null); setGroupOpen(false);
     r.assets.forEach((id, i) => i === 0 && api.current?.flyTo(id)); setTimeout(() => setRecMode('signal'), 1600); };
@@ -376,7 +367,7 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
           <MapView lenses={lenses} year={END} selected={asset} focus={recs ? recFocus : null} onSelect={id => { if (am && id) pick(id); else { setAsset(id); if (id) setDetails(false); } }} apiRef={api}
             pad={{ tl: [am && treeOpen ? 460 : 80, 120], br: [right ? 640 : 240, 60] }} />{/* map camera padding: MapLibre takes px (exception, context/decisions.md) */}
         </NDS>
-        <MapTools api={api} assetsOpen={am && treeOpen && !libOpen} onAssets={am ? () => { setLibOpen(false); setTreeOpen(o => !o); } : undefined}
+        <MapTools grid={false} api={api} assetsOpen={am && treeOpen && !libOpen} onAssets={am ? () => { setLibOpen(false); setTreeOpen(o => !o); } : undefined}
           libraryOpen={libOpen} onLibrary={am ? () => { setLibOpen(o => !o); } : undefined} onStudy={() => onStudy(am && g ? g : null)} />
         {am && libOpen && <StudiesPanel studies={studies} setStudies={setStudies} onOpen={onOpenStudy} onClose={() => setLibOpen(false)} />}
         {am && recs && <div className="recs-wrap"><RecsWindow open={recsOpenIds} mode={recMode} recId={recId} setMode={setRecMode} onFocus={setRecFocus} onFly={flyTo}
@@ -419,7 +410,6 @@ function Explore({ navBar, lenses, year, asset, setAsset, details, setDetails, o
           </div>
         )}
         {!right && <>
-          <MapLegend grid={false} style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-1000)', zIndex: 'var(--proto-z-map-ui)' }} />
           <div style={{ position: 'absolute', right: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}><FtaButton onClick={() => toast({ title: 'Cooper' })} /></div>
         </>}
       </div>

@@ -1,5 +1,5 @@
 /* App styles: layout only, tokens only. No hex, rgba or raw px: scripts/check.mjs enforces it.
-   Foundations: Catalyst DS 2.0.3 (vendor/ds2/rules.md: 2 Type, 3 Spacing and sizing, 4 Layout).
+   Foundations: Catalyst DS 2.0.4 (vendor/ds2/rules.md: 2 Type, 3 Spacing and sizing, 4 Layout).
    Spacing uses the --space-* scale and the inset / stack / section roles; sizes use --size-* or the layout regions;
    text uses the semantic --text-* styles. Map panels sit in the DS map slots (page margin from the map edge). */
 /* Prototype tokens (not in DS 2.0): the few sizes the kit has no token for, each built on the DS base unit (--space-100)
@@ -64,7 +64,7 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .scroll { overflow: auto; min-height: 0; }
 .click { cursor: pointer; border-radius: var(--radius-radius-100); }
 .click:hover { background: var(--surface-secondary-alpha); }
-/* Page layout (DS 2.0.3 rules.md §4 Layout): page margin and gap follow screen width; content capped at 1600 and centred;
+/* Page layout (DS 2.0.4 rules.md §4 Layout): page margin and gap follow screen width; content capped at 1600 and centred;
    cards and regions snap to the 12-column .ifs-grid (.ifs-span-N, .ifs-span-panel / .ifs-span-rest). Docked panels sit outside .page, flush to the edge. */
 .page { box-sizing: border-box; width: 100%; max-width: calc(var(--layout-max-content-width) + 2 * var(--page-margin)); margin: 0 auto;
   padding: var(--page-gap) var(--page-margin); display: flex; flex-direction: column; gap: var(--page-gap); min-width: 0; }
@@ -298,3 +298,12 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 /* J21 Plan › Approve: gate accordions (Figma 84:108440) */
 .pa-gate { all: unset; display: flex; align-items: center; gap: var(--space-200); min-height: var(--size-32); padding: 0 var(--space-300); border-radius: var(--radius-radius-100); background: var(--background-elevation-2-secondary); cursor: pointer; }
 .pa-gate:disabled { cursor: default; opacity: var(--proto-dim); }
+
+/* Rule 4.6 (DS 2.0.4): every panel can fold to its 48 rail. Panels in fixed-width wrappers fill them while open
+   (.proto-fill); folded, the panel takes the rail width and the wrapper shrinks to it. !important beats the
+   wrappers' inline widths (Study's slot width follows its view). */
+.proto-fill { width: 100%; }
+.ifs-panel--collapsed.proto-fill { width: var(--region-rail); flex: none; }
+:where(.ifs-slot-left, .ifs-slot-right, .ad-wrap, .vf-panel, .vf-picker, .rf-cooper):has(> .ifs-panel--collapsed) { width: auto !important; }
+.bi-map:has(> .ifs-panel--collapsed) { flex: none; }
+.map-layers { position: absolute; left: calc(var(--page-margin) + var(--slot-tools) + var(--page-gap)); bottom: var(--space-300); z-index: var(--proto-z-map-window); }   /* rule 4.8: a popover sits above panels */
