@@ -310,3 +310,4 @@ html, body, #root { margin: 0; height: 100%; background: var(--background-page);
 .bi-map:has(> .ifs-panel--collapsed) { flex: none; }
 .map-layers > * { max-height: 100%; overflow: auto; }   /* Layers sits in .ifs-slot-popover (rule 6.1) */
 .proto-colfilter { position: fixed; z-index: var(--proto-z-map-window); margin-top: var(--space-100); }   /* Build library column filter menu, anchored under its header button */
+.plan-zero { align-self: stretch; width: var(--border-widths-border-100); background: var(--border-strong); }   /* zero line of the Compare diverging bars */

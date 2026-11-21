@@ -678,6 +678,30 @@ function Notifications({ open, notes, onClose, onOpen, onRead }) {
 }
 
 /* ============================================================ Compare (Figma 85:65862; results stream in while optimizing, 85:83784) */
+// Figma "Value comparison" (85:65862): one diverging bar per scenario, 2028–2032 against the baseline, by $ measure.
+// Right of zero: better than the baseline (lower cost or lower aggregate risk); left: worse. The kit has no diverging bar chart, so it's rows of kit BarChartItems (Not in DS).
+const DIV_MEASURES = [{ id: 21, label: 'Aggregate Risk', color: 2, sign: 1 }, { id: 37, label: 'CAPEX Cost', color: 1, sign: 1 }, { id: 167, label: 'OPEX Cost', color: 3, sign: 1 }, { id: 165, label: 'Maintenance Cost (OPEX)', color: 4, sign: 1 }];
+function CompareDiverging({ rows }) {
+  const yi = PLAN_YEARS.map((y, i) => y >= 2028 && y <= 2032 ? i : -1).filter(i => i >= 0);
+  const sum = (id, m) => { const o = PLAN_SCENARIOS.find(s => s.id === id).outcomes.find(x => x.measureId === m); return yi.reduce((t, i) => t + (o.byYear[i] || 0), 0); };
+  const base = rows.find(c => c.baseline) || rows[0];
+  const parts = rows.map(c => ({ c, seg: DIV_MEASURES.map(m => ({ ...m, v: (sum(c.id, m.id) - sum(base.id, m.id)) * -m.sign })) }));   // >0 = good for the plan
+  const side = (p, pos) => p.seg.filter(s => pos ? s.v > 0 : s.v < 0).reduce((t, s) => t + Math.abs(s.v), 0);
+  const max = Math.max(1, ...parts.flatMap(p => [side(p, true), side(p, false)]));
+  const seg = s => <BarChartItem key={s.id} color={s.color} number={false} style={{ flex: Math.abs(s.v) / max }} title={`${s.label} ${s.v >= 0 ? '+' : '−'}${fmtMoney(Math.abs(s.v))}`} />;
+  return <NDS label="Diverging stacked bar (kit BarChartItem rows)" className="col" style={{ gap: 'var(--space-200)', padding: 'var(--space-200) var(--space-150) var(--space-150)', width: '100%' }}>
+    {parts.map(p => <div key={p.c.id} className="row" style={{ gap: 'var(--space-300)' }}>
+      <span className="t-body-m-regular plan-ellipsis" style={{ width: 'var(--proto-detail-nav-w)' }}>{p.c.short}</span>
+      <div className="row" style={{ flex: 1, justifyContent: 'flex-end' }}><div className="row" style={{ gap: 'var(--space-50)', width: `${side(p, false) / max * 100}%` }}>{p.seg.filter(s => s.v < 0).map(seg)}</div></div>
+      <span className="plan-zero" />
+      <div className="row" style={{ flex: 1 }}><div className="row" style={{ gap: 'var(--space-50)', width: `${side(p, true) / max * 100}%` }}>{p.seg.filter(s => s.v > 0).map(seg)}</div></div>
+      <span className="t-body-m-regular sec t-numeric" style={{ width: 'var(--proto-detail-nav-w)', textAlign: 'right' }}>{p.c.baseline ? 'Baseline' : `${side(p, true) - side(p, false) >= 0 ? '+' : '−'}${fmtMoney(Math.abs(side(p, true) - side(p, false)))} net`}</span>
+    </div>)}
+    <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>{DIV_MEASURES.map(m => <LegendSwatch key={m.id} label={m.label} color={`var(--data-viz-data-${m.color})`} />)}
+      <span className="t-body-m-regular sec">Right of the line: better than the baseline (less cost or less risk) · Left: worse · 2028–2032</span></div>
+  </NDS>;
+}
+
 function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval, onBack, onSetup, reopt, setReopt }) {
   const CARDS = compareScenarios(reopt);
   const reRunning = reopt && reopt.status === 'running';
@@ -692,7 +716,10 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
   const p = done ? 1 : runProgress(run);
   const others = COMPARE_SCENARIOS.filter(c => !c.baseline);
   const ready = c => c.baseline || done || p >= (others.indexOf(c) + 1) / (others.length + 1);   // "baseline will already be here, rest … get populated as the results come in"
-  const shown = CARDS.filter(ready);
+  const [pick, setPick] = useState([]);             // Figma "All compared ▾": which scenarios to compare (empty = all; the baseline always stays)
+  const [view, setView] = useState('chart');         // Figma chart/table toggle at the end of the tabs row: every chart at once
+  const picked = c => c.baseline || !pick.length || pick.includes(String(c.id));
+  const shown = CARDS.filter(ready).filter(picked);
   const pct = (a, b) => { const d = Math.round((a / b - 1) * 100); return `${d >= 0 ? '+' : '−'}${Math.abs(d)}%`; };   // rule 8.25: true minus
   const sent = stage === 'approval';
   const [onTitleMenu, activityPanel] = useActivity('plan', planVersions(stage, true));
@@ -733,6 +760,10 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
   const yrs = PLAN_YEARS.filter(y => y >= 2028 && y <= 2032);
   const series = shown.map(c => ({ key: String(c.id), label: c.short }));
   const capexByYear = yrs.map(y => ({ label: `${y}`, ...Object.fromEntries(shown.map(c => [String(c.id), PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(o => o.measureId === 37).byYear[PLAN_YEARS.indexOf(y)]])) }));
+  // Figma Cumulative / Annual risk reduction: aggregate risk (measure 21) against its first-year level, per scenario
+  const riskOf = c => PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(o => o.measureId === 21).byYear;
+  const riskCum = yrs.map(y => ({ label: `${y}`, ...Object.fromEntries(shown.map(c => { const r = riskOf(c), r0 = r[PLAN_YEARS.indexOf(yrs[0]) - 1] || r[0]; return [String(c.id), r0 ? (1 - r[PLAN_YEARS.indexOf(y)] / r0) * 100 : 0]; })) }));
+  const riskAnnual = yrs.map(y => ({ label: `${y}`, ...Object.fromEntries(shown.map(c => { const r = riskOf(c), i = PLAN_YEARS.indexOf(y), prev = r[i - 1]; return [String(c.id), prev ? Math.max(0, (1 - r[i] / prev) * 100) : 0]; })) }));
   const riskByYear = PLAN_YEARS.filter(y => y <= 2032).map(y => ({ label: `${y}`, ...Object.fromEntries(shown.map(c => [String(c.id), PLAN_SCENARIOS.find(s => s.id === c.id).outcomes.find(o => o.measureId === 21).byYear[PLAN_YEARS.indexOf(y)]])) }));
   return (
     <AppShell navBar={navBar} header={header}
@@ -743,20 +774,25 @@ function PlanCompare({ navBar, run, done, final, stage, onSelect, onSendApproval
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <h3 className="t-heading-h3-medium" style={{ margin: 0 }}>Scenario Comparison</h3>
           <div className="row" style={{ gap: 'var(--space-200)' }}>
+            <div style={{ width: 'var(--proto-lens-list-w)' }}><IFS.MultiSelect size="s" aria-label="Scenarios compared" placeholder="All compared" value={pick} onChange={v => setPick(v || [])}
+              options={CARDS.filter(c => !c.baseline).map(c => ({ value: String(c.id), label: c.short }))} /></div>
             <Button type="tertiary" size="s" iconLeft="system-plus" onClick={() => toast({ title: 'New scenario isn’t part of this flow' })}>New scenario</Button>
             <Button type="secondary" size="s" iconLeft="cooper-system-icon" disabled={!done} onClick={() => setCooperOpen(true)}>Cooper’s evaluation</Button>
           </div>
         </div>
-        <div className="plan-cards">{CARDS.map(c => <Card key={c.id} c={c} />)}
+        <div className="plan-cards">{CARDS.filter(picked).map(c => <Card key={c.id} c={c} />)}
           {reRunning && <ContentCard className="plan-card" loading title={`${planReoptScenario(reopt).short} · ${Math.round(reoptProgress(reopt) * 100)}%`} />}</div>
-        <div><Tabs value={tab} onChange={setTab} aria-label="Compare" items={[{ value: 'overview', label: 'Overview' }, { value: 'measures', label: 'Value measures and constraints' }, { value: 'investments', label: 'Investments' }]} /></div>
+        <div className="row" style={{ justifyContent: 'space-between' }}><Tabs value={tab} onChange={setTab} aria-label="Compare" items={[{ value: 'overview', label: 'Overview' }, { value: 'measures', label: 'Value measures and constraints' }, { value: 'investments', label: 'Investments' }]} />
+          {tab === 'overview' && <IconButton icon={view === 'chart' ? 'system-table' : 'chart'} type="ghost" size="s" label={view === 'chart' ? 'Show the charts as tables' : 'Show the charts'} onClick={() => setView(v => v === 'chart' ? 'table' : 'chart')} />}</div>
         {tab === 'overview' && <div className="col" style={{ gap: 'var(--space-300)' }}>
           <PSec title="Value Comparison">
             <div style={{ padding: 'var(--space-200) var(--space-150) var(--space-150)' }}><StatCardsRow cards={shown.map(c => ({ size: 's', title: c.short, value: fmtCompact(c.value),
               ...(c.baseline ? {} : { trend: pct(c.value, COMPARE_BASE.value), trendDirection: c.value >= COMPARE_BASE.value ? 'up' : 'down' }) }))} /></div>
           </PSec>
-          <GroupedColumnChart title="Forecast Comparison by Year · CAPEX" data={capexByYear} series={series} format={fmtMoney} />
-          <LineChart title="Aggregate Risk by Year" data={riskByYear} series={series.map((s, i) => ({ ...s, dashed: i === 0 }))} format={v => fmtCompact(v)} />
+          <PSec title="Value Against Baseline"><CompareDiverging rows={shown} /></PSec>
+          <GroupedColumnChart view={view} onViewChange={setView} title="Forecast Comparison by Year · CAPEX" data={capexByYear} series={series} format={fmtMoney} />
+          <LineChart view={view} onViewChange={setView} title="Cumulative Risk Reduction" data={riskCum} series={series.map((s, i) => ({ ...s, dashed: i === 0 }))} format={v => `${v < 0 ? '−' : ''}${Math.abs(Math.round(v))}%`} />
+          <GroupedColumnChart view={view} onViewChange={setView} title="Annual Risk Reduction · All Scenarios" data={riskAnnual} series={series} format={v => `${v.toFixed(1)}%`} />
         </div>}
         {tab === 'measures' && <PSec title="Value Measures and Constraints">
           <div style={{ padding: 'var(--space-200) var(--space-150) var(--space-150)', overflowX: 'auto' }}>
