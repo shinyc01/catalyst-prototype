@@ -2483,55 +2483,7 @@ Working usage of each component, from the kit gallery (src/gallery). Printed by 
       <SideNavTree title="Plan" tree={PLAN_TREE} defaultCollapsed />
     </IFS.Inline>
   ) });
-
-  /* ───────────────────────── pattern screens ───────────────────────── */
-
-  const Upper = ({ children, style }) => <span className="t-heading-h4-semibold" style={{ color: 'var(--text-primary)', ...style }}>{children}</span>;
-  const Panel = ({ children, style }) => <div style={{ background: 'var(--surface-secondary-alpha)', borderRadius: 8, padding: 12, boxSizing: 'border-box', ...style }}>{children}</div>;
-  const RightRail = ({ dot }) => (
-    <div style={{ flex: 'none', width: 48, boxSizing: 'border-box', padding: 12, background: 'var(--surface-primary)', boxShadow: 'inset 1px 0 0 var(--border-base)', position: 'relative' }}>
-      <IFS.IconButton icon="arrow-bar-left" label="Open panel" size="s" onClick={() => toast('Open side panel')} />
-      {dot && <span aria-hidden="true" style={{ position: 'absolute', left: 27, top: 13, width: 6, height: 6, borderRadius: '50%', background: 'var(--background-system-danger)', boxShadow: '0 0 0 1.5px var(--surface-primary)' }} />}
-    </div>
-  );
-
-  // ── Command (home) ──
-  const CommandContent = ({ setStage }) => {
-    const [tab, setTab] = useState('decisions');
-    const [prio, setPrio] = useState('critical');
-    const shown = DECISIONS.filter(d => d.priority === prio);
-    const open = d => { toast(`Opening ${d.title} in ${d.badge}`); setStage(d.badge.toLowerCase()); };
-    const tabs = [{ value: 'works', label: 'My works', count: 3 }, { value: 'decisions', label: 'Decisions', count: 6 }, { value: 'conversations', label: 'Conversations', count: 3 }, { value: 'following', label: 'Following', count: 3 }];
-    const stat = (v, l, style) => <div style={{ position: 'absolute', textAlign: 'center', ...style }}><div className="t-label-l-medium">{v}</div><div className="t-body-m-regular" style={{ color: 'var(--text-tertiary)' }}>{l}</div></div>;
-    return (
-      <div style={{ display: 'flex', minHeight: '100%' }}>
-        <IFS.Stack gap="300" style={{ flex: 1, minWidth: 0, padding: '12px 12px 0' }}>
-          {/* page-top instance 244:119970: cooper on, Show button off; the instance overrides the row gap to 12 */}
-          <IFS.PageTop eyebrow title="Welcome back, Jeff." description="2.8M simulations completed while you were away. Here are the items that require your input and attention right now."
-            style={{ gap: 12 }} tabs={{ items: tabs, value: tab, onChange: setTab }}
-            search={{ placeholder: 'Ask anything about your work', suggestions: ['Why is Northgate #1?', 'What changed since Friday?'] }} />
-          <IFS.Stack gap="400">
-            <IFS.Inline gap="400" align="center" justify="between" style={{ height: 28 }}>
-              <Upper>{tab === 'decisions' ? 'Decisions to review' : tabs.find(t => t.value === tab).label}</Upper>
-              <IFS.Inline gap="300" align="center">
-                <IFS.SegmentedControl size="s" value={prio} onChange={setPrio} options={[{ value: 'normal', label: 'Normal' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]} />
-                <span style={{ width: 1, height: 20, background: 'var(--border-base)' }} />
-                <IFS.IconButton icon="system-filter-settings" type="tertiary" size="s" label="Display settings" />
-              </IFS.Inline>
-            </IFS.Inline>
-            <IFS.Stack gap="200">
-              {tab === 'decisions' && shown.length === 0 && <IFS.EmptyState cause="all-done" heading={`No ${prio}-priority decisions`} body="Nothing at this priority needs your input right now." />}
-              {(tab === 'decisions' ? shown : DECISIONS.slice(3, 6)).map((d, i) => (
-                <HomeRowCard key={d.id} type={i === 0 && tab === 'decisions' ? 'primary' : 'secondary'} rank={i + 1} title={d.title} badge={d.badge}
-                  description={d.description} metrics={metricsOf(d)} media={i === 0 ? <MiniMap /> : undefined} onOpen={() => open(d)} />
-              ))}
-            </IFS.Stack>
-          </IFS.Stack>
-        </IFS.Stack>
-        <IFS.Stack gap="300" style={{ flex: 'none', width: 380, padding: 12, boxSizing: 'border-box' }}>
-          <Panel style={{ position: 'relative', height: 268, overflow: 'hidden', boxShadow: 'inset 0 0 0 1px var(--border-base)' }}>
-            <Upper>Cooper’s work results</Upper>
-  // … cut; full example in src/gallery/patterns-nav-bar.jsx
+}
 ```
 
 ### SmartSearch

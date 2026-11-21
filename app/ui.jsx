@@ -72,6 +72,22 @@ function replay(kind, answers, lenses) {
 }
 
 /* ============================================================ non-DS flag */
+/* Rule 4.6 (DS 2.0.4): every panel can fold. Panel's own onClose replaces its fold toggle, so a panel that can also be
+   closed passes its ✕ through `actions` (kit IconButton) and keeps the toggle. */
+const PanelClose = ({ onClose, label = 'Close panel' }) => <IconButton icon="system-close" label={label} type="ghost" size="s" onClick={onClose} />;
+
+/* Rule 5.1 (DS 2.0.4): the title menu ▾ of every entity header opens that entity's ActivityPanel (an `over` panel, rule 4.6).
+   Same placement as Refine's (top end, under the header). versions: activityVersions([...]) from shared/whistler-additions.js. */
+const EntityActivity = ({ recordLabel, versions, approvals, onClose }) => <div className="rf-cooper">
+  <IFS.ActivityPanel layout="static" title="Activity" recordLabel={recordLabel} defaultVersions={versions} approvals={approvals}
+    onOpenChange={o => !o && onClose()} onOpenVersion={v => toast({ title: v.title || 'Version', description: 'Opening an older version isn’t part of this flow' })} /></div>;
+
+// [onTitleMenu, panel]: pass onTitleMenu to the PageHeader and render panel inside the AppShell.
+const useActivity = (recordLabel, versions, approvals) => {
+  const [open, setOpen] = useState(false);
+  return [() => setOpen(o => !o), open ? <EntityActivity recordLabel={recordLabel} versions={versions} approvals={approvals} onClose={() => setOpen(false)} /> : null];
+};
+
 const NDS = ({ label, children, style, className = '', ...rest }) => <div className={`nds ${className}`} data-label={label} style={style} {...rest}>{children}</div>;
 // A DS token's value in px, for the few places JS has to do geometry (tour card, map padding). Reads the live token.
 const tokenPx = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;

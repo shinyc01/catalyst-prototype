@@ -56,10 +56,10 @@ function BuildLibrary({ navBar, ideas, setIdeas, refine, refineOther, reviews, o
 // "How would you like to start the new investment?" (Figma 73:115860)
 function NewChooser({ open, onClose, onIdeas }) {
   return (
-    <Modal open={open} onOpenChange={o => !o && onClose()} title="How would you like to start the new investment?">
+    <Modal open={open} onOpenChange={o => !o && onClose()} title="How Would You Like to Start the New Investment?">
       <div className="col" style={{ gap: 'var(--space-200)' }}>
-        <ContentCard title="Start with Ideas" description="Describe your idea or upload documents. Cooper builds the investment for you" iconRight="arrow-right" onClick={onIdeas} />
-        <ContentCard title="Duplicate Investment" description="Search any investment. Duplicate it and enhance the copy with new documents and context"
+        <ContentCard title="Start with Ideas" description="Describe your idea or upload documents. Cooper builds the investment for you." iconRight="arrow-right" onClick={onIdeas} />
+        <ContentCard title="Duplicate Investment" description="Search any investment. Duplicate it and enhance the copy with new documents and context." iconRight="arrow-right"
           onClick={() => toast({ title: 'Duplicate Investment isn’t part of this flow', description: 'Start with Ideas to create one with Cooper' })} />
       </div>
     </Modal>
@@ -104,12 +104,13 @@ function NewInvestment({ navBar, onBack, onShape }) {
   const box = drag && { left: Math.min(drag.x0, drag.x1), top: Math.min(drag.y0, drag.y1), width: Math.abs(drag.x1 - drag.x0), height: Math.abs(drag.y1 - drag.y0) };
   const header = <PageHeader title="New investment" onBack={onBack}
     center={<Stepper current={0} steps={[{ label: 'Input' }, { label: 'Shape' }, { label: 'Review' }, { label: 'Refine' }, { label: 'Approve' }]} />}
-    actions={<Button type="primary" size="s" disabled={!ready} onClick={onShape}>Shape</Button>} />;
+    actions={ready ? <Button type="primary" size="s" onClick={onShape}>Shape</Button>   // rule 9.10: a disabled action says why
+      : <Tooltip content="Cooper needs enough context first: describe the idea or add documents"><span><Button type="primary" size="s" disabled>Shape</Button></span></Tooltip>} />;
   const left = ready ? <NDS label="Cooper's context: Ready badge (DocumentsContext has no Ready state)" className="row" style={{ gap: 'var(--space-200)' }}>
     <span className="t-label-m-medium sec">Cooper’s Context</span><Indicator type="green">Ready</Indicator></NDS> : undefined;
   return (
     <AppShell navBar={navBar} header={header}
-      bottom={<BottomSheet type="value" inProgress={!ready} coverage={ctx} left={left} documents={docs ? { label: `${docs} Document${docs > 1 ? 's' : ''}` } : undefined}
+      bottom={<BottomSheet type="documents" inProgress={!ready} coverage={ctx} left={left} documents={docs ? { label: `${docs} Document${docs > 1 ? 's' : ''}` } : undefined}
         onUpload={attach} showPrompts={false} />}>
       <div className="bi-split">
         <div className="bi-chat">
@@ -121,7 +122,7 @@ function NewInvestment({ navBar, onBack, onShape }) {
           </ChatCompactPanel>
         </div>
         <div className="bi-map">
-          <Panel title="Area Overview" collapsible={false} style={{ height: '100%' }}>
+          <Panel title="Area Overview" className="proto-fill" style={{ height: '100%' }}>
             <div ref={mapEl} className="bi-map__view">
               <NDS label="3D map (MapLibre + OpenFreeMap)" className="fill">
                 <MapView lenses={INITIAL_LENSES} year={END} focus={focus} onSelect={() => {}} apiRef={api} pad={{ tl: [80, 60], br: [60, 60] }} />

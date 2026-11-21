@@ -138,8 +138,9 @@ function MapView({ lenses, year, selected, onSelect, interactive = true, grid = 
   useEffect(() => { st.current.update(); });
   return <div ref={el} style={{ position: 'absolute', inset: 0 }} />;
 }
+// Rule 6.9 (DS 2.0.4): no legend on the map; the key lives in the Layers popover (kit Popover) beside the tool bar.
 const MapLegend = ({ style, grid = true }) => (
-  <NDS label="Map legend" className="box glass col" style={{ gap: 'var(--space-150)', width: 'var(--proto-legend-w)', ...style }}>
+  <NDS label="Layers key (map layer list is not in DS, rule 7.20)" className="col" style={{ gap: 'var(--space-150)', ...style }}>
     {grid && <>
       <span className="t-label-m-medium muted">Area risk · all active lenses</span>
       <div style={{ height: 'var(--size-8)', borderRadius: 'var(--radius-radius-100)', background: `linear-gradient(90deg, ${AREA_BANDS.map(b => `var(${b.token})`).join(', ')})` }} />
@@ -151,7 +152,15 @@ const MapLegend = ({ style, grid = true }) => (
     <span className="t-body-s-regular muted">Glowing = over intervention tolerance</span>
   </NDS>
 );
-const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen, onStudy }) => <>
+const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen, onStudy, grid = true }) => {
+  const [layers, setLayers] = useState(false);
+  // rule 6.9 / 9.6: Layers closes on Esc or an outside click (the inline Popover doesn't do it itself)
+  useEffect(() => { if (!layers) return;
+    const key = e => e.key === 'Escape' && setLayers(false);
+    const down = e => !e.target.closest('.map-layers, [aria-label="Layers"]') && setLayers(false);
+    document.addEventListener('keydown', key); document.addEventListener('mousedown', down);
+    return () => { document.removeEventListener('keydown', key); document.removeEventListener('mousedown', down); }; }, [layers]);
+  return <>
   <div style={{ position: 'absolute', left: 'var(--page-margin)', top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
     {/* Figma Explore rail (29:191921 / 29:101050): 1 = asset structure, 2 = studies library, 3 = study */}
     <MapToolbar><MapToolCluster label="Map views">
@@ -161,6 +170,7 @@ const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen
     </MapToolCluster></MapToolbar>
   </div>
   <div style={{ position: 'absolute', left: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
-    <MapToolbar onAction={id => id === 'zoom-in' ? api.current?.zoomIn() : id === 'zoom-out' ? api.current?.zoomOut() : toast({ title: `${id} isn’t part of this flow` })} />
+    <MapToolbar onAction={id => id === 'zoom-in' ? api.current?.zoomIn() : id === 'zoom-out' ? api.current?.zoomOut() : id === 'layers' ? setLayers(o => !o) : toast({ title: `${id} isn’t part of this flow` })} />
   </div>
-</>;
+  {layers && <div className="map-layers"><IFS.Popover inline title="Layers" width="var(--overlay-width-s)" onOpenChange={o => !o && setLayers(false)}><MapLegend grid={grid} /></IFS.Popover></div>}
+</>; };

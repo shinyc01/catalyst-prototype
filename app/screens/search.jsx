@@ -131,7 +131,7 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
       <AgentWindow title="Cooper" text={null} onClose={() => setCooper(null)} onAsk={() => toast({ title: 'Cooper chat isn’t part of this prototype yet' })}>
         <div className="col" style={{ gap: 'var(--space-250)' }}>
           <UserMessage>{cooper.text}</UserMessage>
-          <span className="row t-body-m-regular muted" style={{ gap: 'var(--space-150)' }}><Icon name="cooper-system-icon" size={14} />Cooper is working on it…</span>
+          <span className="row t-body-m-regular muted" style={{ gap: 'var(--space-150)' }}><Icon name="cooper-system-icon" size={16} />Cooper is working on it…</span>
         </div>
       </AgentWindow>
     </div>
@@ -150,8 +150,8 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
       onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(-1)} onClick={e => openItem(r, e.metaKey || e.ctrlKey)}>
       <span className="gs-tile"><Icon name={searchType(r.type).icon} size={16} /></span>
       <span className="col" style={{ flex: 1, minWidth: 0 }}>
-        <span className="t-body-m-regular gs-l1"><span className="sec">{mode === 'recent' ? r.name : hl(r.name)}</span><span className="gs-code">{mode === 'recent' ? r.code : hl(r.code, true)}</span></span>
-        <span className="t-body-s-regular muted plan-ellipsis">{[showType ? searchType(r.type).one.replace(/^./, c => c.toUpperCase()) : null, ...r.detail].filter(Boolean).join(' · ')}</span>
+        <span className="t-label-m-medium gs-l1"><span>{mode === 'recent' ? r.name : hl(r.name)}</span><span className="gs-code">{mode === 'recent' ? r.code : hl(r.code, true)}</span></span>
+        <span className="t-body-m-regular muted plan-ellipsis">{[showType ? searchType(r.type).one.replace(/^./, c => c.toUpperCase()) : null, ...r.detail].filter(Boolean).join(' · ')}</span>
       </span>
       {r.status && <Badge size="s" color="black" indicator={SEARCH_STATUS_DOT[r.status]}>{r.status}</Badge>}
     </div>
@@ -194,7 +194,7 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
           <span className="t-label-m-medium muted">Owner</span>
           <IFS.MultiSelect size="m" value={owners || SEARCH_OWNERS} onChange={v => setOwners(!v.length || v.length === SEARCH_OWNERS.length ? null : v)} listTitle="Owners"
             placeholder="Anyone" options={SEARCH_OWNERS.map(o => ({ value: o, label: o }))} aria-label="Owner" />
-          <span className="t-body-s-regular muted">{owners ? `${owners.length} collaborator${owners.length > 1 ? 's' : ''}` : 'Anyone'}</span>
+          <span className="t-body-m-regular muted">{owners ? `${owners.length} collaborator${owners.length > 1 ? 's' : ''}` : 'Anyone'}</span>
         </div>}
       </div>
     </IFS.Popover>
@@ -234,40 +234,40 @@ function GlobalSearch({ open, onClose, onOpen, network = 'normal' }) {
             {popover}
           </div>}
           <div className="gs-body" ref={list} onScroll={e => { const el = e.currentTarget; if (type !== 'all' && mode === 'results' && el.scrollTop + el.clientHeight > el.scrollHeight - 80 && limit < res.rows.length) setLimit(l => l + PAGE); }}>
-            {cleared && <div className="gs-note t-body-s-regular sec">{cleared}</div>}
-            {fills.map(fl => <div key={fl.word} className="gs-note row t-body-s-regular sec">{fl.how} from “{fl.word}”: <b>{fl.group}: {fl.value}.</b>
+            {cleared && <div className="gs-note t-body-m-regular sec">{cleared}</div>}
+            {fills.map(fl => <div key={fl.word} className="gs-note row t-body-m-regular sec">{fl.how} from “{fl.word}”: <b>{fl.group}: {fl.value}.</b>
               <Button type="ghost" size="s" iconLeft="arrow-back-up" onClick={() => undoFill(fl)}>Undo</Button></div>)}
-            {mode === 'results' && res.corrected && <div className="gs-note t-body-s-regular sec">No exact matches for “{cq}”. Showing results for <b>{res.corrected}</b>.</div>}
+            {mode === 'results' && res.corrected && <div className="gs-note t-body-m-regular sec">No exact matches for “{cq}”. Showing results for <b>{res.corrected}</b>.</div>}
             {narrow.length > 0 && <div className="gs-narrow col">
               <span className="t-label-m-medium muted">Narrow with</span>
               <div className="row" style={{ gap: 'var(--space-150)', flexWrap: 'wrap' }}>{narrow.map(x => <Chip key={x.c.group + x.c.value} counter={x.n} onChange={() => applyValue(x.word, x.c, 'Applied')}>{`${x.c.group}: ${x.c.value}`}</Chip>)}</div>
             </div>}
 
             {mode === 'recent' && (!recentRows.length && !searches.length
-              ? <div className="gs-empty"><span className="t-label-m-medium">No recent items</span><span className="t-body-m-regular sec">Items you open will appear here</span></div>
+              ? <EmptyState cause="first-run" size="section" heading="No Recent Items" body="Items you open appear here." />
               : <>
                 {type === 'all' && searches.length > 0 && <div className="gs-searches col">
-                  <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-m-medium muted">Your searches</span>
+                  <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-m-medium">Your searches</span>
                     <Button type="ghost" size="s" onClick={() => setSearches([])}>Clear all</Button></div>
                   <div className="row gs-chips">{searches.map(s => <Chip key={s.q} iconLeft="system-clock-time" onRemove={() => setSearches(l => l.filter(x => x.q !== s.q))}
                     onChange={() => { setType(s.type || 'all'); setQ(s.q); runLater(s.q, { type: s.type }); }}>{s.q}</Chip>)}</div>
                 </div>}
-                {flat.length > 0 && <span className="t-label-m-medium muted gs-cap">Recently opened</span>}
+                {flat.length > 0 && <span className="t-label-m-medium gs-cap">Recently opened</span>}
                 {flat.map((r, i) => <Row key={r.type + r.id} r={r} i={i} showType={type === 'all'} />)}
               </>)}
 
             {mode === 'loading' && [0, 1, 2].map(i => <div key={i} className="gs-row"><IFS.Skeleton width="var(--size-32)" height="var(--size-32)" shape="block" />
               <span className="col" style={{ flex: 1, gap: 'var(--space-150)' }}><IFS.Skeleton width="40%" height="var(--size-10)" /><IFS.Skeleton width="70%" height="var(--size-10)" /></span><IFS.Skeleton width="var(--size-56)" height="var(--size-18)" /></div>)}
 
-            {mode === 'error' && <div className="gs-empty"><span className="gs-warn"><Icon name="status-warning-filled" size={20} /></span>
-              <span className="t-label-m-medium">Couldn’t load results</span>
-              <span className="t-body-m-regular sec" style={{ maxWidth: 'var(--text-measure)', textAlign: 'center' }}>Something went wrong on our end. Your search is saved in Your searches, so you can try it again later.</span>
-              <Button type="secondary" size="s" iconLeft="arrow-refresh" onClick={() => { setPhase('loading'); setTimeout(() => { setCq(q); setPhase('idle'); }, 900); }}>Retry</Button></div>}
+            {mode === 'error' && <div className="gs-empty"><span className="gs-warn"><Icon name="status-warning-filled" size={24} /></span>
+              <span className="t-label-m-medium">Couldn’t Load Results</span>
+              <span className="t-body-m-regular sec" style={{ maxWidth: 'var(--text-measure)', textAlign: 'center' }}>The search service didn’t respond. Your search is saved in Your searches, so you can try it again later.</span>
+              <Button type="secondary" size="s" iconLeft="arrow-refresh" onClick={() => { setPhase('loading'); setTimeout(() => { setCq(q); setPhase('idle'); }, 900); }}>Try again</Button></div>}
 
             {mode === 'none' && <>
-              <div className="gs-empty"><span className="t-label-m-medium">No matches for “{cq}”</span>
+              <div className="gs-empty"><span className="t-label-m-medium">{`No Matches for “${cq}”`}</span>
                 <span className="t-body-m-regular sec">{widen.length ? searchedLine() : 'Check the spelling, try fewer words, or search by code.'}</span></div>
-              {widen.length > 0 && <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium muted gs-cap">Widen the search</span>
+              {widen.length > 0 && <div className="col" style={{ gap: 'var(--space-150)' }}><span className="t-label-m-medium gs-cap">Widen the search</span>
                 {widen.map(w => <button key={w.id} className="gs-option" onClick={() => { if (w.id === 'match') setMatch('any'); if (w.id === 'filters') { setFilters({}); setOwners(null); setUpdated('any'); } if (w.id === 'types') chooseType('all', true); }}>
                   <span className="t-label-m-medium">{w.label}</span><span className="t-body-m-regular muted">{w.n} result{w.n > 1 ? 's' : ''}</span></button>)}</div>}
             </>}

@@ -1,6 +1,6 @@
 # IFS DS kit — component API
 
-Kit version 2.0.3, generated 2026-11-20. Everything is available as `IFS.<Name>` in a prototype. Each entry has a **Tier**: *Component* = a published IFS DS Figma component (build screens from these); *Pattern helper* = a working composition that implements a pattern's rules, not a Figma component (allowed, but name it as a pattern helper in the plan); *Layout primitive* = `Stack` / `Inline`, token-only spacing between things in a screen (Figma's auto layout; use them instead of writing your own flex + gap). Example screens are not in this list — see the Examples in Storybook.
+Kit version 2.0.4, generated 2026-11-20. Everything is available as `IFS.<Name>` in a prototype. Each entry has a **Tier**: *Component* = a published IFS DS Figma component (build screens from these); *Pattern helper* = a working composition that implements a pattern's rules, not a Figma component (allowed, but name it as a pattern helper in the plan); *Layout primitive* = `Stack` / `Inline`, token-only spacing between things in a screen (Figma's auto layout; use them instead of writing your own flex + gap). Example screens are not in this list — see the Examples in Storybook.
 Each entry is the comment above the component in source (Figma name/node and props). For real usage of every variant,
 read the family's examples file (linked per family). **In handovers** = how often designers place it in the real product files and its usual variant. `IFS.Icon({ name, size: 12|16|24, variant })` takes Figma icon names — see icons.txt.
 
@@ -109,7 +109,7 @@ Props: items = TimelineItem props[] (each may carry `key`), or children = <Timel
 **In handovers:** placed 77× (Value) · usual: state=Success (81%)
 Figma: approval-chain-timeline (1440:6174) — legacy; rebuilt as a configuration of the timeline base (activity-organism 3713:13396).
 Props: steps = [{ key, state, name, position, avatar, date, comment, actions, role, roles, brief }], defaultSteps,
-onChange(steps) — clicking Approve / Reject on an awaiting step really moves it to success / rejected.
+onChange(steps) — demo only: in product screens the timeline is display-only history (rule 7.9); the chain people act on is ApprovalChainTable.
 onApprove(step, index) / onReject(step, index) also fire.
 `function ApprovalChain({ steps, defaultSteps = [], onChange, onApprove, onReject, className, ...rest })`
 
@@ -456,6 +456,16 @@ title ("Phase"), onAddPhase (shows the header + on hover, Figma State=Hover), sl
 across all groups (Q1 2027 = 0, Q2 2027 = 1, … ).
 `function TimelineChart({ groups = [], phases = [], title = 'Phase', onAddPhase, state, className, ...rest })`
 
+### placeMapSlots
+**Tier:** Utility (function; the kit runs it for you)
+placeMapSlots(el): place the top and bottom bars of one `.ifs-slots` container now (normally the kit does this for you)
+`function placeMapSlots(el)`
+
+### watchMapSlots
+**Tier:** Utility (function; the kit runs it for you)
+watchMapSlots(): keep every `.ifs-slots` placed as panels open, close and resize. Started once on load; safe to call again.
+`function watchMapSlots()`
+
 ## charts
 
 Examples (read before using any component below — shows the data shapes props expect): https://shinyc01.github.io/catalyst-design-system-2/src/gallery/charts.jsx
@@ -745,12 +755,12 @@ buttonRight = icon name (Figma "button right": tertiary S icon-button), onButton
 **Tier:** Component
 **In handovers:** placed 104× (Plan) · usual: Size m 100% · Loading false 100%
 Figma: stat-card-organism (3643:35055)
-Props: size m|s, title (show-title), value, description, descriptionPosition below|inline (below = value over a sentence-case
+Props: size s|m (default s, rule 2.6; pass size="m" only for a key-figure row at the top of the page with no page title above), title (show-title), value, description, descriptionPosition below|inline (below = value over a sentence-case
 Label/M/medium caption, as the Patterns file draws it; inline = the library's default slot: description beside the value), trend (e.g. "3 %"; show-trend), trendDirection up|down,
 badge = Badge props (show-badge; Figma default Color=Red S), children = additional content slot, loading,
 compare = { from, to, fromLabel, toLabel } (replaces value: two caption-over-value columns joined by an arrow, from in text/tertiary;
 without `from` only the `to` column shows). The one stat card: it replaces QuickStatCard and CompareStatValue (2.0.3).
-`function StatCard({ size = 'm', title, value, description, descriptionPosition = 'below', trend, trendDirection = 'up', badge, compare, loading, children, className, ...rest })`
+`function StatCard({ size = 's', title, value, description, descriptionPosition = 'below', trend, trendDirection = 'up', badge, compare, loading, children, className, ...rest })`
 
 ### ContentCard
 **Tier:** Component
@@ -759,11 +769,12 @@ Figma: content-card-organism (3643:32067)
 Props: size m|s, title, description (show-description), avatar = Avatar props (show-avatar, L 40),
 control = node (show-checkbox / show-radio-button / show-switch → pass IFS.Checkbox etc.), iconRight = icon name (Figma arrow-right),
 iconLeft = icon name before the title (show-icon-left; Figma default arrow-caret-right-filled),
+meta = short read-only info at the end of the title row (a count, a date, time left, a value; Body/M secondary, truncates first; rule 7.21),
 iconButton = { icon, label, onClick } (show-icon-button), top / bottom = slot nodes (with no title/description/avatar/control/icons
 the title block is skipped, so a slots-only card holds just its slots),
 tertiaryAction / primaryAction = Button props incl. children (show-buttons, show-tertiary-button, show-primary-button),
 selected, cooper (Figma State=Cooper), loading, state (forced: hover|pressed|focus|drag|selected|cooper), onClick → focusable role=button.
-`function ContentCard({ size = 'm', title, description, avatar, control, iconLeft, iconRight, iconButton, top, bottom, tertiaryAction, primaryAction, selected, cooper, loading, state, onClick, className, ...rest })`
+`function ContentCard({ size = 'm', title, description, meta, avatar, control, iconLeft, iconRight, iconButton, top, bottom, tertiaryAction, primaryAction, selected, cooper, loading, state, onClick, className, ...rest })`
 
 ### Table
 **Tier:** Component
@@ -778,11 +789,15 @@ Props:
     cell values by type: text → row[key]; number → row[key] (Figma Type=Number, right-aligned unless align is set); description → { text, description }; counter → { text, value, direction };
     badge → Badge props; status → { type, label, description }; check → label; user → { name, initials, type, description }.
   rows = [{ id, ...data }], groupBy = key or fn(row) → group title (group-row-molecule, expand/collapse), defaultCollapsed = [titles],
+  groups (Nov 20): collapsed / onCollapsedChange(titles) to control which are folded; groupOrder = [titles] (fixed order, groups with no
+  rows still show); groupInfo(title, rows) → { locked, note, end }: locked = a lock instead of the caret, can't open, rows hidden;
+  note = short text after the title ("Opens when Executive is approved"); end = node at the row's end (default: the row count);
+  headerPerGroup = the column header sits under each open group instead of once at the top (sectioned table, e.g. approval stages),
   sort / defaultSort = { key, dir: 'asc'|'desc' }, onSortChange, selectedId / onRowClick (row hover + selected),
   title (show-table-name), tabs (show-segmanted-control), search (right side of the bar). Without title/tabs/search it renders the bare table.
   rowHeight = content-row min height in px (default 60, Figma content-row-molecule),
   rowProps(row) → { className, style, ...attributes } merged onto that content row (drag states, data-* hooks).
-`function Table({ columns = [], rows = [], groupBy, defaultCollapsed = [], sort, defaultSort = null, onSortChange, selectedId, onRowClick, rowKey = 'id', rowHeight, rowProps, title, tabs, search, className, ...rest })`
+`function Table({ columns = [], rows = [], groupBy, defaultCollapsed = [], collapsed: collapsedProp, onCollapsedChange, groupOrder, groupInfo, headerPerGroup, sort, defaultSort = null, onSortChange, selectedId, onRowClick, rowKey = 'id', rowHeight, rowProps, title, tabs, search, className, ...rest })`
 
 ### NotificationCard
 **Tier:** Component
@@ -912,7 +927,7 @@ Figma: slider-organism (3029:20689) — title (+ clue icon) and Number on top, o
 Props: label (Title; absent = show-title off), hint (clue-icon tooltip), description (Hint text), showValue (Number, default true),
 formatValue(v) for the Number, icon (show-left-icon: a Ghost S circle icon-button, e.g. "system-star-favourite"), iconLabel, onIconClick,
 and every SliderTrack prop (type, min, max, step, value/defaultValue/onChange, disabled, thumbState).
-Use <Slider> without label for the bare molecule.
+Use <Slider> without label for the bare molecule. The track fills its parent: inside a flex row give the Slider flex:1, or it shrinks to 60.
 `function Slider({ label, hint, description, showValue = true, formatValue, icon, iconLabel, onIconClick, value, defaultValue, onChange, className, style, ...track })`
 
 ### FormCard
@@ -1163,7 +1178,7 @@ user = { initials, name } or avatar (node), actions (node: replaces the default 
 **In handovers:** placed 1,023× (Build, Value, Plan, Command) · usual: status progress bar 67%
 Figma: page-header (1588:1971) — Level-3 header at the top of the content area (the instance the Map overview screen uses;
 page-header-pattern / header-pattern are near-duplicates). Props: title, id (Figma ID), onBack (Figma "Show button back"),
-onTitleMenu (chevron after the title), status (node, e.g. an indicator), views (node, e.g. segmented icon control; a divider precedes it),
+onTitleMenu (the title menu ▾ after the title and ID: opens the entity's ActivityPanel; required on an entity header, rule 5.1), status (node, e.g. an indicator), views (node, a `SegmentedControl size="s"` of icons; a divider precedes it),
 center (node, centred between left and right: e.g. the Stepper), actions (node, right side: e.g. Cooper chip, Share, primary button).
 The blur sits on a ::before layer, so fixed popovers/modals opened from header actions aren't trapped by it.
 Narrow widths (Nov 19, measured on the header itself):
@@ -1203,7 +1218,7 @@ Props: navBar, sideNav, header (nodes), panel (node, e.g. <Panel>; right of the 
 e.g. a bottom sheet), children (content), height (default 100vh), panelMode, onPanelClose.
 Panel mode (decided Nov 19, guide/rules.md 4.6): set by the panel's JOB, not the screen.
   push  the content shrinks beside the panel and reflows onto its own columns: the user works with the panel and the
-        whole page together (readiness evaluation, Cooper chat, comments, widgets, approval chain). Default.
+        whole page together (readiness evaluation, comments, widgets, approval chain). Default. The full Cooper chat is over (rule 4.6).
   over  the panel sits over the right of the content, no scrim, the page stays usable: the panel is the focus and the page
         is context (row / record preview, evidence chain, activity). Outside click and Esc call onPanelClose
         (clicking another row closes and reopens, so the preview swaps).
@@ -1212,6 +1227,8 @@ Panel mode (decided Nov 19, guide/rules.md 4.6): set by the panel's JOB, not the
 Side nav below md: starts as a rail and expands over the content; outside click and Esc collapse it again.
 The shell measures its own width and sets data-size xs|sm|md|lg|xl. A side nav with a controlled `collapsed`, or a
 panel with a controlled `expanded`, is left alone.
+Content (rule 4.3): wrap each page's content in `.ifs-page` (page margin on all four sides, 1600 cap, centred); map and canvas
+pages (rule 4.10) fill the content area instead.
 `function AppShell({ navBar, sideNav, header, panel, panelMode, onPanelClose, bottom, children, height, className, style, ...rest })`
 
 ## patterns-activity
@@ -1360,9 +1377,13 @@ Props:
   view compact | full, details (full view: force the COMMENT / LAST NOTIFIED / action columns; default = when any row has that data), filterable (default: more than 3 approvers), onPush(approver) (owner's manual reminder on an awaiting row:
   shows the "Reminder sent." toast, stamps Last notified, then "Notified" + live countdown tooltip for pushCooldownHours, default 24),
   onNoteChange(approver, note|null, previous).
+  stages (Nov 20, several approval stages on one page): [{ id, label, approvers, locked, note, collapsed }] instead of approvers;
+    onStagesChange(stages). Built on the Table's groups: one group row per stage (caret, name, status + done/total at the end),
+    the column header under each open stage; locked = a lock, can't open, `note` says when it opens. Which stage is open, folded or
+    locked is the screen's call (stages don't have to run one after another). A fully approved stage starts folded.
 Rules built in (Figma notes): approvers add a note to their own row; the owner adds a note to any approver's row; only a
 note's author can edit or delete it; the filter applies live (state chips + name/role search, Clear all, "No results found").
-`function ApprovalChainTable({ approvers, defaultApprovers = [], onChange, currentUserId, ownerId, view = 'compact', details, filterable, onPush, onNoteChange, pushCooldownHours = 24, className, ...rest })`
+`function ApprovalChainTable({ approvers, defaultApprovers = [], onChange, stages, onStagesChange, currentUserId, ownerId, view = 'compact', details, filterable, onPush, onNoteChange, pushCooldownHours = 24, className, ...rest })`
 
 ## patterns-collaboration
 
@@ -1450,16 +1471,16 @@ Props: controller, defaultOpen, open / onOpenChange.
 ───────────────────────────── InviteCollaboratorModal ─────────────────────────────
 Pattern component: modal-organism "Add Collaborator": person (content card, avatar L 40) + access select,
 "Brief by Cooper" (cooper dots + gradient H4) + text-area-organism M with Cooper's brief for this person, editable.
-Props: open, person, mode invite (Send invitation) | edit (Save; disabled until something changes), defaultAccess, defaultBrief,
-  onCancel, onSubmit({ access, brief }), inline (card only — gallery).
-`function InviteCollaboratorModal({ open, person, mode = 'invite', defaultAccess = 'editor', defaultBrief = '', onCancel, onSubmit, inline })`
+Props: open, person, mode invite (Send invitation) | edit (Save; always on, rule 7.4: with no change it just closes, like Cancel), defaultAccess, defaultBrief,
+  title (the screen's own text; example default "Add Collaborator" / "Edit Collaborator" by mode), onCancel, onSubmit({ access, brief }), inline (card only — gallery).
+`function InviteCollaboratorModal({ open, person, mode = 'invite', title, defaultAccess = 'editor', defaultBrief = '', onCancel, onSubmit, inline })`
 
 ### RemoveCollaboratorModal
 **Tier:** Pattern helper
 ───────────────────────────── RemoveCollaboratorModal ─────────────────────────────
 Pattern component: modal-organism "Remove this collaborator?": person card (avatar L) + "This action will revoke the collaborator's
 invite to the framework" + Cancel / Remove. Props: open, person, onCancel, onConfirm, inline.
-`function RemoveCollaboratorModal({ open, person, onCancel, onConfirm, inline })`
+`function RemoveCollaboratorModal({ open, person, title = "Remove this collaborator?", onCancel, onConfirm, inline }) { // title: the screen's text (rule 8)`
 
 ### useCollaboration
 **Tier:** Pattern helper
@@ -1674,7 +1695,7 @@ header: onNewChat/onHistory/onResize (→ full panel)/onMore/onClose, onDragStar
 ### ChatFullPanel
 **Tier:** Component
 **In handovers:** placed 136× (Value, Build, Plan, Explore) · usual: Type text 98% · size default 100% · input type voice 92% · type chat ge 52% / gen 30%
-Figma: chat-full-panel-organism (1b6802cb1c70…) — "right-side-panel-chat" (Patterns 67:119975 / 67:120161). 450px docked side panel.
+Figma: chat-full-panel-organism (1b6802cb1c70…) — "right-side-panel-chat" (Patterns 67:119975 / 67:120161). Full panel: floats a level above the page, one page margin in (rule 4.6).
 Same props as ChatCompactPanel plus prompts (Figma show-chips: PromptButton L in the empty state) + onPrompt,
 historyOpen, onResizeStart (pointerdown on the left edge: drag to make the panel wider/narrower).
 `function ChatFullPanel(props) { return <ChatPanel size="full" {...props} />; }`
@@ -1720,7 +1741,7 @@ Props: title, badge ("In 4 days" — Badge Black M), due ("May 2"), active, onCl
 ### HistoryPanel
 **Tier:** Component
 **In handovers:** placed 52× (Value) · usual: Property 1=Default (79%)
-Figma: history-panel-molecule (a0999afa6b27…) — "chat history" (Patterns 12:264137). 240px column docked left of the full panel.
+Figma: history-panel-molecule (a0999afa6b27…) — "chat history" (Patterns 12:264137). 240px column at the start side of the full panel, inside the same floating panel.
 Props: chats [{ id, title, time, group today|week|earlier, pinned }], folders [{ id, name, count, icon }], smart { reminders, recommendations, trash } counts,
 activeChatId, onOpenChat(id), onNewChat, onSearch, onOpenFolder(id) ('reminders'|'recommendations'|'trash'|folder id), onCollapse,
 folderLimit (default 3: "See all" expands), onFolderMore(folder, event), onChatMore(chat, event), onFoldersMore(event), onChatsMore(event),
@@ -1785,15 +1806,15 @@ Props: title, description, impact, onBack, onDecline, onApply.
 **Tier:** Pattern helper
 CooperChat — the whole Cooper chat behaviour (pattern component; Patterns "Chat" section 67:121910).
 Sizes: closed (avatar + prompt chips in the bottom sheet) → bar (chat-collapsed-bar, voice by default) → compact (floating window)
-→ full (docked side panel). Sending a message adds a UserMessage, then a CooperMessage that runs Analysing (Step n/total) →
+→ full (floating panel, one page margin in). Sending a message adds a UserMessage, then a CooperMessage that runs Analysing (Step n/total) →
 Streaming → Answered; Stop interrupts (keeps the user message; partial answer stays + Regenerate; before any text: Try again).
 Props: size / defaultSize / onSizeChange ('closed'|'bar'|'compact'|'full'), mode / defaultMode ('voice'|'text'),
 messages / defaultMessages / onMessagesChange ([{ id, role:'user'|'cooper', text, status, ... }]), answer(q) → answer data
 (default canned answers), prompts (empty-state chips in the full panel), renderPanel (wrap the full panel, e.g. with HistoryPanel),
 onHistory, historyOpen, speed (ms per streamed word, default 40; 0 = instant), position {right,bottom} for bar/compact,
-fullInset (px around the docked panel), title / defaultTitle / onTitleChange, onNewChat,
+fullInset (space around the full panel; default the page margin, the same inset as Explore's map tools, rule 6.3; Nov 20), title / defaultTitle / onTitleChange, onNewChat,
 apiRef receives { send(question), setSize(size) } — e.g. bottom-sheet prompt chips send straight into the chat.
-`function CooperChat({ size, defaultSize = 'closed', onSizeChange, mode, defaultMode = 'voice', onModeChange, messages, defaultMessages = [], onMessagesChange, answer, prompts = ['Highlight all my transformers for me in this area', 'I want to explore flood risks along the coast', 'What happens if I don\'t act?'], onHistory, historyOpen, renderPanel, speed = 40, position = { right: 60, bottom: 131 }, fullInset = 8, title, defaultTitle = 'New chat', onTitleChange, onNewChat, apiRef, className })`
+`function CooperChat({ size, defaultSize = 'closed', onSizeChange, mode, defaultMode = 'voice', onModeChange, messages, defaultMessages = [], onMessagesChange, answer, prompts = ['Highlight all my transformers for me in this area', 'I want to explore flood risks along the coast', 'What happens if I don\'t act?'], onHistory, historyOpen, renderPanel, speed = 40, position = { right: 60, bottom: 131 }, fullInset = 'var(--page-margin)', title, defaultTitle = 'New chat', onTitleChange, onNewChat, apiRef, className })`
 
 ### 
 **Tier:** Pattern helper
@@ -1969,14 +1990,14 @@ SegmentedControl S Rationale | Peer benchmark, then the tab:
   Peer benchmark = PeerBenchmark props (`benchmark`; null/{ empty: true} → empty state, tab stays selectable).
 Props: open / defaultOpen / onOpenChange (✕ and Esc close), value (confidence %), thresholds,
 tab / defaultTab ('rationale') / onTabChange, title, floating (slide-in animation), className, style.
-Placement is the screen's job: it floats over the content, top-right, 12px in (see the pattern screens).
+Placement is the screen's job: it floats over the content, top-end, --space-300 in (components.md Evidence rule 2).
 `function EvidenceChainDrawer({ open, defaultOpen = true, onOpenChange, value = 87, thresholds = [70, 90], tab, defaultTab = 'rationale', onTabChange, rationale = [], benchmark, title = 'Evidence chain', floating = true, className, style })`
 
 ### evidenceZone
 **Tier:** Pattern helper
 ------------------------------------------------------------------------------------------ 
 Confidence zones (Figma dev note 31:79279): <70 % Reject, 70–90 % Review, >90 % Approve. Boundaries follow EvidenceStrength
-(value < 70 reject, < 90 review, else approve) so the bar and the behaviour never disagree. Returns { zone, label, autoApply, behaviour } for a value. Thresholds are the EvidenceStrength defaults.
+(value < 70 reject, 70 to 90 review, over 90 approve; exactly 90 is Review) so the bar and the behaviour never disagree. Returns { zone, label, autoApply, behaviour } for a value. Thresholds are the EvidenceStrength defaults.
 `function evidenceZone(value, thresholds = [70, 90])`
 
 ## patterns-nav-bar
@@ -1987,7 +2008,7 @@ Examples (read before using any component below — shows the data shapes props 
 **Tier:** Component
 **In handovers:** placed 274× (Explore, Command) · usual: Cooper badge no 63%
 Figma: explore-header (key ae9026ad…; Patterns copy 12:175111) — the bar under the nav bar on the Explore map; its height follows the tallest part + 4 top and bottom, so 36 / 32 / 32.
-Left (Figma "Content right slot"): smart-search-organism (248 wide, 28 tall, "Search for…") + icon-button-filter (round, 28).
+Left (Figma "Content right slot"): smart-search-organism (248 wide, small control height --control-h-s, "Search for…") + icon-button-filter (round, same height).
 Right ("container-left"): collaborators button (Button Tertiary S, users-group, "3/5") + icon-button-comment.
 Props: search = SmartSearch props (placeholder, onSubmit, suggestions…), onFilter, filtersApplied (filter dot),
 collaborators (label, default "3/5"; null hides), onCollaborators, onComments, hasNewComments, children (extra left content),
@@ -1998,8 +2019,8 @@ actions (node: replaces the right side).
 **Tier:** Component
 **In handovers:** placed 164× (Command) · usual: Type secondary 84%
 Figma: home-row-card-organism (key c497ce96…; Patterns copy 244:117301). One ranked item on the Command (home) list.
-Type=Primary (124 tall: the top item; copper→white gradient stroke, metrics under the text, media on the right) |
-Secondary (72 tall: metrics in their own columns). State Default | Hover | Loading | Focus.
+Type=Primary (132 tall at every density: the top item; copper→white gradient stroke, metrics under the text, media on the right) |
+Secondary (80 tall at every density: metrics in their own columns). State Default | Hover | Loading | Focus.
 Props: type primary|secondary, rank (counter-atom S), title, badge (label → badge-atom White S), description,
 metrics [{ value, label }] (show-metric; Figma shows two: CPV and V/C), liveAlert = MapPinDefect props (show-live-alert),
 collaboration = Avatar props (show-collaboration), media (node: primary right side, e.g. a map), onOpen (card + arrow button),
@@ -2018,17 +2039,6 @@ value / defaultValue / onSelect(id, item), expanded / defaultExpanded (ids) / on
 collapsed / defaultCollapsed / onCollapsedChange.
 `function SideNavTree({ title, tree = [], sections = [], value, defaultValue, onSelect, expanded, defaultExpanded = [], onExpandedChange, collapsed, defaultCollapsed = false, onCollapsedChange, className, ...rest })`
 
-### StagedAppShell
-**Tier:** Pattern helper
-Pattern: StagedAppShell — the three-level navigation model as one working shell: the L1 nav bar (NavBar, collapses by width) picks the
-stage; each stage brings its own L2 sidebar, header, content and bottom sheet (IFS.AppShell slots). Below `collapseSideBelow`
-the sidebar is handed `narrow: true` so it can start collapsed (icon rail) — inferred from the Navigation page rule
-"the sidebar collapses to an icon rail on narrow widths before it disappears".
-Props: stages, value / defaultValue / onChange (stage), screens = { [stage]: { sideNav, header, bottom, content } } where each
-entry may be a node or a function ({ stage, narrow, width }) → node; navBar = extra NavBar props;
-collapseNavBelow (default 800), collapseSideBelow (default 1024 = md, the side-nav rule in guide/rules.md 4.7; was 1280), height.
-`function StagedAppShell({ stages = NB_STAGES, value, defaultValue, onChange, screens = {}, navBar = {}, collapseNavBelow = 800, collapseSideBelow = 1024, height, className, style, ...rest })`
-
 ## patterns-table
 
 Examples (read before using any component below — shows the data shapes props expect): https://shinyc01.github.io/catalyst-design-system-2/src/gallery/patterns-table.jsx
@@ -2041,9 +2051,9 @@ Figma: smart-search-organism (2145:3758) — the Cooper "Ask anything…" bar (s
 Props: type text|voice / defaultType / onTypeChange (Text shows the mic button, Voice shows the keyboard button and listens),
 placeholder, value / defaultValue / onChange(value), onSubmit(value) on Enter or suggestion pick, onClear,
 suggestions (strings or {label,type,query}; shown in a search-modal while focused), suggestionsTitle, listening (voice: "…" state),
-disabled, width (default 360, Figma), size l (40, default) | s (28 tall, padding 8/0/8/8, 28px mic: the explore-header instance),
+disabled, width (default 360, Figma), size l (default: --control-h-m, 36 / 32 / 28) | s (--control-h-s, 28 / 24 / 24, padding 8/0/8/8: the explore-header instance),
 state hover|focus|pressed (gallery only), aria-label.
-Ask a natural-language question here; for keyword search over a list use IFS.Search (search-regular-organism).
+The default search (AI search: keywords or natural language). IFS.Search (search-regular-organism) is the simple keyword search, when the use case needs no AI.
 `function SmartSearch({ type, defaultType = 'text', onTypeChange, placeholder = 'Ask anything…', value, defaultValue = '', onChange, onSubmit, onClear, suggestions, suggestionsTitle = 'Suggested questions', listening, disabled, width = 360, size = 'l', state, className, style, 'aria-label': ariaLabel, ...rest })`
 
 ### SearchModal
@@ -2394,7 +2404,7 @@ filter(option, query), state. While loading and open, the list shows Figma's "Se
 **In handovers:** placed 511× (Build, Explore, Command, Plan, Value) · usual: Number 2 48% / 4 27% · Size s 100% · type 4 72%
 Figma: segmented-control-organism (1387:244501) built from segmented-control-atom (1387:244511)
 Props: options = [{ value, label, iconLeft, iconRight, counter, disabled, state }] (strings allowed), value/defaultValue/onChange,
-size m (32) | s (24), fullWidth (stretches to its container; segments share the width equally). Arrow keys move the selection (radio group).
+size m | s: outer height 40 / 36 / 32 (m: segments at the control height plus a 2px track) and 28 / 24 / 24 (s: the control height outside, segments 4 smaller inside the 2 track (20 inside 24 in Comfortable), each with an invisible hit layer to the full height, Nov 20); fullWidth (stretches to its container; segments share the width equally). Arrow keys move the selection (radio group).
 `function SegmentedControl({ options = [], value, defaultValue, onChange, size = 'm', fullWidth = false, className, ...rest })`
 
 ### Chip
@@ -2505,10 +2515,11 @@ zoom-slider-atom (3275:483), used in the Explore bottom sheet. value 0–100 (Fi
 **In handovers:** placed 2,128× (Value, Build, Plan, Command, Explore) · usual: In progress true 97%
 Figma: base-bottom-sheet-organism (4406:25590), value-bottom-sheet-organism (789:37502), explore-bottom-sheet (72:4676)
 The Cooper entry point at the bottom of the content area, 40px tall, full width. Place it in AppShell's `bottom` slot.
-Props (all types): type base|value|explore (base = any tab; value = Value tab; explore = Explore tab),
+Props (all types): type base|documents|explore (base = broad pages; documents = every page inside one entity, rule 7.22;
+'value' is the old name for documents and still works; explore = Explore tab),
 prompts (labels → PromptButton M; Figma shows two), onPrompt(label), showPrompts (default true), showCooper (show-cooper, default true),
 onCooper (FAB click), cooperIndicator (FAB Show indicator; Figma sheets turn it off).
-type="value": inProgress (Figma In progress: shows the coverage bar), coverage 0–100, cooperContext (cooper-context, default true),
+type="documents" (or "value"): inProgress (Figma In progress: shows the coverage bar), coverage 0–100, cooperContext (cooper-context, default true),
   documents = { label, icon, onClick } (show-documents-button, tertiary M), onUpload (show-upload-button; omit on an Active framework = read-only).
 type="explore": fields [{ key, label, options, value, zoom }], values/onFieldChange(key, value), zoom/onZoomChange, lastSync,
   tools [{ icon, label, onClick }] (ghost S icon buttons). `left` replaces the whole left side for any type.
@@ -2535,7 +2546,7 @@ open/onOpenChange to control. `inline` renders the bubble alone (gallery).
 **Tier:** Component
 **In handovers:** placed 6× (Explore, Value) · usual: Type success 83%
 Figma: alert-organism (1440:5440)
-Props: type error|warning|success, title, children = Body text, showIcon (Figma show-icon, default off),
+Props: type error|warning (success = Figma variant only: screens never use a success Alert, rule 7.12), title, children = Body text, showIcon (Figma show-icon, default off),
 action = button label (Primary S; absent = show-button off), onAction, onClose (shows the close
 icon-button; Figma show-close-icon), closable=false to hide it.
 `function Alert({ type = 'error', title, children, showIcon = false, action, onAction, onClose, closable = true, className, ...rest })`
@@ -2594,9 +2605,10 @@ Figma: panel-organism (4305:365421); collapsed rail = sidebar-organism View=Coll
 Props: title, actions (node, header right, before the buttons), expanded / defaultExpanded=true / onExpandedChange
 (Figma Expanded: 380px ↔ 48px rail holding only the ←| expand button), dot error|warning (status dot on the rail's button:
 red = errors / open questions, orange = warnings only), showEvidence (show-evidence-chain, circle Tertiary S icon-button),
-onEvidence, onClose (shows ✕ instead of the collapse toggle; the panel then never collapses), full (fills the content area),
+onEvidence, onClose (shows ✕ instead of the collapse toggle; the panel then never collapses), collapsible (default true: every panel can fold;
+false only when a screen is specifically asked to stay open: no toggle, always open; rule 4.6, Nov 20), full (fills the content area),
 children (Content slot). Lives in the page layout: no scrim, no focus trap.
-`function Panel({ title, actions, expanded, defaultExpanded = true, onExpandedChange, dot, showEvidence = true, onEvidence, onClose, full, children, className, style })`
+`function Panel({ title, actions, expanded, defaultExpanded = true, onExpandedChange, dot, showEvidence = true, onEvidence, onClose, collapsible = true, full, children, className, style })`
 
 ### Popover
 **Tier:** Component

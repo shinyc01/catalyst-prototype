@@ -5,7 +5,9 @@
 const STORY_DATE = new Date(2026, 10, 17);                                          // [Added] story "today": Nov 17, 2026
 const DISCOUNT = 0.06;                                                              // [Added] CPV discount rate
 const invById = id => WHISTLER_INVESTMENTS.find(i => i.id === id);
-const fmtMoney = v => { const a = Math.abs(v), s = v < 0 ? '−' : ''; return a >= 1e9 ? `${s}$${(a / 1e9).toFixed(2)}B` : a >= 1e6 ? `${s}$${(a / 1e6).toFixed(1)}M` : a >= 1e3 ? `${s}$${Math.round(a / 1e3)}K` : `${s}$${Math.round(a)}`; };
+// Rule 8.25 (DS 2.0.4): under $10,000 in full; from $10,000 K / M / B with 3 significant digits ($860K · $19.4M · $3.04B); true minus.
+const sig3 = n => n >= 100 ? String(Math.round(n)) : n >= 10 ? n.toFixed(1) : n.toFixed(2);
+const fmtMoney = v => { const a = Math.abs(v), s = v < 0 ? '−' : ''; return a >= 1e9 ? `${s}$${sig3(a / 1e9)}B` : a >= 1e6 ? `${s}$${sig3(a / 1e6)}M` : a >= 1e4 ? `${s}$${sig3(a / 1e3)}K` : `${s}$${Math.round(a).toLocaleString('en-US')}`; };
 const fmtValue = v => (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString();
 const fmtCompact = v => Math.abs(v) >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : fmtValue(v);           // 16.0M for big value scores
 const fmtM = v => fmtMoney(v).replace('.0M', 'M').replace('.0B', 'B');                               // $425M
@@ -16,7 +18,7 @@ function cpvOf(id) {
   return Object.entries(s.spendByYear).reduce((t, [y, v]) => t + v / Math.pow(1 + DISCOUNT, Math.max(0, +y - NOW)), 0);
 }
 const vcOf = id => { const c = cpvOf(id); return c > 0 ? invById(id).totalValue / (c / 1000) : 0; };
-const vcLabel = v => `${Math.abs(v) < 100 ? v.toFixed(1) : Math.round(v).toLocaleString()} V/$K`;
+const vcLabel = v => `${Math.abs(v) < 100 ? v.toFixed(1) : Math.round(v).toLocaleString()}\u00a0V/$K`;   // rule 8.27: non-breaking space before a unit
 const firstSentence = t => (t || '').split(/(?<=\.)\s/)[0];
 
 // Asset-manager metrics, from the model at NOW with the default lenses: health index 0–10 and risk $ ± uncertainty
@@ -180,9 +182,9 @@ const CFO_DECISIONS = [
     fvc: `${fmtM(SC(6864).capex2028)} / ${fmtM(SC(6864).capexMax2028)}`, value: fmtCompact(SC(6864).totalValue) },
 ].concat(PO_DECISIONS.filter(d => d.id !== 'cluster'));
 const COMMAND = {
-  owner: { decisions: OWNER_DECISIONS, works: OWNER_WORKS, convos: OWNER_CONVOS, following: OWNER_FOLLOWING, metrics: 'cpv', followTitle: 'Projects I follow' },
-  asset: { decisions: AM_DECISIONS, works: AM_WORKS, convos: AM_CONVOS, following: AM_FOLLOWING, metrics: 'hi', followTitle: 'Projects I follow' },
-  portfolio: { decisions: PO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed works' },
-  cfo: { decisions: CFO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed works' },
-  cpm: { decisions: PO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed works' },
+  owner: { decisions: OWNER_DECISIONS, works: OWNER_WORKS, convos: OWNER_CONVOS, following: OWNER_FOLLOWING, metrics: 'cpv', followTitle: 'Projects I Follow' },
+  asset: { decisions: AM_DECISIONS, works: AM_WORKS, convos: AM_CONVOS, following: AM_FOLLOWING, metrics: 'hi', followTitle: 'Projects I Follow' },
+  portfolio: { decisions: PO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed Works' },
+  cfo: { decisions: CFO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed Works' },
+  cpm: { decisions: PO_DECISIONS, works: PO_WORKS, convos: PO_CONVOS, following: PO_FOLLOWING, metrics: 'fvc', followTitle: 'Followed Works' },
 };

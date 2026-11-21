@@ -47,7 +47,7 @@ function VfMap({ objectives, extraMeasures, onNode, selected, outOfFocus }) {
 function VfNodePanel({ node, onClose }) {
   if (!node) return null;
   const m = node.model;
-  return <div className="vf-panel"><Panel title={node.title} collapsible={false} onClose={onClose}>
+  return <div className="vf-panel"><Panel title={node.title} actions={<PanelClose onClose={onClose} />} className="proto-fill">
     <div className="col" style={{ gap: 'var(--space-stack)' }}>
       {m ? <>
         <span className="t-label-m-medium">Description</span>
@@ -81,14 +81,18 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
   const activeHeader = ['overview', 'map', 'flow'].includes(page);
   // Figma 2761:256320: an icon-only segmented control (overview · node-map · capital flow) in the header's views slot, after the status
   const views = <SegmentedControl size="s" value={page} onChange={setPage} options={[{ value: 'overview', iconLeft: 'overview', ariaLabel: 'Overview' }, { value: 'map', iconLeft: 'node-map', ariaLabel: 'Map' }, { value: 'flow', iconLeft: 'capital-flow', ariaLabel: 'Capital Flow' }]} />;
-  const header = activeHeader ? <PageHeader title="Q1 2026 Strategy Framework" status={<Indicator type="green">Active</Indicator>} views={views}
+  // [Assumed] framework versions for the title menu ▾ (rule 5.1)
+  const [onTitleMenu, activityPanel] = useActivity('framework', activityVersions(draftStage
+    ? [{ text: `${draft.name} created with Cooper.`, by: 'cooper', day: STORY_DAY }]
+    : [{ text: 'Q1 2026 Strategy Framework drafted.', by: { name: ownerName('NL'), initials: 'NL' }, day: '2026-01-08' }, { text: 'Approved and made active.', by: { name: ownerName('NL'), initials: 'NL' }, day: '2026-01-15' }]));
+  const header = activeHeader ? <PageHeader title="Q1 2026 Strategy Framework" onTitleMenu={onTitleMenu} status={<Indicator type="green">Active</Indicator>} views={views}
       actions={openRecs.length ? <IFS.CooperChip onClick={() => setCooper({ kind: 'recs' })}>{`${openRecs.length} Recommendation${openRecs.length > 1 ? 's' : ''}`}</IFS.CooperChip> : undefined} />
-    : draftStage ? <PageHeader title={draft.name} onBack={() => setPage('library')} status={<Indicator type={VF_STATUS[draft.status].type}>{draft.stage === 'input' ? 'Draft' : VF_STATUS[draft.status].label}</Indicator>}
+    : draftStage ? <PageHeader title={draft.name} onBack={() => setPage('library')} onTitleMenu={onTitleMenu} status={<Indicator type={VF_STATUS[draft.status].type}>{draft.stage === 'input' ? 'Draft' : VF_STATUS[draft.status].label}</Indicator>}
       center={<Stepper current={['input', 'shape', 'review', 'approval'].indexOf(page)} steps={[{ label: 'Input' }, { label: 'Shape' }, { label: 'Review' }, { label: 'Approve' }]} />}
       actions={<div className="row" style={{ gap: 'var(--space-200)' }}><Button type="tertiary" size="s" iconLeft="users-group">1/1</Button>
-        {page === 'input' && <Button type="primary" size="s" disabled={draft.ctx < 100} onClick={() => { setDraft(d => ({ ...d, stage: 'shape' })); setPage('shape'); }}>Shape</Button>}
-        {page === 'shape' && <Button type="primary" size="s" disabled={(draft.trace || []).some(t => t.kind === 'error' && !(draft.traceDone || {})[t.id])} onClick={() => { setDraft(d => ({ ...d, stage: 'review' })); setPage('review'); }}>Review</Button>}
-        {page === 'review' && <Button type="primary" size="s" disabled={!draft.checksPassed} onClick={() => { setDraft(d => ({ ...d, stage: 'approval' })); setPage('approval'); }}>Send for approval</Button>}
+        {page === 'input' && (draft.ctx < 100 ? <Tooltip content="Cooper needs full context first: answer its questions or add documents"><span><Button type="primary" size="s" disabled>Shape</Button></span></Tooltip> : <Button type="primary" size="s" onClick={() => { setDraft(d => ({ ...d, stage: 'shape' })); setPage('shape'); }}>Shape</Button>)}
+        {page === 'shape' && ((draft.trace || []).some(t => t.kind === 'error' && !(draft.traceDone || {})[t.id]) ? <Tooltip content="Fix the errors in the Trace Report first"><span><Button type="primary" size="s" disabled>Review</Button></span></Tooltip> : <Button type="primary" size="s" onClick={() => { setDraft(d => ({ ...d, stage: 'review' })); setPage('review'); }}>Review</Button>)}
+        {page === 'review' && (!draft.checksPassed ? <Tooltip content="Resolve the automated checks first"><span><Button type="primary" size="s" disabled>Send for approval</Button></span></Tooltip> : <Button type="primary" size="s" onClick={() => { setDraft(d => ({ ...d, stage: 'approval' })); setPage('approval'); }}>Send for approval</Button>)}
       </div>} />
     : undefined;
   const prompts = libraryPage ? ['Walk me through this framework', 'What hasn’t been updated in a while?'] : page === 'flow' ? ['Which goals are underserved?', 'Explain this framework to me']
@@ -96,8 +100,11 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
   const walk = () => setCooper({ kind: 'text', text: `I’ll walk you through your Q1 2026 Strategy Framework. Enterprise goals (${VF_GOALS.length}): your top priorities. Value framework: the foundation. Strategic objectives (${VF_OBJECTIVES.length}): how goals become direction, weighted ${VF_OBJECTIVES.map(o => `${o.short} ${o.weight}%`).join(', ')}. Value models (${VF_MODEL_ROWS.length}): the calculation engine. Measures (${VF_MEASURES.length}): what you actually track, all from the demo data.` });
   return (
     <AppShell navBar={navBar} header={header}
-      sideNav={<IFS.SideNav title="Value" items={nav} value={navValue} onSelect={id => id !== 'human' && setPage(id)} defaultCollapsed={canvasPage && !activeHeader} />}
-      bottom={<BottomSheet type="value" documents={{ label: `${draftStage ? (draft.docs || 0) : 16} Documents` }} onUpload={() => draftStage && page === 'input' ? setDraft(d => vfAddInput(d, 'doc')) : toast({ title: 'Upload' })}
+      // rule 7.23: the stage's side nav, open by default; inside a draft framework (thin header + stepper) there is none
+      sideNav={draftStage ? undefined : <IFS.SideNav title="Value" items={nav} value={navValue} onSelect={id => id !== 'human' && setPage(id)} />}
+      // rule 7.22: base Cooper bar on the libraries (PageTop); the documents bar inside a framework; an active framework is read-only (no upload)
+      bottom={libraryPage ? <BottomSheet prompts={prompts} onPrompt={p => /^Walk me through/.test(p) ? walk() : toast({ title: `Cooper: ${p}` })} />
+        : <BottomSheet type="documents" documents={{ label: `${draftStage ? (draft.docs || 0) : 16} Documents` }} onUpload={activeHeader ? undefined : () => draftStage && page === 'input' ? setDraft(d => vfAddInput(d, 'doc')) : toast({ title: 'Upload' })}
         prompts={prompts} onPrompt={p => /^Walk me through/.test(p) ? walk() : toast({ title: `Cooper: ${p}` })} />}>
       {libraryPage && <VfLibrary page={page} setPage={setPage} draft={draft} onNew={() => { setDraft(vfNewDraft()); setPage('input'); }} />}
       {page === 'overview' && <VfOverview />}
@@ -123,6 +130,7 @@ function Value({ navBar, page, setPage, draft, setDraft, recsDone, setRecsDone, 
               if (r.id === 'carbon') setPage('map'); if (r.id === 'inputs') setPage('model-wdrm'); setCooper(openRecs.length > 1 ? { kind: 'recs' } : null); }} />
         </AgentWindow>; })()}
       </div>}
+      {activityPanel}
     </AppShell>
   );
 }
@@ -136,7 +144,7 @@ function VfLibrary({ page, setPage, draft, onNew }) {
       <PageTop title="Value Models" description="Published, archived, draft and individual value models" actions={<Button type="secondary" size="m" iconLeft="system-pencil-plus" onClick={() => toast({ title: 'Create Value Model isn’t part of this flow', description: 'Recalibrate an active model instead' })}>New</Button>}
         tabs={{ items: [{ value: 'all', label: 'All', count: rows.length }, { value: 'active', label: 'Active', count: rows.filter(r => r.status === 'active').length }, { value: 'pending', label: 'Pending Approval', count: rows.filter(r => r.status === 'pending').length }], value: tab, onChange: setTab }}
         search={{ placeholder: 'Ask anything about value models' }} />
-      <VfTable rowHeight={48} rowProps={r => ({ 'data-vm': r.id })} onRowClick={r => setPage(`model-${r.id}`)} rows={rows.filter(r => tab === 'all' || r.status === tab)} defaultSort={{ key: 'investments', dir: 'desc' }} columns={[
+      <VfTable rowProps={r => ({ 'data-vm': r.id })} onRowClick={r => setPage(`model-${r.id}`)} rows={rows.filter(r => tab === 'all' || r.status === tab)} defaultSort={{ key: 'investments', dir: 'desc' }} columns={[
         { key: 'name', title: 'Value model', width: '1.6fr', primary: true }, { key: 'status', title: 'Status', width: '1fr', render: r => <Indicator type={VF_STATUS[r.status].type}>{VF_STATUS[r.status].label}</Indicator> },
         { key: 'modified', title: 'Last modified', width: '1fr', sortable: true, sortValue: r => r.modified, render: r => ideaDay(r.modified) }, { key: 'version', title: 'Version', width: 'var(--table-col-number-min)', render: r => `Version ${r.version}` },
         { key: 'investments', title: 'Investments', type: 'number', width: 'var(--table-col-number-min)', sortable: true }]} />
@@ -146,8 +154,8 @@ function VfLibrary({ page, setPage, draft, onNew }) {
     const rows = [{ id: 'v12', name: 'Value Framework v12', status: 'active', models: VF_MODEL_ROWS.length, measures: VF_MEASURES.length, modified: '2026-01-15' },
       { id: 'v13', name: 'Value Framework v13', status: 'pending', models: VF_MODEL_ROWS.length, measures: VF_MEASURES.length + 1, modified: '2026-01-10' }, { id: 'v11', name: 'Value Framework v11', status: 'archived', models: 6, measures: 39, modified: '2025-04-18' }];
     return <div className="page">
-      <PageTop title="Value Framework" description="Published, archived and draft value frameworks" actions={<Button type="secondary" size="m" iconLeft="system-pencil-plus" onClick={() => toast({ title: 'Create Value Framework isn’t part of this flow' })}>New</Button>} search={{ placeholder: 'Ask anything about value frameworks' }} />
-      <VfTable rowHeight={48} onRowClick={r => r.status === 'active' ? setPage('map') : toast({ title: r.name, description: 'Only the active value framework opens in this flow' })} rows={rows} columns={[
+      <PageTop title="Value Frameworks" description="Published, archived and draft value frameworks" actions={<Button type="secondary" size="m" iconLeft="system-pencil-plus" onClick={() => toast({ title: 'Create Value Framework isn’t part of this flow' })}>New</Button>} search={{ placeholder: 'Ask anything about value frameworks' }} />
+      <VfTable onRowClick={r => r.status === 'active' ? setPage('map') : toast({ title: r.name, description: 'Only the active value framework opens in this flow' })} rows={rows} columns={[
         { key: 'name', title: 'Value framework', width: '1.6fr', primary: true }, { key: 'status', title: 'Status', width: '1fr', render: r => <Indicator type={VF_STATUS[r.status].type}>{VF_STATUS[r.status].label}</Indicator> },
         { key: 'modified', title: 'Last modified', width: '1fr', render: r => ideaDay(r.modified) }, { key: 'models', title: 'Models', type: 'number' }, { key: 'measures', title: 'Value measures', type: 'number' }]} />
     </div>;
@@ -160,7 +168,7 @@ function VfLibrary({ page, setPage, draft, onNew }) {
     <PageTop title="Strategy Framework" description="Published, archived, and draft strategy frameworks" actions={<Button type="secondary" size="m" iconLeft="system-pencil-plus" onClick={onNew}>New</Button>}
       tabs={{ items: [{ value: 'all', label: 'All', count: rows.length }, { value: 'active', label: 'Active', count: count('active') }, { value: 'pending', label: 'Pending Approval', count: count('pending') }, { value: 'archived', label: 'Archived', count: count('archived') }, { value: 'draft', label: 'Draft', count: count('draft') }], value: tab, onChange: setTab }}
       search={{ placeholder: 'Ask anything about strategy frameworks' }} />
-    <VfTable rowHeight={48} rowProps={r => ({ 'data-fw': r.id })} rows={rows.filter(r => tab === 'all' || r.status === tab)}
+    <VfTable rowProps={r => ({ 'data-fw': r.id })} rows={rows.filter(r => tab === 'all' || r.status === tab)}
       onRowClick={r => r.id === 'draft' ? setPage(r.status === 'draft' ? draft.stage : r.status === 'revisions' ? 'shape' : 'approval') : r.status === 'active' ? setPage('overview') : toast({ title: r.name, description: 'Only the active framework and your draft open in this flow' })}
       columns={[{ key: 'name', title: 'Strategy framework', width: '2fr', primary: true },
         { key: 'status', title: 'Status', width: '1.2fr', render: r => <span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type={VF_STATUS[r.status].type}>{VF_STATUS[r.status].label}</Indicator>
@@ -180,14 +188,14 @@ function VfOverview() {
   const top = [...PLAN_INVESTMENTS].sort((a, b) => b.capex - a.capex).slice(0, 8);
   return <div className="page">
     <div className="ifs-grid">{[['Portfolio Benefit-Cost Ratio', bcr ?? '—', 'value per $1M ÷ 2,000'], ['Total capital', fmtMoney(VF_TOTAL_CAPITAL), `${PLAN_INVESTMENTS.length} investments`], ['Risk coverage', `${Math.round(scored * 100)}%`, 'of investments scored'], ['Industry position', '62nd', 'percentile among peer utilities']]
-      .map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat title={t} value={String(v)} description={d} /></div>)}</div>
+      .map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat size="m" title={t} value={String(v)} description={d} /></div>)}</div>
     <DataVizCard title="Portfolio Under This Framework"><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>{bar(COMPANY.name, VF_WEIGHTS)}{bar('Peer avg', peer)}{bar('Best in class', best)}
       <div className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>{VF_OBJECTIVES.map(o => <LegendSwatch key={o.id} label={o.short} color={`var(--data-viz-data-${o.color})`} />)}</div></div></DataVizCard>
     <div className="ifs-grid">
       <div className="ifs-span-8"><DataVizCard title="Strategic Objectives Breakdown"><div style={{ height: 'var(--proto-chart-l)', width: '100%' }}><ColumnChart data={VF_OBJECTIVES.map(o => ({ label: o.short, value: Math.round(cap[o.id]) }))} valueLabel="Capital" format={v => fmtMoney(v)} /></div></DataVizCard></div>
       <div className="ifs-span-4"><DataVizCard title="Framework Coverage by Measure Type"><VfBarChart data={byType} valueLabel="Measures" /></DataVizCard></div>
     </div>
-    <DataVizCard title="Projects by Strategic Objectives"><div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>{top.map(i => { const p = vfProfile(i); return <div key={i.id} className="row" style={{ gap: 'var(--space-300)' }}>
+    <DataVizCard title="Investments by Strategic Objective"><div className="col" style={{ gap: 'var(--space-200)', width: '100%' }}>{top.map(i => { const p = vfProfile(i); return <div key={i.id} className="row" style={{ gap: 'var(--space-300)' }}>
       <span className="t-body-m-regular plan-ellipsis" style={{ width: 'var(--proto-plan-side-w)' }}>{i.name}</span>
       <div className="row" style={{ gap: 'var(--space-50)', flex: 1 }}>{VF_OBJECTIVES.map(o => <BarChartItem key={o.id} fill={`var(--data-viz-data-${o.color})`} number={p[o.id] > 0.12} style={{ flex: p[o.id] }} title={`${o.short} ${Math.round(p[o.id] * 100)}%`}>{`${Math.round(p[o.id] * 100)}%`}</BarChartItem>)}</div>
       <span className="t-label-m-medium t-numeric">{fmtMoney(i.capex)}</span></div>; })}</div></DataVizCard>
@@ -206,7 +214,7 @@ function VfFlow() {
     ...VF_MODEL_ROWS.map(m => ({ source: m.objective, target: m.id, value: perModel(m) })), ...VF_MODEL_ROWS.map(m => ({ source: m.id, target: `ms-${m.id}`, value: perModel(m) }))];
   return <div className="page">
     <div className="ifs-grid">{[['Industry position', '62nd'], ['Risk coverage', `${Math.round(PLAN_INVESTMENTS.filter(i => i.value > 0).length / PLAN_INVESTMENTS.length * 100)}%`], ['Total capital', B(VF_TOTAL_CAPITAL)], ['Portfolio Benefit-Cost Ratio', String(bcrOf(VF_TOTAL_VALUE, VF_TOTAL_CAPITAL) ?? '—')]]
-      .map(([t, v]) => <div key={t} className="ifs-span-3"><VfStat title={t} value={v} description="Q1 2026" /></div>)}</div>
+      .map(([t, v]) => <div key={t} className="ifs-span-3"><VfStat size="m" title={t} value={v} description="Q1 2026" /></div>)}</div>
     <ContentCard bottom={<div style={{ width: '100%' }}><VfSankey columns={[{ id: 'g', label: 'Goals' }, { id: 'f', label: 'Value framework' }, { id: 'o', label: 'Strategic objectives' }, { id: 'm', label: 'Models' }, { id: 'x', label: 'Measure output' }]}
       nodes={nodes} links={links} onNodeClick={n => toast({ title: n.label })} /></div>} />
   </div>;
@@ -225,7 +233,7 @@ const VF_PROMPTS = [{ id: 'p1', title: 'Strategic priorities', q: 'What are the 
 function VfInput({ draft, setDraft }) {
   const [text, setText] = useState('');
   if (!draft.started) return <div className="vf-choose">
-    <span className="t-heading-h2-medium">How would you like to start the new Strategy Framework?</span>
+    <h1 className="t-heading-h1-medium" style={{ margin: 0 }}>How Would You Like to Start the New Strategy Framework?</h1>
     <ContentCard title="Built by Cooper" description="Cooper has analyzed global market trends, industry shifts, and your context, then built a new Strategy Framework" onClick={() => setDraft(d => ({ ...vfNewDraft(), started: true, stage: 'shape', ctx: 100, docs: 3, goals: VF_GOALS.length, byCooper: true }))} />
     <ContentCard title="Start with Enterprise Goals" description="Upload your documents or describe your context. Cooper builds a Strategy Framework from scratch" iconRight="arrow-right" onClick={() => setDraft(d => ({ ...vfNewDraft(), started: true }))} />
     <ContentCard title="Duplicate Framework" description="Search any framework. Duplicate it and enhance the copy with new documents and context" onClick={() => toast({ title: 'Duplicate Framework isn’t part of this flow' })} />
@@ -239,7 +247,7 @@ function VfInput({ draft, setDraft }) {
         {!draft.inputs.length && <span className="t-body-m-regular muted">Speak, type or upload what Cooper should know.</span>}</div>
       <div className="col" style={{ gap: 'var(--space-200)' }}>{goals.map(g => <VfNode key={g} type="enterprise-goal" title={g} stackIcons={false} />)}</div>
     </div>
-    <div className="rf-cooper"><AgentWindow title="Create enterprise goals" text={draft.inputs.length ? `I added ${goals.length} enterprise goal${goals.length === 1 ? '' : 's'} from what you told me. To make these goals accurate, answer one of these — you don’t have to answer all three.` : 'Tell me about the organisation’s goals for the next cycle: speak, type, or drop in documents.'} onClose={() => {}} onAsk={() => {}}>
+    <div className="rf-cooper"><AgentWindow title="Create Enterprise Goals" text={draft.inputs.length ? `I added ${goals.length} enterprise goal${goals.length === 1 ? '' : 's'} from what you told me. To make these goals accurate, answer one of these — you don’t have to answer all three.` : 'Tell me about the organisation’s goals for the next cycle: speak, type, or drop in documents.'} onClose={() => {}} onAsk={() => {}}>
       {draft.inputs.length > 0 && draft.ctx < 100 && <div className="col" style={{ gap: 'var(--space-200)' }}>{VF_PROMPTS.filter(p => !(draft.answered || []).includes(p.id)).map(p => <ContentCard key={p.id} size="s" title={p.title} description={p.q}
         onClick={() => setDraft(d => ({ ...vfAddInput(d, 'answer', p.title), answered: [...(d.answered || []), p.id] }))} />)}</div>}
       {draft.ctx >= 100 && <span className="t-label-m-medium">Cooper has enough context. Move to Shape when you’re ready.</span>}
@@ -281,13 +289,13 @@ function VfShape({ draft, setDraft }) {
       <VfMap objectives={draft.objectives} selected={node && node.id} onNode={setNode} />
     </div>
     <NDS label="Weights total (no weight control in Figma)" className="vf-total row"><span className="t-body-m-regular sec">Objective weights</span><span className={`t-label-m-medium t-numeric ${Math.round(total) > 100 ? 'plan-down' : ''}`}>{`${Math.round(total * 10) / 10}%`}</span></NDS>
-    {picker && draft.kind !== 'model' && <div className="vf-picker"><Panel title="Strategic objectives" collapsible={false} onClose={() => setPicker(false)}>
+    {picker && draft.kind !== 'model' && <div className="vf-picker"><Panel title="Strategic Objectives" actions={<PanelClose onClose={() => setPicker(false)} />} className="proto-fill">
       <div className="col" style={{ gap: 'var(--space-200)' }}><IFS.SmartSearch placeholder="Ask anything about strategic objectives" />
         {VF_OBJECTIVE_LIBRARY.filter(o => !draft.objectives.some(x => x.id === o.id)).map(o => <div key={o.id} className="row" style={{ gap: 'var(--space-200)' }}>
           <div style={{ flex: 1, minWidth: 0 }}><VfPick title={o.name} description={o.text} dragData={o.id} /></div>
           <IconButton icon="system-plus" type="tertiary" size="s" label={`Add ${o.name}`} onClick={() => add(o.id)} /></div>)}</div>
     </Panel></div>}
-    {issues.length > 0 && Object.keys(draft.traceDone || {}).length < 1 && <div className="vf-trace"><IFS.TraceReport controller={c} type="drawer" title={draft.kind === 'model' ? 'Recalibration' : 'Trace report'} onUndo={draft.kind === 'model' ? undefined : () => setDraft(d => ({ ...d, objectives: d.objectives.slice(0, -1), trace: [], traceDone: {} }))} /></div>}
+    {issues.length > 0 && Object.keys(draft.traceDone || {}).length < 1 && <div className="vf-trace"><IFS.TraceReport controller={c} type="drawer" title={draft.kind === 'model' ? 'Recalibration' : 'Trace Report'} onUndo={draft.kind === 'model' ? undefined : () => setDraft(d => ({ ...d, objectives: d.objectives.slice(0, -1), trace: [], traceDone: {} }))} /></div>}
     <VfNodePanel node={node} onClose={() => setNode(null)} />
   </>;
 }
@@ -306,7 +314,7 @@ function VfReview({ draft, setDraft }) {
   const rows = [...sorted.slice(0, 3).map(r => ({ ...r, grp: 'Biggest gainers' })), ...sorted.slice(-3).reverse().map(r => ({ ...r, grp: 'Lost the most value' })), ...imp.rows.filter(r => Math.abs(r.change) < 0.01).map(r => ({ ...r, grp: 'Unchanged' }))];
   const relUp = Math.round((proposed.reliability / VF_WEIGHTS.reliability - 1) * 100), socDown = Math.round((1 - proposed.social / VF_WEIGHTS.social) * 100);
   return <div className="page-row"><div className="page">
-    <RfTitle title="Executive summary" text={`Applying this change increases Reliability influence by ${relUp}%, decreases Safety influence by ${socDown}%, and changes the value of ${imp.gained + imp.lost} investments. ${imp.tierIn || imp.tierOut ? `${imp.tierIn} investments move into the funding tier; ${imp.tierOut} drop out of it.` : 'No investment moves across the funding line.'}`} />
+    <RfTitle title="Executive Summary" text={`Applying this change increases Reliability influence by ${relUp}%, decreases Safety influence by ${socDown}%, and changes the value of ${imp.gained + imp.lost} investments. ${imp.tierIn || imp.tierOut ? `${imp.tierIn} investments move into the funding tier; ${imp.tierOut} drop out of it.` : 'No investment moves across the funding line.'}`} />
     <div className="ifs-grid">{[['Portfolio value', `${(imp.before / 1e6).toFixed(1)}M → ${(imp.after / 1e6).toFixed(1)}M`, `${pctCh >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(pctCh * 1000) / 10)}%`],
       ['Investments re-scored', String(imp.rows.length), `${imp.gained} gained · ${imp.lost} lost · ${imp.unchanged} unchanged`], ['Funding tier changes', String(imp.tierIn + imp.tierOut), `${imp.tierIn} gained · ${imp.tierOut} lost`],
       ['Governance flags', String(imp.executing), 'executing investment affected']].map(([t, v, d]) => <div key={t} className="ifs-span-3"><VfStat title={t} value={v} description={d} /></div>)}</div>
@@ -314,13 +322,13 @@ function VfReview({ draft, setDraft }) {
     <DataVizCard title="Investment Value Impact"><div className="col" style={{ gap: 'var(--space-stack)', width: '100%' }}>
       <span className="t-body-m-regular sec">{`Re-scored ${imp.rows.length} · net value change ${pctCh >= 0 ? '+' : ''}${Math.round(pctCh * 1000) / 10}% · materially impacted ${imp.material}. Value change is measured as % of each investment’s value under the proposed framework vs. current.`}</span>
       <ColumnChart data={imp.buckets} valueLabel="Investments" /></div></DataVizCard>
-    <ContentCard bottom={<div style={{ width: '100%' }}><VfTable rowHeight={52} groupBy="grp" defaultCollapsed={['Unchanged']} rows={rows} columns={[
+    <ContentCard bottom={<div style={{ width: '100%' }}><VfTable groupBy="grp" defaultCollapsed={['Unchanged']} rows={rows} columns={[
       { key: 'name', title: 'Investment', width: '2fr', primary: true }, { key: 'type', title: 'Type', width: '1fr', render: r => <Badge size="s" color="white">{VF_TYPE_LABEL[r.type]}</Badge> },
       { key: 'after', title: 'Total value', type: 'number', width: '1.2fr', render: r => `${fmtValue(r.before)} → ${fmtValue(r.after)}` },
       { key: 'change', title: 'Value change', type: 'number', width: '1fr', render: r => <span className={r.change >= 0 ? 'plan-up' : 'plan-down'}>{`${r.change >= 0 ? '▲ +' : '▼ '}${Math.round(r.change * 1000) / 10}%`}</span> },
       { key: 'ratio', title: 'Value / cost ratio', type: 'number', width: '1fr', render: r => `${(r.before / (r.capex / 1e6)).toFixed(0)} → ${(r.after / (r.capex / 1e6)).toFixed(0)}` }]} /></div>} />
   </div>
-  <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}><Panel title="Automated checks" collapsible={false} className="ifs-trc-panel" style={{ height: '100%' }}>
+  <div className="page-dock" style={{ height: 'calc(100vh - var(--proto-sticky-offset))' }}><Panel title="Automated Checks" className="ifs-trc-panel" style={{ height: '100%' }}>
     <ContentCard className="ifs-trc-card" title={<VfGates controller={c} label="Checks" />} bottom={<div className="ifs-trc-card__issues has-kinds"><div className="ifs-trc-card__kinds"><VfKinds controller={c} /></div><VfNavigator controller={c} /></div>} />
   </Panel></div></div>;
 }
@@ -343,12 +351,13 @@ function VfApproval({ draft, setDraft, setPage }) {
     toast({ title: 'Sent for approval', description: 'The approvers are notified' }); };
   const approvers = draft.approvers.map(a => a.status === 'rejected' ? { ...a, action: { label: 'Shape', icon: 'flag', onClick: () => { setDraft(d => ({ ...d, stage: 'shape', status: 'draft' })); setPage('shape'); } } } : a);
   return <div className="page">
-    <RfTitle title="Send for approval" text={`These approvers were added earlier in the framework setup. Notify them or send ${draft.name} for approval — required approvers must respond before it can publish.`}
-      right={draft.status === 'ready' ? <Menu label="Publish" trigger={<Button type="primary" size="s" iconRight="arrow-caret-down-filled">Publish</Button>} items={[
+    <RfTitle title="Send for Approval" text={`These approvers were added earlier in the framework setup. Notify them or send ${draft.name} for approval — required approvers must respond before it can publish.`}
+      right={draft.status === 'ready' ? <Menu label="Publish" trigger={<Button type="primary" size="m" iconRight="arrow-caret-down-filled">Publish</Button>} items={[
         { label: 'Publish now', description: 'Apply this framework immediately.', onClick: () => { setDraft(d => ({ ...d, status: 'active', published: true })); toast({ title: `${draft.name} published`, description: 'Investments are re-scored against it' }); } },
-        { label: 'Schedule', description: 'Pick a date and time to publish automatically.', onClick: () => { setDraft(d => ({ ...d, status: 'scheduled', scheduled: 'Jan 1, 2027 · 9:30 AM' })); toast({ title: 'Publication scheduled', description: 'Jan 1, 2027 · 9:30 AM, the start of the 2027 cycle' }); } }]} />
+        { label: 'Schedule', description: 'Pick a date and time to publish automatically.', onClick: () => { setDraft(d => ({ ...d, status: 'scheduled', scheduled: 'Jan 1, 2027, 9:30 AM' })); toast({ title: 'Publication scheduled', description: 'Jan 1, 2027 · 9:30 AM, the start of the 2027 cycle' }); } }]} />
         : draft.status === 'scheduled' ? <Badge size="s" color="white">{`Scheduled · ${draft.scheduled}`}</Badge>
-        : <Button type="primary" size="s" disabled={draft.status === 'pending'} onClick={send}>{draft.rounds ? 'Send again' : 'Send'}</Button>} />
+        : (draft.status === 'pending' ? <Tooltip content="Waiting for the approvers to respond"><span><Button type="primary" size="m" disabled>{draft.rounds ? 'Send again' : 'Send'}</Button></span></Tooltip>
+          : <Button type="primary" size="m" onClick={send}>{draft.rounds ? 'Send again' : 'Send'}</Button>)} />
     {draft.status === 'revisions' && <IFS.Alert type="warning" title="Revisions required">Luca Ferri asked for changes. Open Shape from his row, fix it and send again.</IFS.Alert>}
     <ContentCard bottom={<div style={{ width: '100%' }}><VfApprovals approvers={approvers} currentUserId="IC" ownerId="IC" view={sent ? 'full' : 'compact'}
       onChange={a => setDraft(d => ({ ...d, approvers: a }))} onNoteChange={(a, note) => setDraft(d => ({ ...d, approvers: d.approvers.map(x => x.id === a.id ? { ...x, note } : x) }))} /></div>} />
@@ -361,7 +370,7 @@ function VfModel({ id, onEdit }) {
   const inputs = ['Probability of failure', 'Consequence of failure', 'Weather adjustment factor', 'Currency to value units'];
   return <div className="page">
     <RfTitle title={m.name} text={`${VF_STATUS[m.status].label} · Version ${m.version} · ${m.investments} investments · scores ${m.measures.length} measure${m.measures.length === 1 ? '' : 's'}`}
-      right={<Button type="secondary" size="s" iconLeft="system-edit-rename" onClick={() => onEdit(m)}>Edit</Button>} />
+      right={<Button type="secondary" size="m" iconLeft="system-edit-rename" onClick={() => onEdit(m)}>Edit</Button>} />
     <div className="ifs-grid">
       <div className="ifs-span-8"><ContentCard bottom={<div className="vf-model-flow">
         <div className="col" style={{ gap: 'var(--space-200)' }}><span className="t-label-m-medium sec">Input</span>{inputs.map(x => <VfNode key={x} type="value-model" title={x} stackIcons={false} />)}</div>
