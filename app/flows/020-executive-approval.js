@@ -21,6 +21,6 @@
     { hash: '#plan-approve?persona=cfo', target: { text: 'Decide' }, title: 'Decide', body: 'Approve, or request changes with a comment.' },
     { target: '.ifs-modal', advance: 'next', title: 'Add a comment', body: 'Optional for an approval, required for a change request. Everyone in the chain sees it.' },
     { target: '.ifs-modal [aria-label="Approve"], .ifs-modal .ifs-button--primary', title: 'Approve', body: 'Your row turns Approved and the gate count advances.' },
-    { target: '[data-gate="executive"]', advance: 'next', title: 'Recorded', body: 'The Executive gate shows your decision; the other reviewers follow.' },
+    { target: { text: 'Executive' }, advance: 'next', title: 'Recorded', body: 'The Executive gate shows your decision; the other reviewers follow.' },
   ],
 });

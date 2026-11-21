@@ -18,7 +18,7 @@
     { target: { text: 'Change reviewer' }, title: 'Adjust who reviews',
       body: 'Tara Quinn wants a benchmark first and is away. Change the reviewer: Mara Delgado takes her place.' },
     { target: '[aria-label^="Push Mara"]', title: 'Notify the new reviewer', body: 'Push Mara so she sees it now.' },
-    { target: '[data-gate="technical"]', advance: 'next', title: 'Other gates open',
+    { target: { text: 'Technical' }, advance: 'next', title: 'Other gates open',
       body: 'When Executive approves, Technical and Financial open together.' },
     { target: '[aria-label^="Push Luca"]', title: 'One more push', body: 'Luca Ferri (Field Engineering Lead) is the last one waiting.' },
     { target: { text: 'Publish', exact: true }, title: 'Publish',

@@ -9,7 +9,7 @@
     { label: 'Figma · Approved — Publish / Schedule', url: 'https://www.figma.com/design/Dv3HzkcFTTrb4E34zLF7cy/?node-id=84-108890' },
   ],
   steps: [
-    { hash: '#plan-approve?persona=cpm&demo=approved', target: '[data-gate="executive"]', advance: 'next', title: 'Every gate passed',
+    { hash: '#plan-approve?persona=cpm&demo=approved', target: { text: 'Executive' }, advance: 'next', title: 'Every gate passed',
       body: 'Executive, Technical and Financial have approved. Publish is enabled.' },
     { target: { text: 'Publish', exact: true }, title: 'Publish', body: 'Publish now, or pick a date and time to schedule it for the cycle start.' },
     { target: { text: 'Publish now', exact: true }, title: 'Make it the baseline', body: 'The plan becomes the active budget baseline.' },

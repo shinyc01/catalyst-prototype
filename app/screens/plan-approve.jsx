@@ -31,7 +31,6 @@ function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish,
     onDecided && onDecided(k, n);
   };
   const c = compareScenarios().find(x => x.id === final) || COMPARE_SCENARIOS[1];
-  const [open, setOpen] = useState({ executive: true });
   const [pub, setPub] = useState(false);
   const all = PA_GATES.every(g => paApproved(gates[g.id]));
   // [Assumed] reviewers answer on their own a few seconds after a gate opens, except PA_SLOW
@@ -44,7 +43,6 @@ function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish,
     return () => clearTimeout(t);
   }, [JSON.stringify(PA_GATES.map(g => paOpen(g.id, gates)))]);
   useEffect(() => { if (all && stage === 'approval') onPublish('approved'); }, [all]);
-  useEffect(() => { PA_GATES.forEach(g => { if (paOpen(g.id, gates) && !paApproved(gates[g.id])) setOpen(o => ({ ...o, [g.id]: true })); }); }, [JSON.stringify(PA_GATES.map(g => paOpen(g.id, gates)))]);
   const push = (gid, a) => setTimeout(() => setGates(gs => ({ ...gs, [gid]: gs[gid].map(r => r.id === a.id ? { ...r, status: 'success' } : r) })), 3000);
   const change = (gid, r) => setGates(gs => ({ ...gs, [gid]: gs[gid].map(x => x.id === r.id ? { ...paRow('MD', 'Mara Delgado', 'VP of Planning', 'awaiting'), replaced: { name: x.name, avatar: x.avatar } } : x) }));
   const [onTitleMenu, activityPanel] = useActivity('plan', planVersions(stage, true), PA_GATES.flatMap(g => gates[g.id] || []));
@@ -68,19 +66,15 @@ function PlanApprove({ navBar, final, gates, setGates, stage, onBack, onPublish,
         </div>
         <div className="ifs-grid">{[['Cost', fmtMoney(c.capex), `${c.name}`], ['Retained risk (2032)', c.risk2032 == null ? '—' : fmtCompact(c.risk2032), 'aggregate risk'], ['Investments funded', String(c.onSchedule), `of ${PLAN_INVESTMENTS.length} · ${c.deferred} deferred`]]
           .map(([t, v, d]) => <div key={t} className="ifs-span-4"><StatCard size="s" title={t} value={v} description={d} /></div>)}</div>
-        <ContentCard bottom={<div className="col" style={{ gap: 'var(--space-100)', width: '100%' }}>{PA_GATES.map(g => {
-          const rows = gates[g.id], ok = paApproved(rows), avail = paOpen(g.id, gates), isOpen = avail && open[g.id];
-          return <div key={g.id} className="col" style={{ gap: 'var(--space-100)' }}>
-            <button className="pa-gate" data-gate={g.id} disabled={!avail} aria-expanded={!!isOpen} onClick={() => setOpen(o => ({ ...o, [g.id]: !o[g.id] }))}>
-              <Icon name={!avail ? 'lock' : isOpen ? 'arrow-caret-down-filled' : 'arrow-caret-right-filled'} size={16} />
-              <span className="t-label-m-medium" style={{ flex: 1 }}>{g.label}</span>
-              {avail && (ok ? <Indicator type="green">Approved</Indicator> : <span className="row" style={{ gap: 'var(--space-150)' }}><Indicator type="orange">Under review</Indicator><IFS.Counter>{`${rows.filter(r => r.status === 'success').length}/${rows.length}`}</IFS.Counter></span>)}
-              {!avail && <span className="t-body-m-regular muted">Opens when Executive is approved</span>}
-            </button>
-            {isOpen && <IFS.ApprovalChainTable view="full" details currentUserId={me || 'OF'} ownerId="OF" onChange={a => setGates(gs => ({ ...gs, [g.id]: a.map(x => { const r = { ...x }; delete r.action; return r; }) }))}
-              approvers={rows.map(r => g.id === 'executive' && r.id === 'TQ' && r.status !== 'success' ? { ...r, action: { label: 'Change reviewer', icon: 'users-group', onClick: () => change(g.id, r) } } : r)}
-              onPush={a => push(g.id, a)} />}
-          </div>; })}</div>} />
+        {/* rule 7.9 / Approval chain rule 10: one ApprovalChainTable with a stage per gate (Executive opens first; Technical and Financial together after it).
+            The kit reads a stage's fold on mount, so the key remounts it when a stage unlocks and the newly open stages unfold. */}
+        <IFS.ApprovalChainTable key={PA_GATES.map(g => paOpen(g.id, gates) ? 1 : 0).join('')} view="full" details currentUserId={me || 'OF'} ownerId="OF" className="pa-chain"
+          stages={PA_GATES.map(g => { const avail = paOpen(g.id, gates);
+            return { id: g.id, label: g.label, locked: !avail, note: avail ? undefined : 'Opens when Executive is approved', collapsed: !avail,   // the kit also folds a fully approved stage
+              approvers: gates[g.id].map(r => g.id === 'executive' && r.id === 'TQ' && r.status !== 'success' ? { ...r, action: { label: 'Change reviewer', icon: 'users-group', onClick: () => change(g.id, r) } } : r) }; })}
+          onStagesChange={st => {
+            setGates(gs => ({ ...gs, ...Object.fromEntries(st.map(x => [x.id, x.approvers.map(a => { const r = { ...a }; delete r.action; return r; })])) })); }}
+          onPush={a => { const g = PA_GATES.find(x => gates[x.id].some(r => r.id === a.id)); g && push(g.id, a); }} />
       </div>
       {answer && <div className="rec-evidence"><AgentWindow text={answer} onClose={() => setAnswer(null)} onAsk={() => {}} /></div>}
       <Modal open={decide !== null} onOpenChange={o => !o && setDecide(null)} title={decide === 'approve' ? 'Approve the Plan' : 'Request Changes'} width="var(--overlay-width-m)"
