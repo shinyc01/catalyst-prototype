@@ -151,29 +151,12 @@ function Command({ navBar, lenses, persona, onOpen }) {
 
             {tab === 'conversations' && <div className="col" style={{ gap: 'var(--space-200)' }}>
               {C.convos.map((c, i) => { const p = PEOPLE[c.person], n = notified[c.id]; return (
-                <RowShell key={c.id} id={c.id}>
-                  <NDS label="Response card" className="cmd-convo row">
-                    <span className="cmd-rank t-body-s-medium">{i + 1}</span>
-                    <Avatar initials={p.initials} type={p.type} size="m" />
-                    <div className="col" style={{ flex: 1, minWidth: 0, gap: 'var(--space-50)' }}>
-                      <span className="t-label-l-medium cmd-trunc">{c.title}</span>
-                      <span className="t-body-m-regular muted">{p.role}</span>
-                      <span className="t-body-m-regular sec"><Trunc text={c.message} /></span>
-                    </div>
-                    <div className="col" style={{ width: 'var(--proto-picker-w)', flex: 'none', gap: 'var(--space-100)' }}>
-                      {c.status === '@you' && <Badge size="s" color="white">@you</Badge>}
-                      {c.status === 'Approved' && <Indicator type="green">Approved</Indicator>}
-                      {c.status === 'Rejected' && <Indicator type="red">Rejected</Indicator>}
-                      {c.status === 'Confirm viability' && <Badge size="s" color="false" avatar={{ initials: p.initials, type: p.type }}>Confirm viability</Badge>}
-                      {c.status === 'mention' && <Badge size="s" color="false" avatar={{ initials: p.initials, type: p.type }}>{c.message.slice(0, 26)}…</Badge>}
-                      {c.status === 'Wait for reply' && <Badge size="s" color="white">Wait for reply</Badge>}
-                      {n && <span className="t-body-m-regular"><span className="muted">Last notified: </span>{n}</span>}
-                    </div>
-                    {c.status === 'Wait for reply'
-                      ? (n ? <Tooltip content="Reminder already sent"><span><Button type="tertiary" size="s" iconLeft="system-notification" disabled>Notified</Button></span></Tooltip>
-                          : <IconButton icon="system-notification" type="ghost" size="s" label={`Remind ${p.name}`} onClick={() => { setNotified(x => ({ ...x, [c.id]: fmtDay(STORY_DATE) })); toast({ title: `Reminder sent to ${p.name}`, description: 'Added to their Conversations list', duration: 5000 }); }} />)
-                      : <IconButton icon="arrow-right" type="ghost" size="s" label="Open where the comment was made" onClick={() => onOpen(c)} />}
-                  </NDS>
+                <RowShell key={c.id} id={c.id} menu={c.status === 'Wait for reply' ? [n ? { label: `Reminded ${n}`, disabled: true } : { label: `Remind ${p.name}`, icon: 'system-notification', onClick: () => { setNotified(x => ({ ...x, [c.id]: fmtDay(STORY_DATE) })); toast({ title: `Reminder sent to ${p.name}`, description: 'Added to their Conversations list', duration: 5000 }); } }] : undefined}>
+                  {/* Figma response card = the kit HomeRowCard (secondary): rank, person, title, their message, status tag; the arrow opens where it was said.
+                      Remind (Wait for reply) moves to the card's ⋮ menu, since the card has one action (rule 7.9: one of each) */}
+                  <HomeRowCard type="secondary" rank={i + 1} title={c.title} collaboration={{ initials: p.initials, type: p.type }}
+                    description={`${p.role} · ${c.message}${n ? ` · Last notified ${n}` : ''}`} badge={c.status === 'mention' ? '@ mention' : c.status}
+                    onOpen={() => onOpen(c)} openLabel="Open where the comment was made" />
                 </RowShell>); })}
             </div>}
 
@@ -200,8 +183,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
               <div className="t-heading-h2-medium">1 Year</div><div className="t-body-m-regular muted">Time horizon</div>
             </div>
           </NDS>
-          <div className="box col" style={{ gap: 'var(--space-300)' }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}><span className="t-label-l-medium">Milestone</span><span className="t-body-m-regular sec">9d left</span></div>
+          <ContentCard title="Milestone" description="9 days left" bottom={<div className="col" style={{ gap: 'var(--space-300)', width: '100%' }}>
             <ProgressBar value={8} label="Milestone progress" />
             <div className="t-body-m-regular sec row" style={{ justifyContent: 'space-between' }}><span>Drafts</span><span>Re-submit</span><span>SG2 window</span><span>Gate</span></div>
             <Calendar defaultMonth={STORY_DATE} today={STORY_DATE} events={evByDay} value={day} onChange={setDay} />
@@ -209,7 +191,7 @@ function Command({ navBar, lenses, persona, onOpen }) {
             <NDS label="Calendar legend" className="row" style={{ gap: 'var(--space-400)', flexWrap: 'wrap' }}>
               {Object.values(EVENT_TYPES).map(t => <LegendSwatch key={t.label} label={t.label} color={TONE_COLOR[t.tone]} />)}
             </NDS>
-          </div>
+          </div>} />
         </div>
       </div></div>
 
