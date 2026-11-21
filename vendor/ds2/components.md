@@ -1,4 +1,4 @@
-# Catalyst Design System 2.0.3 — components and patterns
+# Catalyst Design System 2.0.4 — components and patterns
 
 The catalogue: which component to use for what, then how the patterns work. Rules live in [rules.md](rules.md) and are referenced by number, not repeated. Full props: [`dist/api.md`](../dist/api.md). Figma keys, node ids, variant axes and review items: [figma.json](figma.json).
 
@@ -14,7 +14,8 @@ How to read an entry: `### <Figma set name> · <kit component>` (no kit name = a
 | Open Cooper | `FtaButton`; quick prompts `PromptButton` | — |
 | Single-line / multi-line text | `TextField` / `TextArea` | — |
 | Phone number | `PhoneField` | `TextField` |
-| Search by name or keyword | `Search` | `SmartSearch` (natural language, Cooper) |
+| Search (default: tables, libraries, pages) | `SmartSearch` (AI search: keywords or natural language) | — |
+| Simple keyword search, when the use case needs no AI (column filters, small lists) | `Search` | — |
 | A form on a page | `FormCard` | `Modal` (blocking task) |
 | One of 2–5 options, all visible | `SegmentedControl` | `Tabs` (peer views of a page) |
 | One of many options | `Select`; typeable or long → `Combobox` | `SegmentedControl` |
@@ -27,13 +28,14 @@ How to read an entry: `### <Figma set name> · <kit component>` (no kit name = a
 | Read-only status or category | `Badge`, `Indicator` | `Chip` |
 | Status that matters (risk, health) | `RiskStatus` | `StatusIndicator` (dot only) |
 | Readiness / completion gate | `ReadinessStatus` | `RiskStatus` |
-| Stages (L1) / sections in a stage (L2) | `NavBar` / `SideNav` | `Tabs` |
+| Stages (L1) / a stage's sections or one entity's own pages (L2, rule 7.23) | `NavBar` / `SideNav` | `Tabs` |
 | Peer views in a page; table filter on a library page | `Tabs` | `SegmentedControl` |
 | Progress through steps | `Stepper` (non-interactive) | `Tabs` |
 | Place in a hierarchy, go up a level | `Breadcrumb` | Ghost `Button` |
 | Step through items one at a time | `Pager` | table pagination |
 | Short hint on hover / focus | `Tooltip` | `Popover` (interactive) |
-| Error / warning / success | `Alert` | `Snackbar` (neutral confirmation, Undo) |
+| Error / warning | `Alert` | `Snackbar` (the result of the user's own action, Undo) |
+| News the user didn't cause (approved, finished) | Notification (`NotificationCard` in the tray) + a live `Snackbar` | a success `Alert` (rule 7.12) |
 | Blocking task | `Modal` | `Drawer` |
 | Larger on-demand task, same view | `Drawer` | `Panel` (always on) |
 | Always-on side context | `Panel` | `Drawer` |
@@ -68,7 +70,7 @@ Use: A small fixed set (2–4) of related actions tied to a point on a canvas/ma
 Don't: More than ~4 actions; actions not memorable by position; primary page actions (those belong in toolbars/labelled buttons).
 
 ### icon-button-notification · `NotificationButton`
-Use: The bell in `global-header`; True shows the unread dot.
+Use: The bell in `NavBar`; True shows the unread dot.
 
 ### icon-button-comment · `CommentButton`
 Use: Opening comments; True shows a new-comment dot.
@@ -117,11 +119,10 @@ Use: Phone numbers; supports country/region selection and international format. 
 Use: Multi-line text. L full page (grows 140→300px), M compact (100→260px); then scrolls internally. Width 140–400px.
 
 ### search-regular-organism · `Search`
-Use: Keyword/name search over a list or table.
-Don't: Natural-language questions — that is the separate Cooper "Ask anything…" bar.
+Use: Simple keyword/name search where the use case needs no AI (column filters, small lists). The default search is `SmartSearch`; which one is the screen's call by use case (Nov 20).
 
 ### smart-search-organism · `SmartSearch`
-Use: Natural-language queries and prompts, where the system interprets intent instead of only matching names.
+Use: The default search (AI search): keywords or natural-language queries, where the system interprets intent instead of only matching names.
 Notes: Keep it visually distinct from column filters.
 
 ### form-card-organism · `FormCard`
@@ -236,7 +237,7 @@ Family note: Atoms are items; organisms are the containers with slots.
 Use: One sidebar row: section (Parent), sub-section (Child), group header (Subtitle).
 
 ### navigation-panel-organism · `SideNav`
-Use: Level 2 navigation: the sidebar listing the sections of the active stage. One sidebar for all stages; only the list changes. Only its header (stage title + collapse) is sticky when the list scrolls. Exactly one item is current. Folding: rule 4.7.
+Use: Level 2 navigation (what it lists and when it shows: rule 7.23). One sidebar for all levels; only the list changes. Only its header (level title + collapse) is sticky when the list scrolls. Exactly one item is current. Folding: rule 4.7.
 
 ### tab · `Tabs`
 Use: One tab; use `show-counter` for table filter tabs.
@@ -329,10 +330,10 @@ Use: A person or Cooper anywhere in the UI (header user menu, cards, comments).
 Use: Live multiplayer cursor with name label; one stable colour per user (rule 7.18).
 
 ### content-card-organism · `ContentCard`
-Use: Every content card (content, selectable, settings, link, media; rule 7.8); vary it with props. M in primary areas, dashboards and full-width lists; S nested in drawers, side panels, popovers and dense lists.
+Use: Every content card (content, selectable, settings, link, media; rule 7.8); vary it with props. M in primary areas, dashboards and full-width lists; S nested in drawers, side panels, popovers and dense lists. Short info beside the title ("9d left", a count, a date) goes in `meta`, not the description (rule 7.21).
 
 ### stat-card-organism · `StatCard`
-Use: One key metric: title + value + optional trend or badge; `compare` for from → to. Read-only: no hover, focus, selected or disabled; only a loading skeleton. Type: rules 2.4, 2.6.
+Use: One key metric: title + value + optional trend or badge; `compare` for from → to. Size S by default; `size="m"` only by rule 2.6. Read-only: no hover, focus, selected or disabled; only a loading skeleton. Type: rules 2.4, 2.6.
 
 ### marker-atom · `TimelineMarker`
 Use: Timeline marker (icon/avatar circle); building block of `activity-organism`.
@@ -370,7 +371,7 @@ Use: Draggable node in a side list, dropped onto the canvas.
 Use: The node on the framework/map canvas — the named exception that earns its own component because of canvas behaviour (drag/connect, map-tied selection).
 
 ### approval-chain-timeline · `ApprovalChain`
-Use: One approver step in an approval chain.
+Use: One step in the display-only approval history in `ActivityPanel` (rule 7.9).
 
 ### version-history-timeline · `VersionHistory`
 Use: A version-history entry.
@@ -418,7 +419,7 @@ Use: Sticky column header: short, muted labels in sentence case; align to the co
 Use: Every table cell; pick Type by content. Text start-aligned, numbers end-aligned with consistent decimals, dates start-aligned in one format.
 
 ### group-row-molecule · `Table`
-Use: Collapsible group row in a grouped table.
+Use: Collapsible group row in a grouped table (`groupBy`). Three states: open (caret down, rows shown), collapsed (caret, rows hidden), locked (lock icon, can't open, a short `note` says when it opens). The end of the row shows the row count, or a status (`groupInfo` → `end`). The screen decides each group's state; groups don't have to open one after another. `headerPerGroup` puts the column header under each open group (sectioned table).
 
 ### content-row-molecule · `Table`
 Use: A table row (header or content) holding cells.
@@ -570,7 +571,7 @@ Use: One stage tab in the nav bar; building block.
 Use: IFS Copperleaf logo in the nav bar and log-in screen.
 
 ### sidebar-pattern · `SideNav`
-Use: The ready-made L2 sidebar for a stage; one component, each stage supplies its own section list.
+Use: The ready-made L2 sidebar (rule 7.23); each stage or entity supplies its own page list.
 
 ### header-pattern · `PageHeader`
 Use: Figma's header pattern with toggles for stepper, canvas header, Cooper recommendation and collaborators; build it with `PageHeader`.
@@ -591,8 +592,8 @@ Use: The Explore and Study map bar (rules 5.1, 5.6).
 ### base-bottom-sheet-organism · `BottomSheet`
 Use: Default bottom sheet for any tab: Cooper FAB + prompt chips.
 
-### value-bottom-sheet-organism · `BottomSheet type="value"`
-Use: Value tab only: base + document upload to build Cooper's context; read-only (no upload) once the framework is Active.
+### value-bottom-sheet-organism · `BottomSheet type="documents"`
+Use: base + the entity's documents and upload, which build Cooper's context (where: rule 7.22); read-only (no upload) once a framework is Active. `type="value"` is the old name and still works.
 
 ### explore-bottom-sheet · `BottomSheet type="explore"`
 Use: Explore tab only: base + map controls.
@@ -704,8 +705,8 @@ Use: Ready-made Home and Review screen sections.
 
 ## Layout (code only, not Figma components)
 
-### AppShell · `AppShell`, `StagedAppShell`
-Use: The product shell: nav bar, side nav, page header, content, optional panel, bottom sheet (rule 4.9). `panelMode` push | over (rule 4.6). `StagedAppShell` adds stage switching (Nav bar pattern).
+### AppShell · `AppShell`
+Use: The product shell: nav bar, side nav, page header, content, optional panel, bottom sheet (rule 4.9). `panelMode` push | over (rule 4.6).
 
 ### Stack and Inline · `Stack`, `Inline`
 Use: Layout spacing between things in a screen (rule 1.5).
@@ -734,11 +735,11 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 ### Pattern: Nav bar
 
 **For:** the Level 1 bar that switches between stages, and what each stage brings: its own sidebar (or none), header, content and bottom sheet. On every product screen.
-**Parts:** `NavBar` (logo, stage tabs `NavBarItem`, search / settings / notifications, avatar; collapse: rule 5.7) · `StagedAppShell` (`AppShell` + `NavBar` + a `screens` map from stage to `{ sideNav, header, content, bottom }`) · per stage: Command and Build no sidebar; Value `SideNav`; Plan `SideNavTree` (folder tree + "Ad hoc plans" with ＋); Explore no sidebar, `ExploreHeader` under the bar; Plan and Explore also a 48 collapsed right-panel rail. Content: Command = `PageTop` (Cooper eyebrow, H2 greeting, Tabs with counts, SmartSearch), "Decisions to review" + `SegmentedControl` S, the ranked `HomeRowCard` list, a right column with Cooper's results, milestone `ProgressBar` and `Calendar` (rule 4.2); Value = `PageTop` + the standard `DataTable` (tabs and search in `PageTop`, outside the card); Build = `PageTop` with `Tabs` L (Idea Pad / Investments) + the ranked `DataTable` with the segmented filter; Explore = map with `MapPinDot` clusters, `MapToolbar` (views top start, default view bottom start), `FtaButton`; Plan = title, description and owner, planning-cycle cards, `StatCardsRow`, affected-area map. Bottom: `BottomSheet` per stage with two screen-specific prompts: Command and Build the base sheet; Value the base sheet under the content column only; Plan `type="value"` with "16 Documents"; Explore none.
+**Parts:** `NavBar` (logo, stage tabs `NavBarItem`, search / settings / notifications, avatar; collapse: rule 5.7) · per stage: Command and the Build library no sidebar; Value `SideNav`; Plan `SideNavTree` (folder tree + "Ad hoc plans" with ＋); Explore no sidebar, `ExploreHeader` under the bar; Build and Plan entity steps also dock the System confidence panel on the right, open at the start (rule 4.6); Explore a 48 right-panel rail. Content: Command = `PageTop` (Cooper eyebrow, H2 greeting, Tabs with counts, SmartSearch), "Decisions to review" + `SegmentedControl` S, the ranked `HomeRowCard` list, a right column with Cooper's results, milestone `ProgressBar` and `Calendar` (rule 4.2); Value = `PageTop` + the standard `DataTable` (tabs and search in `PageTop`, outside the card); Build = `PageTop` with `Tabs` L (Idea Pad / Investments) + the ranked `DataTable` with the segmented filter; Explore = map with `MapPinDot` clusters, `MapToolbar` (views top start, default view bottom start), `FtaButton`; Plan = title, description and owner, planning-cycle cards, `StatCardsRow`, affected-area map. Bottom: `BottomSheet` by rule 7.22, with two screen-specific prompts; Explore none.
 **Rules:**
 1. One bar on every screen (rule 4.9): logo at the start, actions at the end, exactly one stage active.
 2. Stage order is fixed: Command, Value, Explore, Build, Plan, Results.
-3. The sidebar belongs to the stage; a stage with no sections has no sidebar and gives the content the full width.
+3. Sidebar: rule 7.23; without one the content takes the full width.
 4. Switching a stage changes the whole shell below the bar. The active tab gets the header-item active fill.
 5. Sidebar rows: Value picks a section (title and table change). Plan: a row selects that plan and expands its folder; the caret toggles a folder without selecting; the open path is outlined, the current folder filled. `arrow-bar-left` / `-right` collapse and expand the sidebar.
 6. The hamburger list (rule 5.7) opens 4 under the button; picking a stage closes it.
@@ -769,8 +770,8 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 
 ### Pattern: Cooper
 
-**For:** the AI assistant on every stage screen: asking about the current screen, Cooper's proactive recommendations, and past conversations. Always over or docked into the content area of an AppShell screen; never a modal or a full page.
-**Parts:** entry = `BottomSheet` prompts (`PromptButton`) + `FtaButton`, shortcut `/` · three sizes: `ChatCollapsedBar` (320 pill above the bottom sheet), `ChatCompactPanel` (320×360 floating), `ChatFullPanel` (docked in the content area with an 8 inset, rule 4.5); each with `ChatHeader`, `TextMessageInput` or `VoiceMessageInput`, `Attachment` · conversation: `UserMessage`, `CooperMessage` (`CooperProgress`, `ChatCard`, `ChatLink`, `Button`) · history: `HistoryPanel` (240, docked beside the full panel) with `FolderItem`, `SectionHeader`, `ChatHistoryCard`; `FolderContent`; `HistorySearch` + `SearchChatHistoryCard`; `Modal` + `ConfirmDeleteCard`; create folder `Modal` + `TextField` + `IconPicker` · recommendations: `CooperChip` in `PageHeader` → `AgentWindow` (`SpeakingControl`, `RecommendationGroup`, `RecommendationItem`, `RecommendationDetail`, `RecommendationImpact`) · behaviour: `CooperChat`, `CooperHistory`, `CooperRecommendations`.
+**For:** the AI assistant on every stage screen: asking about the current screen, Cooper's proactive recommendations, and past conversations. Always over the content area of an AppShell screen (the full chat floats one page margin in, rule 4.6); never docked, a modal or a full page.
+**Parts:** entry = `BottomSheet` prompts (`PromptButton`) + `FtaButton`, shortcut `/` · three sizes: `ChatCollapsedBar` (320 pill above the bottom sheet), `ChatCompactPanel` (320×360 floating), `ChatFullPanel` (floating a level above the page, rule 4.6); each with `ChatHeader`, `TextMessageInput` or `VoiceMessageInput`, `Attachment` · conversation: `UserMessage`, `CooperMessage` (`CooperProgress`, `ChatCard`, `ChatLink`, `Button`) · history: `HistoryPanel` (240, beside the full panel, inside the same floating panel) with `FolderItem`, `SectionHeader`, `ChatHistoryCard`; `FolderContent`; `HistorySearch` + `SearchChatHistoryCard`; `Modal` + `ConfirmDeleteCard`; create folder `Modal` + `TextField` + `IconPicker` · recommendations: `CooperChip` in `PageHeader` → `AgentWindow` (`SpeakingControl`, `RecommendationGroup`, `RecommendationItem`, `RecommendationDetail`, `RecommendationImpact`) · behaviour: `CooperChat`, `CooperHistory`, `CooperRecommendations`.
 **Rules:**
 1. Opens in voice mode ("Say anything, I'm listening") by "Hey Cooper", `/` or the avatar; the keyboard icon switches to text ("Write anything, I'm reading"), the mic back. In voice mode the transcript shows large while the user speaks. A prompt chip sends at once.
 2. "Hey Cooper": the avatar expands into the inline field, a sound plays, the chips hide; Cooper doesn't reply by voice. After ~1.5s of silence the question sends and the floating window opens; after ~6s with nothing said, it collapses back.
@@ -784,7 +785,7 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 10. Input: typing shows Send; multi-line (radius 12) moves the buttons below; files by + or drag onto the panel (any number; the input grows to 400 then scrolls; ✕ removes a file; a file can send without text). Hover your message to copy or edit; saving an edit resends.
 11. History: Search, Start a new chat, smart folders, your folders (See all after 3), chats grouped Today / This week / Earlier. Chat ⋯: Pin, Rename, Move to folder, Select, Delete. Section ⋯: chats Select, Delete all; folders Create folder, Select, Delete all. Select mode adds a footer (Move, Delete, "Selected n ✕"); Cancel clears the selection. ✕ on an item in a Delete or Move dialog only deselects it.
 12. Smart folders (Reminders, Recommendations, Trash) are system-managed; deleted chats stay in Trash 30 days. Users create, rename, give an icon to, bulk move and delete their own folders; deleting a folder never deletes its chats.
-13. Show the history panel only beside the full panel; from the compact window the history button first docks the chat.
+13. Show the history panel only beside the full panel; from the compact window the history button first switches to the full panel.
 14. Recommendations: chip → window grouped by framework column → expand an item (description, impact, Explore) → Shape walks through them (Back, Decline, Do it) → "Working on it: Applying…" → "I've added … Let's go to the next"; after the last, "All selected recommendations have been applied…" and the window closes. Every recommendation is saved as a chat in Recommendations. Decline removes it and updates the count (the chip disappears at 0; "Decline all" only with more than one); declined items stay in history. Each shows the two impact metrics the backend marks. Cooper never auto-commits.
 15. Recommendations and the chat are never open together; "Ask" switches to the chat.
 16. After a canvas change Cooper opens with a working message, then a result and Undo; Undo discards only Cooper's recalculation.
@@ -793,12 +794,12 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 ### Pattern: Documents
 
 **For:** the files attached to a record (investment, value framework) that build Cooper's context. They live in the bottom sheet, never on their own page; not a general file manager.
-**Parts:** `BottomSheet type="value"` with `DocumentsContext` ("Cooper's Context", optional coverage `ProgressBar`, documents Tertiary M `Button`, Upload Tertiary M `IconButton`) · `DocumentsPopover` (`Popover` "Documents" + `Counter`, search, ✕) of `DocumentRow`s (`FileCard` row: name, upload date; hover ⋯ Download / Remove when editable, Download when read-only; error rows Remove + Retry; uploading rows skeleton) · `DocumentsDropArea` (`DropZone` + `NodeCard type="document"` ghosts while dragging) · `DocumentsFeedback` (`Alert`, `Snackbar`, top-right under the page header) · state `useDocuments({ defaultDocuments, editable, required })`.
+**Parts:** `BottomSheet type="documents"` with `DocumentsContext` ("Cooper's Context", optional coverage `ProgressBar`, documents Tertiary M `Button`, Upload Tertiary M `IconButton`) · `DocumentsPopover` (`Popover` "Documents" + `Counter`, search, ✕) of `DocumentRow`s (`FileCard` row: name, upload date; hover ⋯ Download / Remove when editable, Download when read-only; error rows Remove + Retry; uploading rows skeleton) · `DocumentsDropArea` (`DropZone` + `NodeCard type="document"` ghosts while dragging) · `DocumentsFeedback` (`Alert`, `Snackbar`, top-right under the page header) · state `useDocuments({ defaultDocuments, editable, required })`.
 **Rules:**
 1. The button reads "1 Document" / "N Documents" and is hidden at 0. The popover opens 4 above the bottom sheet, clear of canvas tools, at most 360 tall: 1–7 documents no scroll, 8–9 scroll, 10+ search appears. Newest upload first. Search filters by name; no match "No results found" with no counter.
 2. A row opens a preview in a separate window; Download downloads; ✕, Esc or outside click closes the popover.
 3. Attach by Upload (multiple files) or by dropping files on the content (purple dashed overlay while dragging). Each file is checked first; a rejected file never enters the list or the count. Accepted files show as loading rows and the button icon spins; on success the count goes up and the list opens with the new file on top.
-4. Rejection messages (error `Alert`, rule 7.12; also closes on the next action): «Can't add "{file}" — supported formats are {list}.» (PDF, DOCX, XLSX, PPTX, TXT, CSV); «Can't add "{file}" — the file is {size}, the limit is {limit}.» (25 MB, no Retry); several: «{n} of {total} files added. {m} files were skipped — unsupported format or too large.» + See details.
+4. Rejection messages (error `Alert`; nothing is left to fix, so it closes on the next action or ✕, rule 7.12): «Can't add "{file}" — supported formats are {list}.» (PDF, DOCX, XLSX, PPTX, TXT, CSV); «Can't add "{file}" — the file is {size}, the limit is {limit}.» (25 MB, no Retry); several: «{n} of {total} files added. {m} files were skipped — unsupported format or too large.» + See details.
 5. Network failure: the row stays with "Upload failed" + retry (tooltip "Try again"), uncounted and outside Cooper's context until it uploads; retry resends that file, one row at a time; completed files stay; the row goes only when removed.
 6. Remove (editable): the row goes, the count drops, snackbar "The document has been removed" + Undo (rule 7.12).
 7. Empty: depends on whether Cooper's context is required to leave the stage. Required: coverage bar + Upload (the bar fills as documents are processed; 25% per usable document). Optional: Upload only. The counter appears with the first document and the list replaces the empty state; at 100% coverage the empty state gives way to the normal state.
@@ -808,9 +809,9 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 ### Pattern: Widget builder
 
 **For:** a page of widgets people arrange: add from a catalog, reorder by drag, resize on a 3-column grid, remove. A dashboard (widgets on the page, one grid) or a report (blocks inside sections, one grid per section); same widgets and rules. Editing only while the page is in Draft.
-**Parts:** `AppShell` + `NavBar` + `SideNav` + `PageHeader` + `BottomSheet type="value"` (optional `Panel`) · page intro with a secondary "Widgets" button · `StatCardsRow` (the metrics block) · `WidgetBoard` (grid engine) of `WidgetFrame`s (title, Cooper button; hover ⋮⋮, "Edit with Cooper", ⋮ menu) with kit charts inside (`bare`) · drag feedback: ghost (`WidgetFrame state="ghost"`, or `WidgetCard state="drag"` from the drawer), source at 30%, `DropIndicator`, then `DropZone` "+ Drop here to place", `Tooltip` for a blocked drop · resize: `ResizeHandle`, `Tooltip` · `WidgetsDrawer` (`Drawer` + search + `WidgetCard`s with `PreviewWidgetCard`) · `toast` + Undo.
+**Parts:** `AppShell` + `NavBar` + `SideNav` + `PageHeader` + `BottomSheet type="documents"` (optional `Panel`) · page intro with a secondary "Widgets" button · `StatCardsRow` (the metrics block) · `WidgetBoard` (grid engine) of `WidgetFrame`s (title, Cooper button; hover ⋮⋮, "Edit with Cooper", ⋮ menu) with kit charts inside (`bare`) · drag feedback: ghost (`WidgetFrame state="ghost"`, or `WidgetCard state="drag"` from the drawer), source at 30%, `DropIndicator`, then `DropZone` "+ Drop here to place", `Tooltip` for a blocked drop · resize: `ResizeHandle`, `Tooltip` · `WidgetsDrawer` (`Drawer` + search + `WidgetCard`s with `PreviewWidgetCard`) · `toast` + Undo.
 **Rules:**
-1. A section is a 3-column grid with a 12 gap; widths only 1/3, 1/2, 2/3 or 3/3. A row holds 1–3 widgets, never spans sections, never leaves an empty column (the last widget fills the rest), and its widgets share the tallest height (height is never resized by hand).
+1. A section is a 3-column grid with a page gap (rule 4.2); widths only 1/3, 1/2, 2/3 or 3/3. A row holds 1–3 widgets, never spans sections, never leaves an empty column (the last widget fills the rest), and its widgets share the tallest height (height is never resized by hand).
 2. Auto widths: 1 → 3/3; 2 → 1/2 + 1/2; 3 → 1/3 each; chart + text → 2/3 + 1/3; chart + chart → 1/2 + 1/2, locked. A row of 2 may be 1/2 + 1/2, 1/3 + 2/3 or 2/3 + 1/3. Manual widths last until the count or order changes or the divider is double-clicked (→ Auto). Width is saved with the edition, the same for everyone.
 3. Limits: metrics block (1–3 stat cards of equal width) 3/3 only, no handle, not draggable; text 1/3–3/3; chart min 1/2, resizable only next to a text widget; wide chart or table 3/3 (proposed in Figma).
 4. Add: Widgets → drawer (`push`) → "+ Add" places the widget and removes its card, toast `"<name>" widget added` + Undo; or drag the card in (the drawer steps aside). The drawer search filters by description; no match → empty state.
@@ -829,7 +830,7 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 2. The panel is never empty (the owner is always listed first, "(you)"). Sections: In project, Awaiting, Suggested by Cooper; empty sections hide.
 3. The indicator counts invited collaborators, not approvers or reviewers: "joined / invited", both including the owner (1/1 alone).
 4. Search: empty focus shows Suggested by Cooper + Recently; typing matches name or job role; only people not yet on the record; no match shows suggestion chips of people who can be invited. The role filter narrows to roles; clearing every role returns to All.
-5. Invite: "+" → Add Collaborator dialog (access defaults to Editor; Cooper's brief pre-filled and editable) → Send invitation → under Awaiting, invited count +1. Clicking a collaborator opens the same dialog to edit; Save stays disabled until something changes.
+5. Invite: "+" → Add Collaborator dialog (access defaults to Editor; Cooper's brief pre-filled and editable) → Send invitation → under Awaiting, invited count +1. Clicking a collaborator opens the same dialog to edit ("Edit Collaborator"; the title is the screen's text, `title` prop); Save is always on (rule 7.4): with no change it just closes the dialog.
 6. Remove: role select → Remove → "Remove this collaborator?" (revokes the invite) → gone, count −1. Always confirmed.
 7. Push: an awaiting row shows the bell 24h after the last notification (sending the invite counts). Push sends an in-app notification and email (both deep-link to the invitation's Accept / Decline), attributed to the owner, reusing the invite and brief (no new invite, no count change); toast "Reminder sent. You can push again in 24h."; the row then shows a disabled "Notified". At most 1 per invitee per 24h.
 8. Auto-reminders: system-sent after N days (§10 Open), impersonal, repeat at intervals then stop; manual and auto reminders are never merged. All reminders stop (queued ones are cancelled) when the invitee accepts or declines, is removed or replaced, or the record is archived; every reminder is logged in Activity ("A. Singh resent the invitation to …"); notification preferences apply (email off → in-app only).
@@ -867,10 +868,11 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 7. The Comment column shows exactly what the approver wrote at decision time and updates when they edit it; empty if nothing. Never invent text.
 8. Push: only clock (awaiting) rows; manual push is attributed to the owner, has no threshold, 1 per reviewer per 24h; it stamps Last notified; the "Notified" tooltip shows a live countdown (hours rounded up, minutes under 1h). A reviewer pending for N days (§10 Open) is notified in-app (bell + toast) and by email; auto-reminders then every N days, 3 at most, impersonal. All stop when the reviewer acts, the version is withdrawn, the reviewer is replaced or the approval closes. Every push is logged in Activity; notification preferences apply.
 9. User filter: only with more than 3 approvers; applies live; chips (All, Approved, Awaiting, Rejected, Revisions required) are multi-select and All resets them; search matches name or role (✕ clears it); chips and search combine; the counter = 1 per chip other than All + 1 for a non-empty query; Clear all resets both; no match keeps the filter open with "No results found"; outside click closes. Awaiting also matches not-acted rows.
+10. **Several stages on one page** (Plan › Approve: Executive, Technical, Financial): one `ApprovalChainTable` with `stages`, not one table per stage. Each stage is a group row of the table (name, then status + done/total at the end; the column header under each open stage). A stage is open, folded or locked as the case needs: locked shows a lock and when it opens ("Opens when Executive is approved"); a fully approved stage folds. The kit writes each stage's status itself: Approved (all approved), Changes requested (anyone rejected or asked for revisions), else Under review; a stage's `collapsed` sets how it starts. Panel and timeline: rule 7.9.
 
 ### Pattern: Confidence, trace & readiness
 
-**For:** three right-hand panels with the system's verdict on a framework. **System Confidence**: for the author on Review (readiness by gate + open questions and warnings). **Trace Report**: a reaction to a user change the system considers incorrect (errors, warnings, notes, one at a time). **Readiness Evaluation**: for a stakeholder reviewing someone else's framework (see Approval chain).
+**For:** three right-hand panels with the system's verdict on a framework. **System Confidence**: for the author on the work steps inside an entity (where, and open at the start: rule 4.6): readiness by gate + open questions and warnings. **Trace Report**: a reaction to a user change the system considers incorrect (errors, warnings, notes, one at a time). **Readiness Evaluation**: for a stakeholder reviewing someone else's framework (see Approval chain).
 **Parts:** `useIssueReport({ issues, kinds, gates, onResolvedAll })` with `CONFIDENCE_KINDS` (Open questions, Warnings) or `TRACE_KINDS` (Errors, Warnings, Notes) · `SystemConfidence` = `Panel` + `ContentCard` with `ConfidenceGates` (`ProgressRing`, a `ReadinessStatus` per gate with XS `Indicator`s and tooltips), `IssueKindSwitch` (`SegmentedControl` S with counters), `IssueNavigator` · `TraceReport` `type="drawer"` (floating over the canvas, collapse only) or `type="sidebar"` (`Panel`), footer Undo (Tertiary L) · `IssueNavigator`: `Pager progress="resolved"`, issue title (H3) and description, then solutions (`IssueSolution`), Upload file / My answer (`IssueAnswerField`), a single Okay, or the Applied / Answered card; "All" lists `IssueListItem`s · collapsed rail `Panel expanded={false}` with `dot`.
 **Rules:**
 1. Red = open questions or errors; orange = warnings. The rail dot follows (none when all is OK). The Approval readiness total matches the segmented counters.
@@ -889,8 +891,8 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 **Parts:** `EvidenceButton` (circle Tertiary S, `cooper-evidence-icon`, 16; in a card header via `DataVizCard header.slot` or `ContentCard iconButton`; on a panel `Panel showEvidence onEvidence`) · `EvidenceChainDrawer` (`over`; title "Evidence chain", ✕ only): `EvidenceStrength` (captions `<70% Reject` · `{value}% Review` · `>90% Approve`), `SegmentedControl` S full width Rationale | Peer benchmark, `EvidenceSection`s of `SourceCard`s, `PeerBenchmark` (description, summary rows, "Typical scope" with `LegendSwatch` + `VerticalBarChartItem`; `EmptyState` when there's too little data) · `SourceCard` (`type="file"` a Tertiary S button with the source name that opens the source, icon optional; `type="user"` avatar + name, for a person's input; `content="quote"` excerpt with a start rule, `content="text"` paragraph; optional info `Badge`) · `evidenceZone(value)`.
 **Rules:**
 1. The trigger shows wherever Cooper-written content exists, at every confidence level (never hidden because confidence is high).
-2. From a card: the drawer floats over the content area top-end, 12 in from the page header, the end edge and the bottom sheet. Another card's button switches the chain; the same button, ✕ or Esc closes it and focus returns. From System confidence: it opens in the panel's place, below the nav bar, over the page header, ending 12 above the bottom sheet. One chain at a time; its trigger shows as expanded.
-3. Confidence zones set what Cooper does: under 70% Reject (Cooper doesn't apply; a reviewer decides), 70–90% Review (Cooper fills in and waits for a person), over 90% Approve (applied automatically; the chain stays available). Exactly 90 is Approve. Every value carries its own confidence.
+2. From a card: the drawer floats over the content area top-end, `--space-300` (12) in from the page header, the end edge and the bottom sheet; the screen places it (`Drawer floating` alone sits `--space-400` (16) from the window edges). Another card's button switches the chain; the same button, ✕ or Esc closes it and focus returns. From System confidence: it opens in the panel's place, below the nav bar, over the page header, ending `--space-300` above the bottom sheet. One chain at a time; its trigger shows as expanded.
+3. Confidence zones set what Cooper does: under 70% Reject (Cooper doesn't apply; a reviewer decides), 70–90% Review (Cooper fills in and waits for a person), over 90% Approve (applied automatically; the chain stays available). Exactly 90 is Review; Approve starts above 90 (2.0.4). Every value carries its own confidence.
 4. The drawer layout is the same in every zone: only the marker and the behaviour change.
 5. Rationale is never empty: Why it's flagged → Decisions → Considered but not included; sections 12 apart with a 1px top rule and a Label/M/medium title; cards 8 apart.
 6. Peer benchmark compares records of the same type, age band and duty. It is the only tab that can be empty: "Peer benchmark isn't available", no action; the tab stays rendered and selectable. The tab choice persists while the drawer is open.
@@ -901,7 +903,7 @@ How components work together, from the Figma file IFS Design System Patterns. Ea
 **For:** a record's history: the activity log, saved versions, the approval chain, and comparing two versions or benchmarks. `ActivityPanel` wherever a record offers "Activity"; `CompareView` for a framework's Compare view.
 **Parts:** `ActivityPanel` (`over` panel, 380, "Activity", ✕): `SegmentedControl` S Version History | Approval Chain, `SmartSearch` with suggested questions, `VersionHistory` (version cards on the timeline base: title, "Current" `Badge`, description, last-activity author `Avatar` XS and time, ⋯ `Menu`; expanded: nested `Timeline` of entries with type `Badge` Comment / Action / Auto-action, Cooper `Avatar type="cooper"`), `ApprovalChain` (display only), `EmptyState`, `Modal`, `toast` · `CompareView`: `CompareHeader` + `CompareDropdown` (`CompareDropdownList`), four `StatCard`s with `compare`, `Sankey` with current and baseline sources.
 **Rules:**
-1. Open from a library row ⋯ › Activity or the framework title ⌄ › Activity.
+1. Open from a library row ⋯ › Activity, or the entity header's title menu ▾ (after the ID; rule 5.1).
 2. The segmented control exists only when both views have content. A record with no approval process (e.g. a study) opens on Version history with no control (`approvals={undefined}`). A record with a process but no chain yet keeps it and shows "No approval chain yet / Approvers appear here after you send this framework for approval".
 3. Search filters the panel (author, date, status, what changed: "What did A. Singh do?", "Show comments only", "What did Cooper change automatically?"; also version names, descriptions, authors, dates and log text); matching versions expand to the matching entries. It never answers in a chat bubble. No match: "No results found" + chips; ✕ clears.
 4. Versions: collapsed, newest first; ⋯ on hover; the caret opens the version's full log (the author row hides). Each card shows the last person who changed that version. Click a card or name to open that version read-only.
