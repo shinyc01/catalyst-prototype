@@ -643,15 +643,35 @@ function PlanHome({ navBar, run, done, stage, final, saved, onStart, onSetup, on
 }
 
 /* ============================================================ notifications (NavBar bell) */
-function Notifications({ open, notes, onClose, onOpen }) {
+// Figma notification tray: Mark all as read + filter in the header, five tabs, Today / Earlier, cards without buttons that open on click and read on open (open question 83)
+// [Assumed] tab of each notification: Cooper's news and your own items → My work; people acting on your items → Collaboration; published / released → Follows; Mentions has none yet
+const NOTE_TABS = [{ value: 'all', label: 'All' }, { value: 'work', label: 'My work' }, { value: 'mentions', label: 'Mentions' }, { value: 'collab', label: 'Collaboration' }, { value: 'follows', label: 'Follows' }];
+const noteTab = n => n.tab_ || (/ published$|^Allocations /.test(n.title) ? 'follows' : n.avatar ? 'collab' : 'work');
+function Notifications({ open, notes, onClose, onOpen, onRead }) {
+  const [tab, setTab] = useState('all');
+  const [unread, setUnread] = useState(false);
   const ago = t => { const s = (Date.now() - t) / 1000, m = Math.round(s / 60), h = Math.round(m / 60), d = Math.round(h / 24);
     return s < 45 ? 'just now' : m < 60 ? `${m} minute${m > 1 ? 's' : ''} ago` : h < 24 ? `${h} hour${h > 1 ? 's' : ''} ago` : d < 2 ? 'yesterday' : d < 7 ? `${d} days ago` : new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };   // rule 8.30
+  const shown = notes.filter(n => (tab === 'all' || noteTab(n) === tab) && (!unread || !n.read));
+  const day = new Date(); day.setHours(0, 0, 0, 0);
+  const groups = [['Today', shown.filter(n => n.time >= day.getTime())], ['Earlier', shown.filter(n => n.time < day.getTime())]].filter(([, l]) => l.length);
   return (
-    <Drawer open={open} onOpenChange={o => !o && onClose()} title="Notifications" collapsible={false} overlay="none">{/* overlay="none": DS 2.0 bug — the Drawer scrim sits above the drawer */}
+    <Drawer open={open} onOpenChange={o => !o && onClose()} title="Notifications" collapsible={false} overlay="none"   // overlay="none": DS 2.0 bug — the Drawer scrim sits above the drawer
+      tabs={<IFS.Tabs aria-label="Notification types" value={tab} onChange={setTab} items={NOTE_TABS} />}
+      subtitle={<div className="row" style={{ gap: 'var(--space-100)', justifyContent: 'space-between', width: '100%' }}>
+        <Button type="ghost" size="s" onClick={onRead}>Mark all as read</Button>
+        <IFS.Tooltip content={unread ? 'Show all' : 'Show unread only'}><span><IFS.FilterButton hasNew={unread} label={unread ? 'Show all' : 'Show unread only'} onClick={() => setUnread(u => !u)} /></span></IFS.Tooltip>
+      </div>}>
       <div className="col" style={{ gap: 'var(--space-stack)', padding: '0 var(--space-inset) var(--space-inset)' }}>
-        {!notes.length && <EmptyState cause="all-done" size="section" heading="All Caught Up" body="Notifications about your plans and investments appear here." />}
-        {notes.map(n => <NotificationCard key={n.id} type="specific" read={n.read} title={n.title} details={n.details} meta={n.meta} time={ago(n.time)}
-          actionRequired={false} avatar={n.cooper ? undefined : n.avatar} actions={n.link ? [{ label: n.action || 'Open', onClick: () => onOpen(n) }] : undefined} />)}
+        {!groups.length && (notes.length
+          ? <EmptyState cause="no-results" size="section" heading="No Notifications Here" body={unread ? 'Everything here is read. Show all to see them.' : 'Nothing in this tab yet.'} />
+          : <EmptyState cause="all-done" size="section" heading="All Caught Up" body="Notifications about your plans and investments appear here." />)}
+        {groups.map(([label, list]) => <div key={label} className="col" style={{ gap: 'var(--space-150)' }}>
+          <span className="t-label-m-medium">{label}</span>
+          {list.map(n => <NotificationCard key={n.id} type="specific" read={n.read} title={n.title} details={n.details} meta={n.meta} time={ago(n.time)}
+            data-note={n.action || (n.link ? 'Open' : undefined)} aria-label={n.title}
+            actionRequired={false} avatar={n.cooper ? undefined : n.avatar} onClick={() => onOpen(n)} />)}
+        </div>)}
       </div>
     </Drawer>
   );
