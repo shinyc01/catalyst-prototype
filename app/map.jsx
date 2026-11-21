@@ -161,7 +161,7 @@ const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen
     document.addEventListener('keydown', key); document.addEventListener('mousedown', down);
     return () => { document.removeEventListener('keydown', key); document.removeEventListener('mousedown', down); }; }, [layers]);
   return <>
-  <div style={{ position: 'absolute', left: 'var(--page-margin)', top: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
+  <div className="ifs-slot-tools">
     {/* Figma Explore rail (29:191921 / 29:101050): 1 = asset structure, 2 = studies library, 3 = study */}
     <MapToolbar><MapToolCluster label="Map views">
       <MapToolButton icon="asset-structure" label="Asset structure" active={!!assetsOpen} onClick={() => onAssets ? onAssets() : toast({ title: 'Asset structure isn’t part of this flow' })} />
@@ -169,8 +169,8 @@ const MapTools = ({ api, assetsOpen, onAssets, libraryOpen, onLibrary, studyOpen
       <MapToolButton icon="system-book" label="Study" active={!!studyOpen} onClick={() => onStudy ? onStudy() : api.current?.fit()} />
     </MapToolCluster></MapToolbar>
   </div>
-  <div style={{ position: 'absolute', left: 'var(--page-margin)', bottom: 'var(--space-300)', zIndex: 'var(--proto-z-map-ui)' }}>
+  <div className="ifs-slot-tools-bottom">
     <MapToolbar onAction={id => id === 'zoom-in' ? api.current?.zoomIn() : id === 'zoom-out' ? api.current?.zoomOut() : id === 'layers' ? setLayers(o => !o) : toast({ title: `${id} isn’t part of this flow` })} />
   </div>
-  {layers && <div className="map-layers"><IFS.Popover inline title="Layers" width="var(--overlay-width-s)" onOpenChange={o => !o && setLayers(false)}><MapLegend grid={grid} /></IFS.Popover></div>}
+  {layers && <div className="ifs-slot-popover map-layers"><IFS.Popover inline title="Layers" width="var(--overlay-width-s)" onOpenChange={o => !o && setLayers(false)}><MapLegend grid={grid} /></IFS.Popover></div>}
 </>; };
